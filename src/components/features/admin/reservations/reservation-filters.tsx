@@ -1,0 +1,169 @@
+"use client";
+
+import { useState, useCallback } from "react";
+import { CalendarIcon, XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { AccommodationType } from "@/types";
+import { ReservationStatus } from "@/types";
+import { getStatusLabel } from "@/lib/status-transitions";
+import { getTodayStr, dateToStr, formatDatePtBr } from "@/lib/availability";
+import { cn } from "@/lib/utils";
+
+interface ReservationFiltersProps {
+  onFilterChange: (filters: {
+    date: string;
+    status: string;
+    accommodationType: string;
+  }) => void;
+  defaultDate?: string;
+  accommodationTypes: AccommodationType[];
+}
+
+export function ReservationFilters({
+  onFilterChange,
+  defaultDate,
+  accommodationTypes,
+}: ReservationFiltersProps) {
+  const today = getTodayStr();
+
+  const [date, setDate] = useState(defaultDate ?? today);
+  const [status, setStatus] = useState("");
+  const [accommodationType, setAccommodationType] = useState("");
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const fireChange = useCallback(
+    (newDate: string, newStatus: string, newAccommodationType: string) => {
+      onFilterChange({
+        date: newDate,
+        status: newStatus,
+        accommodationType: newAccommodationType,
+      });
+    },
+    [onFilterChange]
+  );
+
+  const handleDateSelect = (selected: Date | undefined) => {
+    const newDate = selected ? dateToStr(selected) : "";
+    setDate(newDate);
+    setCalendarOpen(false);
+    fireChange(newDate, status, accommodationType);
+  };
+
+  const handleStatusChange = (value: string) => {
+    const newStatus = value === "all" ? "" : value;
+    setStatus(newStatus);
+    fireChange(date, newStatus, accommodationType);
+  };
+
+  const handleAccommodationChange = (value: string) => {
+    const newAccommodation = value === "all" ? "" : value;
+    setAccommodationType(newAccommodation);
+    fireChange(date, status, newAccommodation);
+  };
+
+  const hasNonDefaultFilters =
+    date !== today || status !== "" || accommodationType !== "";
+
+  const handleClearFilters = () => {
+    setDate(today);
+    setStatus("");
+    setAccommodationType("");
+    fireChange(today, "", "");
+  };
+
+  const selectedDateObj = date
+    ? (() => {
+        const [y, m, d] = date.split("-").map(Number);
+        return new Date(y, m - 1, d);
+      })()
+    : undefined;
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      {/* Date Picker */}
+      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className={cn(
+              "w-[220px] justify-start text-left font-normal",
+              !date && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {date ? formatDatePtBr(date) : "Selecionar data"}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selectedDateObj}
+            onSelect={handleDateSelect}
+            initialFocus
+          />
+        </PopoverContent>
+      </Popover>
+
+      {/* Status Select */}
+      <Select value={status || "all"} onValueChange={handleStatusChange}>
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todos os status</SelectItem>
+          {Object.values(ReservationStatus).map((s) => (
+            <SelectItem key={s} value={s}>
+              {getStatusLabel(s)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Accommodation Type Select */}
+      <Select
+        value={accommodationType || "all"}
+        onValueChange={handleAccommodationChange}
+      >
+        <SelectTrigger className="w-[180px]">
+          <SelectValue placeholder="Acomodacao" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">Todas acomodacoes</SelectItem>
+          {accommodationTypes
+            .filter((at) => at.is_active)
+            .map((at) => (
+              <SelectItem key={at.id} value={at.id}>
+                {at.name}
+              </SelectItem>
+            ))}
+        </SelectContent>
+      </Select>
+
+      {/* Clear Filters */}
+      {hasNonDefaultFilters && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleClearFilters}
+          className="text-muted-foreground"
+        >
+          <XIcon className="mr-1 h-4 w-4" />
+          Limpar filtros
+        </Button>
+      )}
+    </div>
+  );
+}
