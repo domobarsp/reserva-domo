@@ -31,7 +31,9 @@ export function ReservasPageContent({
   const router = useRouter();
   useRealtimeSubscription({ table: "reservations" });
   const searchParams = useSearchParams();
-  const initialDate = searchParams.get("date") ?? getTodayStr();
+  const filterDate = searchParams.get("date") ?? getTodayStr();
+  const filterStatus = searchParams.get("status") ?? "";
+  const filterAccommodationType = searchParams.get("accommodation") ?? "";
 
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -39,25 +41,14 @@ export function ReservasPageContent({
   const [editingReservation, setEditingReservation] =
     useState<ReservationFull | null>(null);
 
-  // Filters state
-  const [filters, setFilters] = useState({
-    date: initialDate,
-    status: "",
-    accommodationType: "",
-  });
-
   const filteredReservations = useMemo(() => {
     return initialReservations.filter((r) => {
-      if (filters.date && r.date !== filters.date) return false;
-      if (filters.status && r.status !== filters.status) return false;
-      if (
-        filters.accommodationType &&
-        r.accommodation_type_id !== filters.accommodationType
-      )
-        return false;
+      if (filterDate && r.date !== filterDate) return false;
+      if (filterStatus && r.status !== filterStatus) return false;
+      if (filterAccommodationType && r.accommodation_type_id !== filterAccommodationType) return false;
       return true;
     });
-  }, [initialReservations, filters]);
+  }, [initialReservations, filterDate, filterStatus, filterAccommodationType]);
 
   const handleFilterChange = useCallback(
     (newFilters: {
@@ -65,9 +56,14 @@ export function ReservasPageContent({
       status: string;
       accommodationType: string;
     }) => {
-      setFilters(newFilters);
+      const params = new URLSearchParams();
+      if (newFilters.date) params.set("date", newFilters.date);
+      if (newFilters.status) params.set("status", newFilters.status);
+      if (newFilters.accommodationType) params.set("accommodation", newFilters.accommodationType);
+      const query = params.toString();
+      router.replace(`/admin/reservas${query ? `?${query}` : ""}`);
     },
-    []
+    [router]
   );
 
   const handleStatusChange = useCallback(
@@ -108,7 +104,9 @@ export function ReservasPageContent({
       {/* Filters */}
       <ReservationFilters
         onFilterChange={handleFilterChange}
-        defaultDate={initialDate}
+        defaultDate={filterDate}
+        defaultStatus={filterStatus}
+        defaultAccommodationType={filterAccommodationType}
         accommodationTypes={accommodationTypes}
       />
 
@@ -132,6 +130,7 @@ export function ReservasPageContent({
         onOpenChange={setEditDialogOpen}
         reservation={editingReservation}
         accommodationTypes={accommodationTypes}
+        timeSlots={timeSlots}
         onSuccess={handleSuccess}
       />
     </div>

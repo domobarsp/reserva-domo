@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import type { FullReservationData } from "@/lib/validations/reservation";
 import type { AvailabilityResponse } from "@/types";
 import { formatDatePtBr } from "@/lib/availability";
+import { formatTime } from "@/lib/utils";
 
 interface StepConfirmationProps {
   needsCard: boolean;
@@ -61,7 +62,7 @@ export function StepConfirmation({
             <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
             <span className="text-sm">
               {timeSlot
-                ? `${timeSlot.name} (${timeSlot.start_time} — ${timeSlot.end_time})`
+                ? `${timeSlot.name} (${formatTime(timeSlot.start_time)} — ${formatTime(timeSlot.end_time)})`
                 : "—"}
             </span>
           </div>

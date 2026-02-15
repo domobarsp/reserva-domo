@@ -29,19 +29,23 @@ interface ReservationFiltersProps {
     accommodationType: string;
   }) => void;
   defaultDate?: string;
+  defaultStatus?: string;
+  defaultAccommodationType?: string;
   accommodationTypes: AccommodationType[];
 }
 
 export function ReservationFilters({
   onFilterChange,
   defaultDate,
+  defaultStatus,
+  defaultAccommodationType,
   accommodationTypes,
 }: ReservationFiltersProps) {
   const today = getTodayStr();
 
   const [date, setDate] = useState(defaultDate ?? today);
-  const [status, setStatus] = useState("");
-  const [accommodationType, setAccommodationType] = useState("");
+  const [status, setStatus] = useState(defaultStatus ?? "");
+  const [accommodationType, setAccommodationType] = useState(defaultAccommodationType ?? "");
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const fireChange = useCallback(
@@ -103,8 +107,10 @@ export function ReservationFilters({
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {date ? formatDatePtBr(date) : "Selecionar data"}
+            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+            <span className="truncate">
+              {date ? formatDatePtBr(date) : "Selecionar data"}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">

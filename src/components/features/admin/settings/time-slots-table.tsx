@@ -14,6 +14,7 @@ import { Switch } from "@/components/ui/switch";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Pencil, Trash2, Clock } from "lucide-react";
 import type { TimeSlot } from "@/types";
+import { formatTime } from "@/lib/utils";
 
 const DAY_LABELS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
@@ -57,8 +58,8 @@ export function TimeSlotsTable({
           {timeSlots.map((ts) => (
             <TableRow key={ts.id}>
               <TableCell className="font-medium">{ts.name}</TableCell>
-              <TableCell>{ts.start_time}</TableCell>
-              <TableCell>{ts.end_time}</TableCell>
+              <TableCell>{formatTime(ts.start_time)}</TableCell>
+              <TableCell>{formatTime(ts.end_time)}</TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1">
                   {ts.days_of_week

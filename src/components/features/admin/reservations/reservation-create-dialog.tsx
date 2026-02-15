@@ -45,7 +45,7 @@ import {
 import { getTodayStr, dateToStr, formatDatePtBr } from "@/lib/availability";
 import { ReservationSource, Locale } from "@/types";
 import type { AccommodationType, TimeSlot } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 import { createReservation } from "@/app/admin/(authenticated)/reservas/actions";
 
 interface ReservationCreateDialogProps {
@@ -81,13 +81,8 @@ export function ReservationCreateDialog({
   });
 
   const onSubmit = async (data: AdminReservationData) => {
-    // Find the time_slot_id that best matches the reservation_time
-    const matchedSlot = timeSlots.find(
-      (ts) =>
-        ts.is_active &&
-        data.reservation_time >= ts.start_time &&
-        data.reservation_time <= ts.end_time
-    );
+    // reservation_time contains "time_slot_id|start_time"
+    const [selectedSlotId, selectedTime] = data.reservation_time.split("|");
 
     const result = await createReservation(
       {
@@ -99,9 +94,9 @@ export function ReservationCreateDialog({
       },
       {
         accommodation_type_id: data.accommodation_type_id,
-        time_slot_id: matchedSlot?.id ?? timeSlots[0]?.id ?? "",
+        time_slot_id: selectedSlotId,
         date: data.date,
-        reservation_time: data.reservation_time,
+        reservation_time: selectedTime,
         party_size: data.party_size,
         special_requests: data.special_requests || null,
         source: data.source as ReservationSource,
@@ -248,9 +243,28 @@ export function ReservationCreateDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Horario</FormLabel>
-                    <FormControl>
-                      <Input placeholder="19:00" {...field} />
-                    </FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecionar horário" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {timeSlots
+                          .filter((ts) => ts.is_active)
+                          .map((ts) => (
+                            <SelectItem
+                              key={ts.id}
+                              value={`${ts.id}|${ts.start_time}`}
+                            >
+                              {ts.name} ({formatTime(ts.start_time)} — {formatTime(ts.end_time)})
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

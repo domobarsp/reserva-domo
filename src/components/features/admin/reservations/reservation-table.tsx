@@ -21,6 +21,7 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { StatusDropdown } from "./status-dropdown";
 import type { ReservationFull } from "@/types";
 import { ReservationStatus } from "@/types";
+import { formatTime } from "@/lib/utils";
 
 interface ReservationTableProps {
   reservations: ReservationFull[];
@@ -74,7 +75,7 @@ export function ReservationTable({
         {sorted.map((reservation) => (
           <TableRow key={reservation.id}>
             <TableCell>{formatDateDdMmYyyy(reservation.date)}</TableCell>
-            <TableCell>{reservation.reservation_time}</TableCell>
+            <TableCell>{formatTime(reservation.reservation_time)}</TableCell>
             <TableCell>
               {reservation.customer.first_name}{" "}
               {reservation.customer.last_name}

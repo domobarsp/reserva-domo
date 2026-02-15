@@ -11,15 +11,11 @@ import {
 } from "@/components/ui/table";
 import { ReservationStatusBadge } from "@/components/shared/status-badge";
 import type { ReservationFull } from "@/types";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 
 interface TodayReservationsProps {
   className?: string;
   reservations: ReservationFull[];
-}
-
-function formatTime(timeStr: string): string {
-  return timeStr.slice(0, 5);
 }
 
 export function TodayReservations({

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import {
   fullReservationSchema,
   type FullReservationData,
@@ -243,6 +244,7 @@ export function ReservationForm({
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                   >
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isSubmitting ? "Confirmando..." : "Confirmar Reserva"}
                   </Button>
                 ) : null}

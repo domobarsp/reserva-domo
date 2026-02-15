@@ -2,10 +2,10 @@
 
 import { useFormContext } from "react-hook-form";
 import { useMemo } from "react";
-import { CalendarIcon, Users } from "lucide-react";
+import { CalendarIcon, Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
+import { cn, formatTime } from "@/lib/utils";
 import {
   FormField,
   FormItem,
@@ -182,9 +182,10 @@ export function StepReservationInfo({
 
       {/* Loading indicator */}
       {selectedDate && isLoadingAvailability && (
-        <p className="text-sm text-muted-foreground">
-          Carregando horários...
-        </p>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Carregando horários...</span>
+        </div>
       )}
 
       {/* Time Slot Selection */}
@@ -215,7 +216,7 @@ export function StepReservationInfo({
                       <div>
                         <p className="font-medium">{ts.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {ts.start_time} — {ts.end_time}
+                          {formatTime(ts.start_time)} — {formatTime(ts.end_time)}
                         </p>
                       </div>
                     </Label>

@@ -44,8 +44,8 @@ import {
   type EditReservationData,
 } from "@/lib/validations/admin";
 import { dateToStr, formatDatePtBr } from "@/lib/availability";
-import type { ReservationFull, AccommodationType } from "@/types";
-import { cn } from "@/lib/utils";
+import type { ReservationFull, AccommodationType, TimeSlot } from "@/types";
+import { cn, formatTime } from "@/lib/utils";
 import { updateReservation } from "@/app/admin/(authenticated)/reservas/actions";
 
 interface ReservationEditDialogProps {
@@ -53,6 +53,7 @@ interface ReservationEditDialogProps {
   onOpenChange: (open: boolean) => void;
   reservation: ReservationFull | null;
   accommodationTypes: AccommodationType[];
+  timeSlots: TimeSlot[];
   onSuccess: () => void;
 }
 
@@ -61,6 +62,7 @@ export function ReservationEditDialog({
   onOpenChange,
   reservation,
   accommodationTypes,
+  timeSlots,
   onSuccess,
 }: ReservationEditDialogProps) {
   const form = useForm<EditReservationData>({
@@ -80,7 +82,7 @@ export function ReservationEditDialog({
     if (reservation) {
       form.reset({
         date: reservation.date,
-        reservation_time: reservation.reservation_time,
+        reservation_time: `${reservation.time_slot_id}|${reservation.reservation_time}`,
         accommodation_type_id: reservation.accommodation_type_id,
         party_size: reservation.party_size,
         special_requests: reservation.special_requests ?? "",
@@ -95,9 +97,13 @@ export function ReservationEditDialog({
   const onSubmit = async (data: EditReservationData) => {
     if (!reservation) return;
 
+    // reservation_time contains "time_slot_id|start_time"
+    const [selectedSlotId, selectedTime] = data.reservation_time.split("|");
+
     const result = await updateReservation(reservation.id, {
       date: data.date,
-      reservation_time: data.reservation_time,
+      reservation_time: selectedTime,
+      time_slot_id: selectedSlotId,
       accommodation_type_id: data.accommodation_type_id,
       party_size: data.party_size,
       special_requests: data.special_requests || null,
@@ -181,9 +187,28 @@ export function ReservationEditDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Horario</FormLabel>
-                    <FormControl>
-                      <Input placeholder="19:00" {...field} />
-                    </FormControl>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecionar horário" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {timeSlots
+                          .filter((ts) => ts.is_active)
+                          .map((ts) => (
+                            <SelectItem
+                              key={ts.id}
+                              value={`${ts.id}|${ts.start_time}`}
+                            >
+                              {ts.name} ({formatTime(ts.start_time)} — {formatTime(ts.end_time)})
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
