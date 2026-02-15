@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useRealtimeSubscription } from "@/hooks/use-realtime";
 import { Plus } from "lucide-react";
@@ -69,14 +69,31 @@ export function ReservasPageContent({
   filterAccommodationType,
 }: ReservasPageContentProps) {
   const router = useRouter();
-  const [isNavigating, startNavigation] = useTransition();
-  useRealtimeSubscription({ table: "reservations" });
+  const [isFiltering, startFilteringNavigation] = useTransition();
+  const [, startRefreshTransition] = useTransition();
 
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingReservation, setEditingReservation] =
     useState<ReservationFull | null>(null);
+  const [reservations, setReservations] =
+    useState<ReservationFull[]>(initialReservations);
+
+  useEffect(() => {
+    setReservations(initialReservations);
+  }, [initialReservations]);
+
+  const refreshReservations = useCallback(() => {
+    startRefreshTransition(() => {
+      router.refresh();
+    });
+  }, [router, startRefreshTransition]);
+
+  useRealtimeSubscription({
+    table: "reservations",
+    onEvent: refreshReservations,
+  });
 
   const handleFilterChange = useCallback(
     (newFilters: {
@@ -100,26 +117,51 @@ export function ReservasPageContent({
         return;
       }
 
-      startNavigation(() => {
+      startFilteringNavigation(() => {
         router.replace(`/admin/reservas${nextQuery ? `?${nextQuery}` : ""}`);
       });
     },
-    [router, filterDate, filterStatus, filterAccommodationType]
+    [router, filterDate, filterStatus, filterAccommodationType, startFilteringNavigation]
   );
 
   const handleStatusChange = useCallback(
     async (id: string, newStatus: ReservationStatus) => {
       const result = await updateReservationStatus(id, newStatus);
       if (result.success) {
+        setReservations((current) => {
+          const updated = current
+            .map((reservation) => {
+              if (reservation.id !== id) return reservation;
+              return {
+                ...reservation,
+                status: newStatus,
+                cancelled_at:
+                  newStatus === ReservationStatus.CANCELLED
+                    ? new Date().toISOString()
+                    : reservation.cancelled_at,
+                cancelled_by:
+                  newStatus === ReservationStatus.CANCELLED
+                    ? "admin"
+                    : reservation.cancelled_by,
+              };
+            });
+
+          if (filterStatus && newStatus !== filterStatus) {
+            return updated.filter((reservation) => reservation.id !== id);
+          }
+
+          return updated;
+        });
+
         toast.success(
           `Status alterado para ${getStatusLabel(newStatus)}`
         );
-        router.refresh();
+        refreshReservations();
       } else {
         toast.error(result.error);
       }
     },
-    [router]
+    [filterStatus, refreshReservations]
   );
 
   const handleEdit = useCallback((reservation: ReservationFull) => {
@@ -128,8 +170,8 @@ export function ReservasPageContent({
   }, []);
 
   const handleSuccess = useCallback(() => {
-    router.refresh();
-  }, [router]);
+    refreshReservations();
+  }, [refreshReservations]);
 
   return (
     <div className="space-y-8">
@@ -138,8 +180,8 @@ export function ReservasPageContent({
         <h1 className="text-2xl font-semibold">Reservas</h1>
         <Button
           onClick={() => setCreateDialogOpen(true)}
-          disabled={isNavigating}
-          aria-busy={isNavigating}
+          disabled={isFiltering}
+          aria-busy={isFiltering}
         >
           <Plus className="mr-2 h-4 w-4" />
           Nova Reserva
@@ -154,16 +196,16 @@ export function ReservasPageContent({
         defaultStatus={filterStatus}
         defaultAccommodationType={filterAccommodationType}
         accommodationTypes={accommodationTypes}
-        isPending={isNavigating}
+        isPending={isFiltering}
       />
 
       {/* Table */}
-      <div aria-busy={isNavigating}>
-        {isNavigating ? (
+      <div aria-busy={isFiltering}>
+        {isFiltering ? (
           <ReservationTableLoading />
         ) : (
           <ReservationTable
-            reservations={initialReservations}
+            reservations={reservations}
             onStatusChange={handleStatusChange}
             onEdit={handleEdit}
           />

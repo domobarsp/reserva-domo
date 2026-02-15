@@ -56,6 +56,7 @@
 - **Reservas server-driven**: filtros (data/status/acomodacao) agora sao aplicados no server via `searchParams` em `page.tsx`
 - **Loading ao filtrar**: troca de filtros em `/admin/reservas` agora usa estado pending + skeleton da tabela durante a transicao
 - **Controles durante transicao**: filtros e CTA principal recebem `disabled`/`aria-busy` enquanto os dados filtrados carregam
+- **Regressao de status corrigida**: mudancas de status (ex.: cancelado) agora refletem automaticamente na listagem sem reload manual, com atualizacao otimista local + refresh em transicao acionado por realtime e por mutation
 - **Consistencia visual**: header de reservas padronizado para `font-semibold`, tabela de reservas com container `rounded` + borda sutil, e espacamentos harmonizados com dashboard
 
 ### Formulário Público

@@ -215,3 +215,11 @@
 **Contexto**: O redesign inicial dos Big Numbers ficou visualmente pesado, com excesso de área interna e destaque exagerado no texto de insight em relação ao valor numérico.
 **Decisão**: Manter o card com superfície branca completa (sem faixas internas), reduzir proporções gerais (padding/gaps/tamanhos) e tornar o título de insight mais discreto. O maior destaque tipográfico do card deve ser sempre o número principal.
 **Razão**: Aproxima o layout da referência visual, melhora escaneabilidade e reforça hierarquia de informação correta para uso operacional do dashboard.
+
+---
+
+### 2026-02-15 — Regressão de auto-atualização em Reservas: refresh orientado a transição + estado otimista local
+
+**Contexto**: Após a migração de filtros de `/admin/reservas` para fluxo server-driven, a listagem deixou de refletir algumas mudanças de status em tempo hábil (ex.: `cancelado`) sem refresh manual da página.
+**Decisão**: Em `reservas-page-content.tsx`, centralizar refresh em callback `refreshReservations()` usando `startTransition(() => router.refresh())` para eventos de realtime e pós-mutation, além de manter um estado local de reservas com atualização otimista imediata do status (incluindo remoção da linha quando deixa de satisfazer o filtro de status ativo).
+**Razão**: A combinação de refresh em transição com fallback otimista elimina a percepção de stale UI, preserva consistência com dados do servidor e evita dependência de reload manual.

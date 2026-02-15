@@ -40,3 +40,11 @@
 - [x] 4.4 Atualizar `CurrentState.md`
 - [x] 4.5 Atualizar `Phases.md` (status da Fase 4.7)
 - [x] 4.6 Adicionar entradas no `DecisionLog.md` (append-only) caso haja novas decisões técnicas durante execução
+
+## 5 — Regressão: atualização automática de status em Reservas
+
+- [x] 5.1 Diagnosticar regressão de auto-refresh na listagem ao mudar status (ex.: cancelado)
+- [x] 5.2 Ajustar `reservas-page-content.tsx` para refresh via `startTransition` no callback de realtime
+- [x] 5.3 Aplicar atualização otimista de status local para feedback imediato sem reload manual
+- [x] 5.4 Validar com `npx tsc --noEmit` e `npm run lint` sem novos erros
+- [x] **Checkpoint**: mudança de status reflete automaticamente na listagem sem refresh manual
