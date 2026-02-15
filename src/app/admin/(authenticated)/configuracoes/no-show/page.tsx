@@ -16,7 +16,7 @@ export default async function NoShowPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Taxa de No-Show</h1>
+          <h1 className="text-2xl font-semibold">Taxa de No-Show</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Configure o valor padrão da taxa de não comparecimento.
           </p>

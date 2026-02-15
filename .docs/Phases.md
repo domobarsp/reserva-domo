@@ -8,8 +8,9 @@ Fase 0 (Docs) ✅
        ├─ Fase 2 (Formulário público, mock) ✅
        └─ Fase 3 (Admin UI, mock) ✅
             └─ Fase 4 (Supabase) ✅
-                 └─ Fase 4.5 (Polish Pós-Supabase)
-                      └─ Fase 5 (Stripe)
+                 └─ Fase 4.5 (Polish Pós-Supabase) ✅
+                      └─ Fase 4.6 (Design System)
+                           └─ Fase 5 (Stripe)
                            └─ Fase 6 (Resend)
                                 └─ Fase 7 (Admin Features & UX)
                                      └─ Fase 8 (UI Polish)
@@ -141,7 +142,7 @@ Fase 0 (Docs) ✅
 ---
 
 ## Fase 4.5 — Polish Pós-Supabase
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Correção de bugs e melhorias de UX identificadas após a integração Supabase. Devem ser resolvidas antes do Stripe para garantir estabilidade.
@@ -155,12 +156,45 @@ Correção de bugs e melhorias de UX identificadas após a integração Supabase
 - Dialog de criação de reserva admin: campo de horário deve ser select dos time slots disponíveis (não input livre)
 
 **Critérios de aceitação**:
-- [ ] `/admin` redireciona para `/admin/dashboard` quando autenticado
-- [ ] Cancelamento de reserva atualiza lista em tempo real sem perder filtros
-- [ ] Filtro de data renderiza corretamente sem overflow
-- [ ] Loading states visíveis durante fetches (formulário público + pages admin)
-- [ ] Horários exibidos como HH:mm em toda a UI
-- [ ] Criação de reserva admin usa select de horários de serviço
+- [x] `/admin` redireciona para `/admin/dashboard` quando autenticado
+- [x] Cancelamento de reserva atualiza lista em tempo real sem perder filtros
+- [x] Filtro de data renderiza corretamente sem overflow
+- [x] Loading states visíveis durante fetches (formulário público + pages admin)
+- [x] Horários exibidos como HH:mm em toda a UI
+- [x] Criação de reserva admin usa select de horários de serviço
+
+**Notas**:
+- `/admin` usa `redirect()` do Next.js em `src/app/admin/page.tsx`
+- Filtros de reserva movidos para URL searchParams — `router.refresh()` do realtime preserva filtros
+- `formatTime()` compartilhada em `src/lib/utils.ts`, usada em 6 arquivos
+- Dialogs de criação/edição usam `<Select>` com valor composto `time_slot_id|start_time`
+- Loading skeletons via `loading.tsx` do Next.js em 6 páginas admin
+- Componente `skeleton` do shadcn instalado
+
+---
+
+## Fase 4.6 — Design System (Lime/Gray/Inter/Vega)
+**Status**: `COMPLETE`
+
+**Escopo**:
+Aplicação do design system definido em `.docs/DesignSystem.md`. Substitui o tema padrão neutro do shadcn/ui pela identidade visual Domo: cor primária Lime, base Gray com tom azulado, fonte Inter, raio de borda reduzido.
+
+**Itens**:
+- Fundação: globals.css (paleta Lime/Gray completa, light + dark), layout.tsx (fonte Inter), components.json (baseColor gray)
+- Componentes base: table.tsx (header bg sutil, mais respiro), status-transitions.ts (cores amber/emerald/rose), status-badge.tsx (sem outline)
+- Componentes de página: dashboard-stats.tsx (cards verticais coloridos), admin-sidebar.tsx (logo lime, active primary/10), empty-state.tsx (dashed border), month-grid.tsx + calendar-legend.tsx (cores semânticas), layout admin (padding generoso)
+
+**Critérios de aceitação**:
+- [x] Cor primária lime em botões, links, accents
+- [x] Fonte Inter em todo o sistema
+- [x] Border radius 0.45rem
+- [x] Tabelas com header bg sutil, mais respiro nas células
+- [x] Badges de status sem borda, com cores amber/emerald/rose
+- [x] Dashboard cards verticais com backgrounds coloridos diferenciados
+- [x] Sidebar com logo lime e active state primary/10
+- [x] Calendário com cores emerald/amber/rose e ring primary
+- [x] Empty states com borda dashed
+- [x] Headers de página com font-semibold e padding generoso
 
 ---
 

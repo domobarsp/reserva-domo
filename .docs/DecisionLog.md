@@ -183,3 +183,11 @@
 - **Raio de borda**: Small (0.45rem)
 - **Diretrizes adicionais**: Mais cor e menos bordas, table headers com background sutil, mais respiro nas tabelas, cards de métricas com backgrounds coloridos diferenciados, sidebar com accent primário (lime)
 **Razão**: Definir um padrão visual coeso e moderno antes da Fase 8 (UI Polish). Documentado em `.docs/DesignSystem.md` para guiar todas as decisões de UI futuras. A referência visual é o configurador shadcn/ui com os parâmetros acima + os blocos de dashboard da biblioteca.
+
+---
+
+### 2026-02-14 — Fase 4.6 (Design System) antecipada antes do Stripe
+
+**Contexto**: O design system (Lime/Gray/Inter/Vega) estava planejado para a Fase 8 (UI Polish). No entanto, aplicar a identidade visual antes do Stripe evita retrabalho visual nos componentes do Stripe e garante que o sistema tenha aparência final mais cedo.
+**Decisão**: Criar Fase 4.6 entre 4.5 (Polish) e 5 (Stripe). Escopo: aplicar todas as mudanças definidas em `.docs/DesignSystem.md` — fundação (globals.css, layout.tsx, components.json), componentes base (table, badges, status colors) e componentes de página (dashboard stats, sidebar, calendário, empty states). A Fase 8 permanece para padronização fina e acessibilidade.
+**Razão**: Aplicar identidade visual cedo reduz retrabalho. Componentes Stripe (Payment Element, badges de cobrança) já nascerão no tema correto. A Fase 8 foca em refinamentos que dependem de todas as features estarem implementadas.

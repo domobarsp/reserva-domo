@@ -14,11 +14,11 @@ export function EmptyState({
   action,
 }: EmptyStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
-      <div className="text-muted-foreground mb-4">
+    <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border/50 py-12 text-center">
+      <div className="text-muted-foreground/50 mb-4">
         {icon ?? <InboxIcon className="h-12 w-12" />}
       </div>
-      <h3 className="text-lg font-medium">{title}</h3>
+      <h3 className="text-base font-medium">{title}</h3>
       {description && (
         <p className="text-muted-foreground mt-1 max-w-sm text-sm">
           {description}

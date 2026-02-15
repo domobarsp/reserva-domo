@@ -159,16 +159,16 @@ export function MonthGrid({
 
   function getOccupancyBg(dayData: DayData): string {
     if (!dayData.isCurrentMonth) return "";
-    if (dayData.isClosed) return "bg-gray-100";
+    if (dayData.isClosed) return "bg-muted";
     if (dayData.occupancyRatio === 0) return "";
-    if (dayData.occupancyRatio <= 0.5) return "bg-green-50";
-    if (dayData.occupancyRatio <= 0.8) return "bg-yellow-50";
-    return "bg-red-50";
+    if (dayData.occupancyRatio <= 0.5) return "bg-emerald-50";
+    if (dayData.occupancyRatio <= 0.8) return "bg-amber-50";
+    return "bg-rose-50";
   }
 
   return (
     <div className="overflow-x-auto">
-      <div className="grid min-w-[600px] grid-cols-7 gap-px rounded-lg border bg-gray-200">
+      <div className="grid min-w-[600px] grid-cols-7 gap-px rounded-lg border bg-border">
         {/* Weekday headers */}
         {WEEKDAY_HEADERS.map((header) => (
           <div
@@ -191,27 +191,27 @@ export function MonthGrid({
               }
             }}
             className={cn(
-              "flex min-h-[80px] flex-col items-start p-2 text-left transition-colors",
+              "flex min-h-[80px] flex-col items-start p-3 rounded-lg text-left transition-colors",
               dayData.isCurrentMonth
-                ? "cursor-pointer bg-white hover:bg-gray-50"
+                ? "cursor-pointer bg-white hover:ring-2 hover:ring-primary/50"
                 : "cursor-default bg-white",
               getOccupancyBg(dayData),
-              dayData.isToday && "ring-2 ring-blue-500 ring-inset",
-              !dayData.isCurrentMonth && "text-gray-300"
+              dayData.isToday && "ring-2 ring-primary/30 ring-inset",
+              !dayData.isCurrentMonth && "text-muted-foreground/30"
             )}
           >
             <span
               className={cn(
                 "text-sm font-medium",
-                dayData.isToday && "text-blue-600",
-                !dayData.isCurrentMonth && "text-gray-300"
+                dayData.isToday && "text-primary",
+                !dayData.isCurrentMonth && "text-muted-foreground/30"
               )}
             >
               {dayData.day}
             </span>
 
             {dayData.isCurrentMonth && dayData.isClosed && (
-              <span className="mt-1 text-[10px] font-medium text-gray-500">
+              <span className="mt-1 text-[10px] font-medium text-muted-foreground">
                 Fechado
               </span>
             )}
@@ -220,10 +220,10 @@ export function MonthGrid({
               !dayData.isClosed &&
               dayData.reservationCount > 0 && (
                 <div className="mt-auto space-y-0.5">
-                  <span className="block text-[10px] text-gray-600">
+                  <span className="block text-[10px] text-muted-foreground/80">
                     {dayData.reservationCount} res.
                   </span>
-                  <span className="block text-[10px] text-gray-600">
+                  <span className="block text-[10px] text-muted-foreground/80">
                     {dayData.totalCovers} pax
                   </span>
                 </div>

@@ -31,7 +31,7 @@ export function AdminSidebar() {
   return (
     <aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:block">
       <div className="flex h-16 items-center border-b px-6">
-        <Link href="/admin/dashboard" className="text-xl font-bold tracking-tight">
+        <Link href="/admin/dashboard" className="text-xl font-bold tracking-tight text-primary">
           Domo
         </Link>
         <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
@@ -47,13 +47,13 @@ export function AdminSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                 isActive
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-sidebar-foreground/70 hover:bg-muted/60 hover:text-sidebar-foreground"
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className="h-[18px] w-[18px]" />
               {item.label}
             </Link>
           );

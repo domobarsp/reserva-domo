@@ -16,7 +16,7 @@ export default async function GarantiaCartaoPage() {
           </Link>
         </Button>
         <div>
-          <h1 className="text-2xl font-bold">Garantia com Cartão</h1>
+          <h1 className="text-2xl font-semibold">Garantia com Cartão</h1>
           <p className="text-muted-foreground text-sm mt-1">
             Configure quais dias exigem garantia com cartão de crédito.
           </p>

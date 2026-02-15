@@ -64,18 +64,18 @@ export function getStatusLabel(status: ReservationStatus): string {
 export function getStatusColor(status: ReservationStatus): string {
   const colors: Record<ReservationStatus, string> = {
     [ReservationStatus.PENDING]:
-      "bg-yellow-100 text-yellow-800 border-yellow-200",
+      "bg-amber-50 text-amber-700 border-amber-200/60",
     [ReservationStatus.CONFIRMED]:
-      "bg-blue-100 text-blue-800 border-blue-200",
+      "bg-blue-50 text-blue-700 border-blue-200/60",
     [ReservationStatus.SEATED]:
-      "bg-green-100 text-green-800 border-green-200",
+      "bg-emerald-50 text-emerald-700 border-emerald-200/60",
     [ReservationStatus.COMPLETE]:
-      "bg-gray-100 text-gray-800 border-gray-200",
-    [ReservationStatus.NO_SHOW]: "bg-red-100 text-red-800 border-red-200",
+      "bg-gray-50 text-gray-600 border-gray-200/60",
+    [ReservationStatus.NO_SHOW]: "bg-rose-50 text-rose-700 border-rose-200/60",
     [ReservationStatus.CANCELLED]:
-      "bg-gray-100 text-gray-500 border-gray-200",
+      "bg-gray-50 text-gray-400 border-gray-200/60",
   };
-  return colors[status] ?? "bg-gray-100 text-gray-800 border-gray-200";
+  return colors[status] ?? "bg-gray-50 text-gray-600 border-gray-200/60";
 }
 
 /**
@@ -96,9 +96,9 @@ export function getWaitlistStatusLabel(status: WaitlistStatus): string {
 export function getWaitlistStatusColor(status: WaitlistStatus): string {
   const colors: Record<WaitlistStatus, string> = {
     [WaitlistStatus.WAITING]:
-      "bg-yellow-100 text-yellow-800 border-yellow-200",
-    [WaitlistStatus.SEATED]: "bg-green-100 text-green-800 border-green-200",
-    [WaitlistStatus.REMOVED]: "bg-gray-100 text-gray-500 border-gray-200",
+      "bg-amber-50 text-amber-700 border-amber-200/60",
+    [WaitlistStatus.SEATED]: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
+    [WaitlistStatus.REMOVED]: "bg-gray-50 text-gray-400 border-gray-200/60",
   };
-  return colors[status] ?? "bg-gray-100 text-gray-800 border-gray-200";
+  return colors[status] ?? "bg-gray-50 text-gray-600 border-gray-200/60";
 }

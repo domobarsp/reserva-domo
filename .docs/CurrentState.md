@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-02-13 | Fase: 4 (Integração Supabase) — COMPLETA
+> Atualizado: 2026-02-15 | Fase: 4.6 (Design System) — COMPLETA
 
 ## O que funciona
 
@@ -16,7 +16,7 @@
 - Navegação funcional entre todas as rotas
 - API health check em `/api/health`
 - Tipos TypeScript completos em `src/types/index.ts` (espelhando DatabaseSchema.md)
-- Componentes shadcn/ui instalados: button, card, separator, sheet, badge, input, label, select, calendar, popover, radio-group, textarea, form, progress, sonner, table, dialog, dropdown-menu, alert-dialog, switch, checkbox, tooltip
+- Componentes shadcn/ui instalados: button, card, separator, sheet, badge, input, label, select, calendar, popover, radio-group, textarea, form, progress, sonner, table, dialog, dropdown-menu, alert-dialog, switch, checkbox, tooltip, skeleton
 
 ### Supabase (Fase 4)
 
@@ -27,6 +27,27 @@
 - **API Routes públicas**: `/api/availability`, `/api/reservations`, `/api/reservations/cancel`
 - **Realtime**: Hook `useRealtimeSubscription` com subscriptions em reservations e waitlist_entries
 - **Supabase clients**: Browser (`client.ts`), Server (`server.ts`), Admin/Service Role (`admin.ts`), Middleware helper (`middleware.ts`)
+
+### Polish Pós-Supabase (Fase 4.5)
+
+- **Redirect `/admin`**: `src/app/admin/page.tsx` redireciona para `/admin/dashboard`
+- **Filtros via URL**: Filtros de reservas (data, status, acomodação) salvos em searchParams — `router.refresh()` do realtime preserva filtros ativos
+- **Filtro de data**: Texto truncado para evitar overflow do botão
+- **Horários HH:mm**: Função compartilhada `formatTime()` em `src/lib/utils.ts`, usada em 6 componentes
+- **Select de horário**: Dialogs de criação/edição de reserva admin usam `<Select>` de time slots em vez de input livre
+- **Loading states**: Skeletons via `loading.tsx` do Next.js em 6 páginas admin (dashboard, reservas, calendário, lista-espera, passantes, configurações)
+- **Spinner no formulário**: Botão de submit mostra `Loader2` animado durante envio
+
+### Design System (Fase 4.6)
+
+- **Fundação**: Paleta Lime/Gray completa em `globals.css`, fonte Inter, border radius 0.45rem, baseColor gray
+- **Tabelas**: Headers com `bg-muted/50`, padding generoso (`px-4 py-3.5`), uppercase tracking-wider, hover sutil
+- **Status Badges**: Cores amber/emerald/rose (não yellow/green/red), pill-shaped (`rounded-full`), sem borda
+- **Dashboard Stats**: Cards verticais com backgrounds coloridos diferenciados (primary/10, emerald-50, amber-50, violet-50), número grande
+- **Sidebar**: Logo lime (`text-primary`), active state `bg-primary/10 text-primary font-medium`, ícones 18px
+- **Calendário**: Cores emerald/amber/rose, ring primary no dia atual, hover ring primary/50, células arredondadas
+- **Empty States**: Borda dashed (`border-dashed border-border/50`), ícone com opacity /50
+- **Espaçamento**: Layout admin com padding `p-6 lg:p-8`, headers `text-2xl font-semibold`
 
 ### Formulário Público
 
@@ -67,12 +88,12 @@
   - **Realtime**: atualiza automaticamente quando reservas mudam
 - **Gestão de Reservas** (`/admin/reservas`):
   - Tabela completa com colunas: Data, Horário, Cliente, Acomodação, Pessoas, Status, Ações
-  - Filtros: Data (date picker), Status (select), Tipo de acomodação (select)
+  - Filtros: Data (date picker), Status (select), Tipo de acomodação (select) — preservados via URL searchParams
   - Dropdown de status com transições válidas apenas
-  - Dialog de criação manual (cliente + reserva, horário livre, source admin/phone)
-  - Dialog de edição com override de no-show fee
-  - Suporte a deep-link `?date=YYYY-MM-DD` do calendário
-  - **Realtime**: atualiza automaticamente
+  - Dialog de criação manual (cliente + reserva, select de time slots, source admin/phone)
+  - Dialog de edição com select de time slots e override de no-show fee
+  - Suporte a deep-link `?date=YYYY-MM-DD&status=...&accommodation=...`
+  - **Realtime**: atualiza automaticamente sem perder filtros
   - **Persistência**: Todas as operações CRUD persistem no Supabase
 - **Calendário Visual** (`/admin/calendario`):
   - Grid mensal 7 colunas customizado
@@ -104,6 +125,9 @@
 - **Helpers de status** (`src/lib/status-transitions.ts`):
   - Transições válidas de reserva: pending→confirmed/cancelled, confirmed→seated/no_show/cancelled, seated→complete/no_show
   - Labels e cores para badges de status (reserva e waitlist)
+- **Utilitários** (`src/lib/utils.ts`):
+  - `cn()` — merge de classes Tailwind
+  - `formatTime()` — formata horário para HH:mm
 - **Componentes compartilhados**:
   - `ReservationStatusBadge`, `WaitlistStatusBadge` — badges coloridos por status
   - `ConfirmDialog` — dialog de confirmação reutilizável (default/destructive)
@@ -118,7 +142,9 @@
 
 - Integração Stripe (Fase 5)
 - Integração Resend (Fase 6)
-- Relatórios (Fase 7)
+- Admin Features & UX (Fase 7)
+- UI Polish & Padronização (Fase 8)
+- Relatórios e Produção (Fase 9)
 
 ## Issues Conhecidas
 
@@ -126,4 +152,4 @@
 
 ## Próximos Passos
 
-Fase 5 — Integração Stripe: SetupIntent para captura condicional de cartão, Stripe Payment Element no formulário, cobrança de no-show, webhook handler.
+Fase 5 — Integração Stripe: SetupIntent para captura condicional de cartão, Payment Element no formulário, cobrança de no-show via PaymentIntent, webhook handler.

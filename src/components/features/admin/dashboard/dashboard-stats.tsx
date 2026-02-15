@@ -88,25 +88,29 @@ export function DashboardStats({
       label: "Reservas Hoje",
       value: stats.totalToday,
       icon: CalendarCheck,
-      iconColor: "text-blue-600",
+      iconColor: "text-primary",
+      bgColor: "bg-primary/10",
     },
     {
       label: "Confirmadas",
       value: stats.confirmed,
       icon: Clock,
-      iconColor: "text-green-600",
+      iconColor: "text-emerald-600",
+      bgColor: "bg-emerald-50",
     },
     {
       label: "Pendentes",
       value: stats.pending,
       icon: Users,
-      iconColor: "text-yellow-600",
+      iconColor: "text-amber-600",
+      bgColor: "bg-amber-50",
     },
     {
       label: "Ocupacao",
       value: `${stats.occupancyPercent}%`,
       icon: BarChart3,
-      iconColor: "text-purple-600",
+      iconColor: "text-violet-600",
+      bgColor: "bg-violet-50",
     },
   ] as const;
 
@@ -118,20 +122,15 @@ export function DashboardStats({
       )}
     >
       {cards.map((card) => (
-        <Card key={card.label}>
-          <CardContent className="flex items-center gap-4">
-            <div
-              className={cn(
-                "flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted",
-                card.iconColor
-              )}
-            >
-              <card.icon className="h-6 w-6" />
+        <Card key={card.label} className="border-0 shadow-none">
+          <CardContent className={cn("flex flex-col gap-3", card.bgColor)}>
+            <div className="flex items-center gap-2">
+              <card.icon className={cn("h-5 w-5", card.iconColor)} />
+              <p className="text-sm font-medium text-muted-foreground">
+                {card.label}
+              </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">{card.label}</p>
-              <p className="text-2xl font-bold">{card.value}</p>
-            </div>
+            <p className="text-3xl font-bold tracking-tight">{card.value}</p>
           </CardContent>
         </Card>
       ))}

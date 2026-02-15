@@ -1,8 +1,8 @@
 const LEGEND_ITEMS = [
-  { color: "bg-green-50 border-green-200", label: "Baixa ocupação (até 50%)" },
-  { color: "bg-yellow-50 border-yellow-200", label: "Média ocupação (51-80%)" },
-  { color: "bg-red-50 border-red-200", label: "Alta ocupação (81-100%)" },
-  { color: "bg-gray-100 border-gray-300", label: "Fechado" },
+  { color: "bg-emerald-50 border-emerald-200", label: "Baixa ocupação (até 50%)" },
+  { color: "bg-amber-50 border-amber-200", label: "Média ocupação (51-80%)" },
+  { color: "bg-rose-50 border-rose-200", label: "Alta ocupação (81-100%)" },
+  { color: "bg-muted border-border", label: "Fechado" },
 ];
 
 export function CalendarLegend() {

@@ -21,8 +21,11 @@ export function ReservationStatusBadge({
 }: ReservationStatusBadgeProps) {
   return (
     <Badge
-      variant="outline"
-      className={cn(getStatusColor(status), className)}
+      className={cn(
+        "rounded-full px-2.5 py-0.5 text-xs font-medium border-0",
+        getStatusColor(status),
+        className
+      )}
     >
       {getStatusLabel(status)}
     </Badge>
@@ -40,8 +43,11 @@ export function WaitlistStatusBadge({
 }: WaitlistStatusBadgeProps) {
   return (
     <Badge
-      variant="outline"
-      className={cn(getWaitlistStatusColor(status), className)}
+      className={cn(
+        "rounded-full px-2.5 py-0.5 text-xs font-medium border-0",
+        getWaitlistStatusColor(status),
+        className
+      )}
     >
       {getWaitlistStatusLabel(status)}
     </Badge>
