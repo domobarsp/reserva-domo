@@ -6,23 +6,22 @@ export default async function DashboardPage() {
   const data = await getDashboardData();
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
-      <p className="text-muted-foreground mt-1">Visao geral do dia</p>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="mt-1 text-muted-foreground">Visao geral do dia</p>
+      </div>
       <DashboardStats
-        className="mt-6"
+        className="mt-0"
         todayReservations={data.todayReservations}
         timeSlots={data.timeSlots}
         accommodationTypes={data.accommodationTypes}
         capacityRules={data.capacityRules}
         exceptionDates={data.exceptionDates}
       />
-      <div className="mt-8">
+      <div className="space-y-4">
         <h2 className="text-lg font-semibold">Reservas de Hoje</h2>
-        <TodayReservations
-          className="mt-4"
-          reservations={data.todayReservations}
-        />
+        <TodayReservations reservations={data.todayReservations} />
       </div>
     </div>
   );

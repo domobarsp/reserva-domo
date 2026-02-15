@@ -9,12 +9,13 @@ Fase 0 (Docs) ✅
        └─ Fase 3 (Admin UI, mock) ✅
             └─ Fase 4 (Supabase) ✅
                  └─ Fase 4.5 (Polish Pós-Supabase) ✅
-                      └─ Fase 4.6 (Design System)
-                           └─ Fase 5 (Stripe)
-                           └─ Fase 6 (Resend)
-                                └─ Fase 7 (Admin Features & UX)
-                                     └─ Fase 8 (UI Polish)
-                                          └─ Fase 9 (Relatórios + Produção)
+                      └─ Fase 4.6 (Design System) ✅
+                           └─ Fase 4.7 (Refinamentos UX/UI)
+                                └─ Fase 5 (Stripe)
+                                └─ Fase 6 (Resend)
+                                     └─ Fase 7 (Admin Features & UX)
+                                          └─ Fase 8 (UI Polish)
+                                               └─ Fase 9 (Relatórios + Produção)
 ```
 
 > **Planejamento granular**: Antes de iniciar cada fase, o agente deve criar um plano
@@ -195,6 +196,27 @@ Aplicação do design system definido em `.docs/DesignSystem.md`. Substitui o te
 - [x] Calendário com cores emerald/amber/rose e ring primary
 - [x] Empty states com borda dashed
 - [x] Headers de página com font-semibold e padding generoso
+
+---
+
+## Fase 4.7 — Refinamentos UX/UI (Dashboard + Filtros)
+**Status**: `IN PROGRESS`
+
+**Escopo**:
+Ajustes visuais e de feedback de carregamento para elevar a qualidade percebida do admin antes da integração Stripe, sem misturar escopo com as features da Fase 7.
+
+**Itens**:
+- Dashboard: refino dos cards de Big Numbers para visual mais próximo da referência (superfície com borda, cantos arredondados, espaçamento, hierarquia de conteúdo e microcopy)
+- Reservas: loading/skeleton ao aplicar filtros em `/admin/reservas`, incluindo estado pending durante transição
+- UX/UI sweep: padronização de headers, espaçamentos e estados assíncronos (loading/disabled/aria-busy) nas telas impactadas
+- Validação responsiva (desktop/mobile) dos novos padrões
+
+**Critérios de aceitação**:
+- [ ] Cards de Big Numbers com borda visível, raio, padding e gap consistentes, próximos da referência visual compartilhada
+- [ ] Ao alterar filtros em `/admin/reservas`, a área de conteúdo entra em loading com skeleton até os novos dados renderizarem
+- [ ] Filtros continuam preservados na URL e atualização realtime não perde o estado filtrado
+- [ ] Melhorias gerais de UX/UI aplicadas nas páginas impactadas sem regressão visual em mobile/desktop
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
 
 ---
 

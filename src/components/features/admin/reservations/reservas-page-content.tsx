@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useTransition, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useRealtimeSubscription } from "@/hooks/use-realtime";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ReservationFilters } from "@/components/features/admin/reservations/reservation-filters";
 import { ReservationTable } from "@/components/features/admin/reservations/reservation-table";
 import { ReservationCreateDialog } from "@/components/features/admin/reservations/reservation-create-dialog";
@@ -21,19 +22,55 @@ interface ReservasPageContentProps {
   initialReservations: ReservationFull[];
   accommodationTypes: AccommodationType[];
   timeSlots: TimeSlot[];
+  filterDate: string;
+  filterStatus: string;
+  filterAccommodationType: string;
+}
+
+function buildFiltersQuery(filters: {
+  date: string;
+  status: string;
+  accommodationType: string;
+}): string {
+  const params = new URLSearchParams();
+  if (filters.date) {
+    params.set("date", filters.date);
+  }
+  if (filters.status) {
+    params.set("status", filters.status);
+  }
+  if (filters.accommodationType) {
+    params.set("accommodation", filters.accommodationType);
+  }
+  return params.toString();
+}
+
+function ReservationTableLoading() {
+  return (
+    <div
+      className="space-y-2 overflow-hidden rounded-xl border border-border/60 p-3"
+      aria-busy="true"
+      aria-live="polite"
+    >
+      <Skeleton className="h-11 w-full rounded-lg" />
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Skeleton key={i} className="h-14 w-full rounded-lg" />
+      ))}
+    </div>
+  );
 }
 
 export function ReservasPageContent({
   initialReservations,
   accommodationTypes,
   timeSlots,
+  filterDate,
+  filterStatus,
+  filterAccommodationType,
 }: ReservasPageContentProps) {
   const router = useRouter();
+  const [isNavigating, startNavigation] = useTransition();
   useRealtimeSubscription({ table: "reservations" });
-  const searchParams = useSearchParams();
-  const filterDate = searchParams.get("date") ?? getTodayStr();
-  const filterStatus = searchParams.get("status") ?? "";
-  const filterAccommodationType = searchParams.get("accommodation") ?? "";
 
   // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -41,29 +78,33 @@ export function ReservasPageContent({
   const [editingReservation, setEditingReservation] =
     useState<ReservationFull | null>(null);
 
-  const filteredReservations = useMemo(() => {
-    return initialReservations.filter((r) => {
-      if (filterDate && r.date !== filterDate) return false;
-      if (filterStatus && r.status !== filterStatus) return false;
-      if (filterAccommodationType && r.accommodation_type_id !== filterAccommodationType) return false;
-      return true;
-    });
-  }, [initialReservations, filterDate, filterStatus, filterAccommodationType]);
-
   const handleFilterChange = useCallback(
     (newFilters: {
       date: string;
       status: string;
       accommodationType: string;
     }) => {
-      const params = new URLSearchParams();
-      if (newFilters.date) params.set("date", newFilters.date);
-      if (newFilters.status) params.set("status", newFilters.status);
-      if (newFilters.accommodationType) params.set("accommodation", newFilters.accommodationType);
-      const query = params.toString();
-      router.replace(`/admin/reservas${query ? `?${query}` : ""}`);
+      const normalizedFilters = {
+        date: newFilters.date || getTodayStr(),
+        status: newFilters.status,
+        accommodationType: newFilters.accommodationType,
+      };
+      const nextQuery = buildFiltersQuery(normalizedFilters);
+      const currentQuery = buildFiltersQuery({
+        date: filterDate,
+        status: filterStatus,
+        accommodationType: filterAccommodationType,
+      });
+
+      if (nextQuery === currentQuery) {
+        return;
+      }
+
+      startNavigation(() => {
+        router.replace(`/admin/reservas${nextQuery ? `?${nextQuery}` : ""}`);
+      });
     },
-    [router]
+    [router, filterDate, filterStatus, filterAccommodationType]
   );
 
   const handleStatusChange = useCallback(
@@ -91,11 +132,15 @@ export function ReservasPageContent({
   }, [router]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Reservas</h1>
-        <Button onClick={() => setCreateDialogOpen(true)}>
+        <h1 className="text-2xl font-semibold">Reservas</h1>
+        <Button
+          onClick={() => setCreateDialogOpen(true)}
+          disabled={isNavigating}
+          aria-busy={isNavigating}
+        >
           <Plus className="mr-2 h-4 w-4" />
           Nova Reserva
         </Button>
@@ -103,19 +148,27 @@ export function ReservasPageContent({
 
       {/* Filters */}
       <ReservationFilters
+        key={`${filterDate}-${filterStatus}-${filterAccommodationType}`}
         onFilterChange={handleFilterChange}
         defaultDate={filterDate}
         defaultStatus={filterStatus}
         defaultAccommodationType={filterAccommodationType}
         accommodationTypes={accommodationTypes}
+        isPending={isNavigating}
       />
 
       {/* Table */}
-      <ReservationTable
-        reservations={filteredReservations}
-        onStatusChange={handleStatusChange}
-        onEdit={handleEdit}
-      />
+      <div aria-busy={isNavigating}>
+        {isNavigating ? (
+          <ReservationTableLoading />
+        ) : (
+          <ReservationTable
+            reservations={initialReservations}
+            onStatusChange={handleStatusChange}
+            onEdit={handleEdit}
+          />
+        )}
+      </div>
 
       {/* Dialogs */}
       <ReservationCreateDialog

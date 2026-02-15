@@ -191,3 +191,27 @@
 **Contexto**: O design system (Lime/Gray/Inter/Vega) estava planejado para a Fase 8 (UI Polish). No entanto, aplicar a identidade visual antes do Stripe evita retrabalho visual nos componentes do Stripe e garante que o sistema tenha aparência final mais cedo.
 **Decisão**: Criar Fase 4.6 entre 4.5 (Polish) e 5 (Stripe). Escopo: aplicar todas as mudanças definidas em `.docs/DesignSystem.md` — fundação (globals.css, layout.tsx, components.json), componentes base (table, badges, status colors) e componentes de página (dashboard stats, sidebar, calendário, empty states). A Fase 8 permanece para padronização fina e acessibilidade.
 **Razão**: Aplicar identidade visual cedo reduz retrabalho. Componentes Stripe (Payment Element, badges de cobrança) já nascerão no tema correto. A Fase 8 foca em refinamentos que dependem de todas as features estarem implementadas.
+
+---
+
+### 2026-02-15 — Fase 4.7 de refinamentos UX/UI antes do Stripe
+
+**Contexto**: Após a Fase 4.6, foram identificados pontos de qualidade visual e feedback de carregamento ainda abaixo do esperado: cards de Big Numbers no dashboard sem aparência de superfície consolidada e ausência de skeleton durante aplicação de filtros em reservas.
+**Decisão**: Criar a Fase 4.7 entre 4.6 e 5, com três frentes: (1) refino dos cards de Big Numbers para layout mais próximo da referência visual compartilhada (borda, raio, espaçamento e hierarquia de conteúdo), (2) loading/skeleton ao aplicar filtros em `/admin/reservas`, e (3) rodada curta de melhorias gerais de UX/UI nas telas impactadas (consistência tipográfica, espaçamento e estados assíncronos).
+**Razão**: Resolver esses débitos antes do Stripe melhora a qualidade percebida do produto, reduz fricção operacional no admin e evita carregar inconsistências visuais para as próximas fases.
+
+---
+
+### 2026-02-15 — Filtros de Reservas migrados para server-driven com pending local
+
+**Contexto**: A página `/admin/reservas` filtrava os dados somente no client sobre uma lista completa já carregada. Isso impedia feedback de loading real ao aplicar filtros e mantinha dados antigos visíveis durante a transição.
+**Decisão**: Migrar aplicação de filtros para o server (`page.tsx` recebe `searchParams` e chama `getReservationsFull()` já filtrado) e manter estado `useTransition` no client para exibir skeleton da tabela e desabilitar controles durante navegação por filtros.
+**Razão**: O fluxo server-driven garante dados consistentes com a URL e permite UX de carregamento clara (skeleton/pending) sem regressão de realtime nem perda de filtros ativos.
+
+---
+
+### 2026-02-15 — Dashboard stats com card branco compacto e foco tipográfico no número
+
+**Contexto**: O redesign inicial dos Big Numbers ficou visualmente pesado, com excesso de área interna e destaque exagerado no texto de insight em relação ao valor numérico.
+**Decisão**: Manter o card com superfície branca completa (sem faixas internas), reduzir proporções gerais (padding/gaps/tamanhos) e tornar o título de insight mais discreto. O maior destaque tipográfico do card deve ser sempre o número principal.
+**Razão**: Aproxima o layout da referência visual, melhora escaneabilidade e reforça hierarquia de informação correta para uso operacional do dashboard.

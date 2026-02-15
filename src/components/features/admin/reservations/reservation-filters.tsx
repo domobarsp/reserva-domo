@@ -32,6 +32,7 @@ interface ReservationFiltersProps {
   defaultStatus?: string;
   defaultAccommodationType?: string;
   accommodationTypes: AccommodationType[];
+  isPending?: boolean;
 }
 
 export function ReservationFilters({
@@ -40,6 +41,7 @@ export function ReservationFilters({
   defaultStatus,
   defaultAccommodationType,
   accommodationTypes,
+  isPending = false,
 }: ReservationFiltersProps) {
   const today = getTodayStr();
 
@@ -96,12 +98,13 @@ export function ReservationFilters({
     : undefined;
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3" aria-busy={isPending}>
       {/* Date Picker */}
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
+            disabled={isPending}
             className={cn(
               "w-[220px] justify-start text-left font-normal",
               !date && "text-muted-foreground"
@@ -124,7 +127,11 @@ export function ReservationFilters({
       </Popover>
 
       {/* Status Select */}
-      <Select value={status || "all"} onValueChange={handleStatusChange}>
+      <Select
+        value={status || "all"}
+        onValueChange={handleStatusChange}
+        disabled={isPending}
+      >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Status" />
         </SelectTrigger>
@@ -142,6 +149,7 @@ export function ReservationFilters({
       <Select
         value={accommodationType || "all"}
         onValueChange={handleAccommodationChange}
+        disabled={isPending}
       >
         <SelectTrigger className="w-[180px]">
           <SelectValue placeholder="Acomodacao" />
@@ -164,6 +172,7 @@ export function ReservationFilters({
           variant="ghost"
           size="sm"
           onClick={handleClearFilters}
+          disabled={isPending}
           className="text-muted-foreground"
         >
           <XIcon className="mr-1 h-4 w-4" />

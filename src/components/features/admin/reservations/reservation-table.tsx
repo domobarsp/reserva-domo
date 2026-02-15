@@ -59,54 +59,56 @@ export function ReservationTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Data</TableHead>
-          <TableHead>Horario</TableHead>
-          <TableHead>Cliente</TableHead>
-          <TableHead>Acomodacao</TableHead>
-          <TableHead>Pessoas</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Acoes</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {sorted.map((reservation) => (
-          <TableRow key={reservation.id}>
-            <TableCell>{formatDateDdMmYyyy(reservation.date)}</TableCell>
-            <TableCell>{formatTime(reservation.reservation_time)}</TableCell>
-            <TableCell>
-              {reservation.customer.first_name}{" "}
-              {reservation.customer.last_name}
-            </TableCell>
-            <TableCell>{reservation.accommodation_type.name}</TableCell>
-            <TableCell>{reservation.party_size}</TableCell>
-            <TableCell>
-              <StatusDropdown
-                reservation={reservation}
-                onStatusChange={onStatusChange}
-              />
-            </TableCell>
-            <TableCell>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                    <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">Abrir menu</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(reservation)}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Editar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </TableCell>
+    <div className="overflow-hidden rounded-xl border border-border/60">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Data</TableHead>
+            <TableHead>Horario</TableHead>
+            <TableHead>Cliente</TableHead>
+            <TableHead>Acomodacao</TableHead>
+            <TableHead>Pessoas</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Acoes</TableHead>
           </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+        </TableHeader>
+        <TableBody>
+          {sorted.map((reservation) => (
+            <TableRow key={reservation.id}>
+              <TableCell>{formatDateDdMmYyyy(reservation.date)}</TableCell>
+              <TableCell>{formatTime(reservation.reservation_time)}</TableCell>
+              <TableCell>
+                {reservation.customer.first_name}{" "}
+                {reservation.customer.last_name}
+              </TableCell>
+              <TableCell>{reservation.accommodation_type.name}</TableCell>
+              <TableCell>{reservation.party_size}</TableCell>
+              <TableCell>
+                <StatusDropdown
+                  reservation={reservation}
+                  onStatusChange={onStatusChange}
+                />
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <MoreHorizontal className="h-4 w-4" />
+                      <span className="sr-only">Abrir menu</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onEdit(reservation)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Editar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

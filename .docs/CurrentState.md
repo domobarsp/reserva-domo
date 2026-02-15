@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-02-15 | Fase: 4.6 (Design System) — COMPLETA
+> Atualizado: 2026-02-15 | Fase: 4.7 (Refinamentos UX/UI) — EM PROGRESSO
 
 ## O que funciona
 
@@ -48,6 +48,15 @@
 - **Calendário**: Cores emerald/amber/rose, ring primary no dia atual, hover ring primary/50, células arredondadas
 - **Empty States**: Borda dashed (`border-dashed border-border/50`), ícone com opacity /50
 - **Espaçamento**: Layout admin com padding `p-6 lg:p-8`, headers `text-2xl font-semibold`
+
+### Refinamentos UX/UI (Fase 4.7 — em progresso)
+
+- **Dashboard Big Numbers**: cards redesenhados com superficie branca completa (sem faixas), borda visivel, raio maior, proporcao mais compacta, hierarquia de conteudo (label, valor, insight, texto auxiliar) e chip colorido de contexto
+- **Dashboard loading**: skeleton dos cards atualizado para refletir a nova estrutura visual
+- **Reservas server-driven**: filtros (data/status/acomodacao) agora sao aplicados no server via `searchParams` em `page.tsx`
+- **Loading ao filtrar**: troca de filtros em `/admin/reservas` agora usa estado pending + skeleton da tabela durante a transicao
+- **Controles durante transicao**: filtros e CTA principal recebem `disabled`/`aria-busy` enquanto os dados filtrados carregam
+- **Consistencia visual**: header de reservas padronizado para `font-semibold`, tabela de reservas com container `rounded` + borda sutil, e espacamentos harmonizados com dashboard
 
 ### Formulário Público
 
@@ -140,6 +149,7 @@
 
 ## O que não existe ainda
 
+- Finalizacao da Fase 4.7 (validacao manual desktop/mobile e fechamento de docs de conclusao)
 - Integração Stripe (Fase 5)
 - Integração Resend (Fase 6)
 - Admin Features & UX (Fase 7)
@@ -152,4 +162,4 @@
 
 ## Próximos Passos
 
-Fase 5 — Integração Stripe: SetupIntent para captura condicional de cartão, Payment Element no formulário, cobrança de no-show via PaymentIntent, webhook handler.
+Concluir Fase 4.7 — Refinamentos UX/UI: validacao manual desktop/mobile das telas Dashboard e Reservas, depois marcar fase como COMPLETE e seguir para Fase 5 (Stripe).
