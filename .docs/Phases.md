@@ -200,7 +200,7 @@ Aplicação do design system definido em `.docs/DesignSystem.md`. Substitui o te
 ---
 
 ## Fase 4.7 — Refinamentos UX/UI (Dashboard + Filtros)
-**Status**: `IN PROGRESS`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Ajustes visuais e de feedback de carregamento para elevar a qualidade percebida do admin antes da integração Stripe, sem misturar escopo com as features da Fase 7.
@@ -221,7 +221,7 @@ Ajustes visuais e de feedback de carregamento para elevar a qualidade percebida 
 ---
 
 ## Fase 5 — Integração Stripe
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 - SetupIntent para captura condicional de cartão

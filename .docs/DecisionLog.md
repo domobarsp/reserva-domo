@@ -223,3 +223,45 @@
 **Contexto**: Após a migração de filtros de `/admin/reservas` para fluxo server-driven, a listagem deixou de refletir algumas mudanças de status em tempo hábil (ex.: `cancelado`) sem refresh manual da página.
 **Decisão**: Em `reservas-page-content.tsx`, centralizar refresh em callback `refreshReservations()` usando `startTransition(() => router.refresh())` para eventos de realtime e pós-mutation, além de manter um estado local de reservas com atualização otimista imediata do status (incluindo remoção da linha quando deixa de satisfazer o filtro de status ativo).
 **Razão**: A combinação de refresh em transição com fallback otimista elimina a percepção de stale UI, preserva consistência com dados do servidor e evita dependência de reload manual.
+
+---
+
+### 2026-02-21 — Fase 5 (Stripe): reserva criada apenas na confirmação, sem reservas zumbi
+
+**Contexto**: O fluxo do formulário com cartão poderia criar a reserva antes do step de cartão (para passar o `reservationId` ao SetupIntent) — mas isso criaria reservas "zumbi" se o usuário abandonasse no step de cartão.
+**Decisão**: A reserva é criada **somente** no step de confirmação (último), independentemente de haver ou não step de cartão. O `paymentMethodId` é capturado diretamente do retorno do `confirmSetup` client-side e passado no body do POST `/api/reservations`.
+**Razão**: Evita reservas pendentes no banco sem intenção real. Simplifica o fluxo: um único ponto de criação de reserva independente do caminho (com ou sem cartão).
+
+---
+
+### 2026-02-21 — Fase 5 (Stripe): sem webhook para setup_intent.succeeded
+
+**Contexto**: A documentação original do Stripe sugeria tratar `setup_intent.succeeded` no webhook para salvar o `stripe_payment_method_id` na reserva.
+**Decisão**: Não tratar `setup_intent.succeeded` no webhook. O `payment_method` está disponível diretamente no retorno de `stripe.confirmSetup()` client-side. O ID é capturado ali e enviado junto com os dados da reserva no submit.
+**Razão**: Elimina latência de webhook para o fluxo crítico. Reduz complexidade (sem necessidade de lookup de reserva por setup_intent_id). O webhook foca apenas em `payment_intent.*` (cobranças de no-show).
+
+---
+
+### 2026-02-21 — Fase 5 (Stripe): cobrança de no-show via API Route autenticada, não Server Action
+
+**Contexto**: A cobrança de no-show poderia ser implementada como Server Action (padrão das outras mutations admin) ou como API Route.
+**Decisão**: Usar API Route (`POST /api/stripe/charge-no-show`) com verificação de sessão Supabase explícita.
+**Razão**: Operação financeira sensível: API Route oferece controle explícito de status HTTP, melhor tratamento de erros do Stripe, e log mais claro. Server Actions retornam objetos JSON sem código HTTP — adequados para mutations de formulário, mas menos expressivos para operações com múltiplos estados de falha (authn, validação, Stripe error).
+
+---
+
+### 2026-02-21 — Realtime: REPLICA IDENTITY FULL obrigatório para UPDATE/DELETE com RLS
+
+**Contexto**: Após implementar o Supabase Realtime nas tabelas `reservations` e `waitlist_entries`, eventos de INSERT chegavam mas UPDATE (mudança de status, cancelamento) e DELETE silenciosamente não eram entregues ao cliente admin.
+**Decisão**: Adicionar `ALTER TABLE public.reservations REPLICA IDENTITY FULL` e idem para `waitlist_entries` via migration `004_replica_identity.sql`.
+**Razão**: Com RLS ativo, o Supabase Realtime precisa verificar se o usuário subscrito tem acesso à **linha anterior** de um UPDATE/DELETE. Sem `REPLICA IDENTITY FULL`, o PostgreSQL não inclui os dados anteriores no WAL — o Supabase não consegue fazer o check de RLS e descarta o evento silenciosamente. Com `FULL`, a linha completa antes e depois da mudança é incluída no WAL, permitindo a verificação correta.
+**⚠️ Regra crítica**: Qualquer nova tabela adicionada ao realtime (`ALTER PUBLICATION supabase_realtime ADD TABLE`) com RLS ativo **deve** ter `REPLICA IDENTITY FULL` configurado, caso contrário UPDATE/DELETE não serão entregues.
+
+---
+
+### 2026-02-21 — Realtime: canal com nome único por instância + callback via ref
+
+**Contexto**: O hook `useRealtimeSubscription` usava o nome de canal `realtime-${table}` (fixo). Múltiplas páginas admin abertas ou componentes montados criavam canais com o mesmo nome, causando conflito no Supabase Realtime. Adicionalmente, `onEvent` estava no array de dependências do `useEffect`, causando re-subscrição quando a referência da função mudava entre renders.
+**Decisão**: (1) Adicionar sufixo aleatório ao nome do canal: `realtime-${table}-${random}`. (2) Armazenar `onEvent` em um `useRef` atualizado a cada render, removendo-o das dependências do `useEffect`.
+**Razão**: Canais com nome único evitam conflito entre instâncias. O padrão de ref para callback é a forma correta de usar funções estáveis em `useEffect` sem re-subscrever — garante que o canal seja criado uma vez por montagem e destruído apenas no unmount.
+**⚠️ Regra crítica**: Ao usar `useRealtimeSubscription`, nunca passar uma função instável (criada inline) como `onEvent` — embora o hook seja robusto via ref, manter o callback estável (via `useCallback`) é boa prática.

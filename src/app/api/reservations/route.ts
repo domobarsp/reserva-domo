@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
-import { fullReservationSchema } from "@/lib/validations/reservation";
+import { apiReservationSchema } from "@/lib/validations/reservation";
 import {
   getAvailableTimeSlotsFrom,
   getRemainingCapacityFrom,
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Validar dados com Zod
-  const parsed = fullReservationSchema.safeParse(body);
+  const parsed = apiReservationSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
       { error: "Dados inválidos", details: parsed.error.flatten() },
@@ -195,6 +195,12 @@ export async function POST(request: NextRequest) {
       locale: data.preferred_locale,
       status: ReservationStatus.PENDING,
       cancellation_token: cancellationToken,
+      ...(data.stripe_customer_id && {
+        stripe_customer_id: data.stripe_customer_id,
+      }),
+      ...(data.stripe_payment_method_id && {
+        stripe_payment_method_id: data.stripe_payment_method_id,
+      }),
     })
     .select()
     .single();

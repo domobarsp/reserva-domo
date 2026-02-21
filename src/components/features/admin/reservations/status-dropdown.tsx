@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,11 +15,13 @@ import { ReservationStatus } from "@/types";
 interface StatusDropdownProps {
   reservation: ReservationFull;
   onStatusChange: (id: string, status: ReservationStatus) => void;
+  isLoading?: boolean;
 }
 
 export function StatusDropdown({
   reservation,
   onStatusChange,
+  isLoading = false,
 }: StatusDropdownProps) {
   const validNextStatuses = getValidNextStatuses(reservation.status);
 
@@ -29,10 +31,17 @@ export function StatusDropdown({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button className="flex cursor-pointer items-center gap-1 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
+      <DropdownMenuTrigger asChild disabled={isLoading}>
+        <button
+          className="flex cursor-pointer items-center gap-1 rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+          aria-busy={isLoading}
+        >
           <ReservationStatusBadge status={reservation.status} />
-          <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          {isLoading ? (
+            <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start">

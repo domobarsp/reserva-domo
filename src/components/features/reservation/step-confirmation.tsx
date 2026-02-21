@@ -121,11 +121,10 @@ export function StepConfirmation({
 
       {/* Card guarantee notice */}
       {needsCard && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-          <CreditCard className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <p className="text-sm text-amber-700 dark:text-amber-300">
-            Garantia com cartão exigida para esta data (placeholder — sem
-            cobrança real).
+        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
+          <CreditCard className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <p className="text-sm text-emerald-700 dark:text-emerald-300">
+            Cartão registrado como garantia. Nenhuma cobrança foi realizada.
           </p>
         </div>
       )}

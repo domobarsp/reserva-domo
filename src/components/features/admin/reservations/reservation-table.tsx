@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { MoreHorizontal, Pencil } from "lucide-react";
+import { MoreHorizontal, Pencil, BanknoteIcon, CreditCard, CheckCircle2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -14,8 +14,15 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusDropdown } from "./status-dropdown";
@@ -27,6 +34,8 @@ interface ReservationTableProps {
   reservations: ReservationFull[];
   onStatusChange: (id: string, status: ReservationStatus) => void;
   onEdit: (reservation: ReservationFull) => void;
+  onChargeNoShow: (reservation: ReservationFull) => void;
+  loadingStatusId: string | null;
 }
 
 function formatDateDdMmYyyy(dateStr: string): string {
@@ -38,13 +47,13 @@ export function ReservationTable({
   reservations,
   onStatusChange,
   onEdit,
+  onChargeNoShow,
+  loadingStatusId,
 }: ReservationTableProps) {
   const sorted = useMemo(() => {
     return [...reservations].sort((a, b) => {
-      // Date descending
       const dateCompare = b.date.localeCompare(a.date);
       if (dateCompare !== 0) return dateCompare;
-      // Time ascending
       return a.reservation_time.localeCompare(b.reservation_time);
     });
   }, [reservations]);
@@ -59,56 +68,130 @@ export function ReservationTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/60">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Data</TableHead>
-            <TableHead>Horario</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead>Acomodacao</TableHead>
-            <TableHead>Pessoas</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Acoes</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {sorted.map((reservation) => (
-            <TableRow key={reservation.id}>
-              <TableCell>{formatDateDdMmYyyy(reservation.date)}</TableCell>
-              <TableCell>{formatTime(reservation.reservation_time)}</TableCell>
-              <TableCell>
-                {reservation.customer.first_name}{" "}
-                {reservation.customer.last_name}
-              </TableCell>
-              <TableCell>{reservation.accommodation_type.name}</TableCell>
-              <TableCell>{reservation.party_size}</TableCell>
-              <TableCell>
-                <StatusDropdown
-                  reservation={reservation}
-                  onStatusChange={onStatusChange}
-                />
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreHorizontal className="h-4 w-4" />
-                      <span className="sr-only">Abrir menu</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(reservation)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Editar
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+    <TooltipProvider delayDuration={300}>
+      <div className="overflow-hidden rounded-xl border border-border/60">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Data</TableHead>
+              <TableHead>Horario</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Acomodacao</TableHead>
+              <TableHead>Pessoas</TableHead>
+              <TableHead>Status</TableHead>
+              {/* Coluna de indicador de cartão/cobrança — sem título */}
+              <TableHead className="w-8" />
+              <TableHead>Acoes</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {sorted.map((reservation) => {
+              const hasCard = !!reservation.stripe_payment_method_id;
+              const wasCharged = reservation.no_show_charged;
+              const isNoShow = reservation.status === ReservationStatus.NO_SHOW;
+              const canChargeNoShow = isNoShow && hasCard && !wasCharged;
+
+              return (
+                <TableRow key={reservation.id}>
+                  <TableCell>{formatDateDdMmYyyy(reservation.date)}</TableCell>
+                  <TableCell>
+                    {formatTime(reservation.reservation_time)}
+                  </TableCell>
+                  <TableCell>
+                    {reservation.customer.first_name}{" "}
+                    {reservation.customer.last_name}
+                  </TableCell>
+                  <TableCell>{reservation.accommodation_type.name}</TableCell>
+                  <TableCell>{reservation.party_size}</TableCell>
+                  <TableCell>
+                    <StatusDropdown
+                      reservation={reservation}
+                      onStatusChange={onStatusChange}
+                      isLoading={loadingStatusId === reservation.id}
+                    />
+                  </TableCell>
+
+                  {/* Indicador de cartão/cobrança */}
+                  <TableCell className="text-center">
+                    {wasCharged ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          <p className="font-medium">No-show cobrado</p>
+                          {reservation.no_show_charge_amount != null && (
+                            <p className="text-xs text-muted-foreground">
+                              R${" "}
+                              {(reservation.no_show_charge_amount / 100)
+                                .toFixed(2)
+                                .replace(".", ",")}
+                            </p>
+                          )}
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : canChargeNoShow ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CreditCard className="h-4 w-4 text-amber-500 mx-auto" />
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          <p className="font-medium">Cobrança pendente</p>
+                          <p className="text-xs text-muted-foreground">
+                            Cartão registrado, no-show não cobrado
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : hasCard ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CreditCard className="h-4 w-4 text-muted-foreground/40 mx-auto" />
+                        </TooltipTrigger>
+                        <TooltipContent side="left">
+                          Cartão registrado como garantia
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : null}
+                  </TableCell>
+
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Abrir menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEdit(reservation)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        {canChargeNoShow && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => onChargeNoShow(reservation)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <BanknoteIcon className="mr-2 h-4 w-4" />
+                              Cobrar No-Show
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </TooltipProvider>
   );
 }

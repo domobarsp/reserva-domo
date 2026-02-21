@@ -36,10 +36,17 @@ export const customerInfoSchema = z.object({
   preferred_locale: z.enum(["pt", "en", "es"]),
 });
 
-// Schema completo (composição dos dois)
+// Schema completo (composição dos dois) — usado no formulário
 export const fullReservationSchema = reservationInfoSchema.merge(customerInfoSchema);
+
+// Schema estendido para a API — inclui campos Stripe opcionais
+export const apiReservationSchema = fullReservationSchema.extend({
+  stripe_customer_id: z.string().optional(),
+  stripe_payment_method_id: z.string().optional(),
+});
 
 // Tipos inferidos dos schemas
 export type ReservationInfoData = z.infer<typeof reservationInfoSchema>;
 export type CustomerInfoData = z.infer<typeof customerInfoSchema>;
 export type FullReservationData = z.infer<typeof fullReservationSchema>;
+export type ApiReservationData = z.infer<typeof apiReservationSchema>;

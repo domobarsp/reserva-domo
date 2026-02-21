@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { StepIndicator } from "./step-indicator";
 import { StepReservationInfo } from "./step-reservation-info";
 import { StepCustomerInfo } from "./step-customer-info";
-import { StepCardPlaceholder } from "./step-card-placeholder";
+import { StepCardStripe } from "./step-card-stripe";
 import { StepConfirmation } from "./step-confirmation";
 
 interface ReservationFormProps {
@@ -35,6 +35,14 @@ export function ReservationForm({
   const [availabilityData, setAvailabilityData] =
     useState<AvailabilityResponse | null>(null);
   const [isLoadingAvailability, setIsLoadingAvailability] = useState(false);
+
+  // Stripe state
+  const [stripeCustomerId, setStripeCustomerId] = useState("");
+  const [paymentMethodId, setPaymentMethodId] = useState("");
+  const [isConfirmingCard, setIsConfirmingCard] = useState(false);
+  const [cardError, setCardError] = useState<string | null>(null);
+  // Ref para acionar o confirmSetup do step de cartão
+  const cardTriggerRef = useRef<(() => Promise<void>) | null>(null);
 
   const form = useForm<FullReservationData>({
     resolver: zodResolver(fullReservationSchema),
@@ -83,13 +91,11 @@ export function ReservationForm({
 
   const needsCard = availabilityData?.requiresCard ?? false;
 
-  // Calcular total de steps e labels dinamicamente
   const totalSteps = needsCard ? 4 : 3;
   const stepLabels = needsCard
     ? ["Reserva", "Dados", "Cartão", "Confirmação"]
     : ["Reserva", "Dados", "Confirmação"];
 
-  // Mapear step lógico para componente
   const getConfirmationStep = () => (needsCard ? 4 : 3);
   const getCardStep = () => (needsCard ? 3 : null);
 
@@ -99,7 +105,6 @@ export function ReservationForm({
         const values = form.getValues();
         const result = reservationInfoSchema.safeParse(values);
         if (!result.success) {
-          // Trigger validation on step 1 fields
           const isValid = await form.trigger([
             "date",
             "time_slot_id",
@@ -124,20 +129,43 @@ export function ReservationForm({
         }
         return true;
       }
-      // Card step (3 when needsCard) and confirmation don't need validation
       return true;
     },
     [currentStep, form]
   );
 
   const handleNext = useCallback(async () => {
+    // Se estamos no card step, acionar o confirmSetup do Stripe
+    if (currentStep === getCardStep()) {
+      if (!cardTriggerRef.current) return;
+      setCardError(null);
+      setIsConfirmingCard(true);
+      await cardTriggerRef.current();
+      setIsConfirmingCard(false);
+      // O avanço de step ocorre no onSuccess do StepCardStripe
+      return;
+    }
+
     const isValid = await validateCurrentStep();
     if (!isValid) return;
     setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
-  }, [validateCurrentStep, totalSteps]);
+  }, [currentStep, validateCurrentStep, totalSteps]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleBack = useCallback(() => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
+  }, []);
+
+  const handleCardSuccess = useCallback(
+    (custId: string, pmId: string) => {
+      setStripeCustomerId(custId);
+      setPaymentMethodId(pmId);
+      setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
+    },
+    [totalSteps]
+  );
+
+  const handleCardError = useCallback((message: string) => {
+    setCardError(message);
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -148,10 +176,17 @@ export function ReservationForm({
 
     try {
       const values = form.getValues();
+      const body: Record<string, unknown> = { ...values };
+
+      if (needsCard && stripeCustomerId && paymentMethodId) {
+        body.stripe_customer_id = stripeCustomerId;
+        body.stripe_payment_method_id = paymentMethodId;
+      }
+
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
@@ -179,7 +214,10 @@ export function ReservationForm({
     } catch {
       setIsSubmitting(false);
     }
-  }, [form, router]);
+  }, [form, router, needsCard, stripeCustomerId, paymentMethodId]);
+
+  const values = form.getValues();
+  const customerName = `${values.first_name} ${values.last_name}`.trim();
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
@@ -208,8 +246,21 @@ export function ReservationForm({
               {/* Step 2 — Dados do Cliente */}
               {currentStep === 2 && <StepCustomerInfo />}
 
-              {/* Step 3 — Cartão (condicional) */}
-              {currentStep === getCardStep() && <StepCardPlaceholder />}
+              {/* Step 3 — Cartão (Stripe) */}
+              {currentStep === getCardStep() && (
+                <div>
+                  <StepCardStripe
+                    email={values.email}
+                    name={customerName}
+                    onSuccess={handleCardSuccess}
+                    onError={handleCardError}
+                    triggerRef={cardTriggerRef}
+                  />
+                  {cardError && (
+                    <p className="mt-3 text-sm text-destructive">{cardError}</p>
+                  )}
+                </div>
+              )}
 
               {/* Step final — Confirmação */}
               {currentStep === getConfirmationStep() && (
@@ -226,7 +277,7 @@ export function ReservationForm({
                     type="button"
                     variant="outline"
                     onClick={handleBack}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isConfirmingCard}
                   >
                     Voltar
                   </Button>
@@ -235,8 +286,15 @@ export function ReservationForm({
                 )}
 
                 {currentStep < getConfirmationStep() ? (
-                  <Button type="button" onClick={handleNext}>
-                    Avançar
+                  <Button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={isConfirmingCard}
+                  >
+                    {isConfirmingCard && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {isConfirmingCard ? "Validando cartão..." : "Avançar"}
                   </Button>
                 ) : currentStep === getConfirmationStep() ? (
                   <Button
@@ -244,7 +302,9 @@ export function ReservationForm({
                     onClick={handleSubmit}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSubmitting && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
                     {isSubmitting ? "Confirmando..." : "Confirmar Reserva"}
                   </Button>
                 ) : null}

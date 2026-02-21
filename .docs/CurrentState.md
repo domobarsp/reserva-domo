@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-02-15 | Fase: 4.7 (Refinamentos UX/UI) — EM PROGRESSO
+> Atualizado: 2026-02-21 | Fase: 5 (Stripe) — CONCLUÍDA + polish | Próxima: Fase 6 (Resend)
 
 ## O que funciona
 
@@ -26,6 +26,9 @@
 - **Server Actions**: 9 arquivos de actions para todas as mutations admin
 - **API Routes públicas**: `/api/availability`, `/api/reservations`, `/api/reservations/cancel`
 - **Realtime**: Hook `useRealtimeSubscription` com subscriptions em reservations e waitlist_entries
+  - Canal com nome único por instância (sufixo aleatório) — evita conflito entre abas/páginas
+  - Callback via `useRef` — evita re-subscrição ao trocar referência da função
+  - `REPLICA IDENTITY FULL` nas tabelas (`004_replica_identity.sql`) — obrigatório para eventos UPDATE/DELETE funcionarem com RLS ativo
 - **Supabase clients**: Browser (`client.ts`), Server (`server.ts`), Admin/Service Role (`admin.ts`), Middleware helper (`middleware.ts`)
 
 ### Polish Pós-Supabase (Fase 4.5)
@@ -49,7 +52,7 @@
 - **Empty States**: Borda dashed (`border-dashed border-border/50`), ícone com opacity /50
 - **Espaçamento**: Layout admin com padding `p-6 lg:p-8`, headers `text-2xl font-semibold`
 
-### Refinamentos UX/UI (Fase 4.7 — em progresso)
+### Refinamentos UX/UI (Fase 4.7 — CONCLUÍDA)
 
 - **Dashboard Big Numbers**: cards redesenhados com superficie branca completa (sem faixas), borda visivel, raio maior, proporcao mais compacta, hierarquia de conteudo (label, valor, insight, texto auxiliar) e chip colorido de contexto
 - **Dashboard loading**: skeleton dos cards atualizado para refletir a nova estrutura visual
@@ -143,15 +146,29 @@
   - `ConfirmDialog` — dialog de confirmação reutilizável (default/destructive)
   - `EmptyState` — estado vazio para tabelas com ícone, título, descrição
 
+### Stripe (Fase 5 — CONCLUÍDA)
+
+- **SetupIntent**: `POST /api/stripe/setup-intent` — cria/busca Stripe Customer por email e retorna `clientSecret`
+- **StepCardStripe** (`step-card-stripe.tsx`): substitui placeholder, busca `clientSecret` na montagem, renderiza `<Elements>` + `<PaymentElement>`, expõe `triggerRef` para o pai acionar `confirmSetup`
+- **reservation-form.tsx**: integra `confirmSetup({ redirect: 'if_required' })` no step de cartão; captura `paymentMethodId` do resultado client-side; passa `stripe_customer_id` + `stripe_payment_method_id` no submit da confirmação
+- **`/api/reservations`**: aceita e persiste campos Stripe opcionais via `apiReservationSchema` (extensão de `fullReservationSchema`)
+- **Cobrança no-show**: `POST /api/stripe/charge-no-show` (autenticada via sessão Supabase) — resolve valor por prioridade (reserva > exceção de data > global), cria PaymentIntent `off_session`, registra em `no_show_charges`, atualiza `reservations.no_show_charged`
+- **Webhook**: `POST /api/stripe/webhook` com `runtime = 'nodejs'` — trata `payment_intent.succeeded` e `payment_intent.payment_failed`; NÃO trata `setup_intent.succeeded` (desnecessário, payment_method_id capturado client-side)
+- **Admin UI — indicadores de cartão**: coluna sem título na tabela de reservas com ícones tooltipados:
+  - `CreditCard` muted — cartão registrado como garantia
+  - `CreditCard` amber — no-show pendente de cobrança
+  - `CheckCircle2` emerald (+ valor no tooltip) — no-show cobrado
+- **Admin UI — ação de cobrança**: item "Cobrar No-Show" no dropdown de ações (condicional: `status === no_show && hasCard && !no_show_charged`)
+- **`ChargeNoShowDialog`**: dialog rico com resumo da reserva (cliente, data, hora, pessoas), valor a cobrar e banner de aviso sobre irreversibilidade — substitui `window.confirm`
+- **Loading por linha no status**: `StatusDropdown` recebe `isLoading` prop; mostra `Loader2` animado no lugar do `ChevronDown` enquanto a Server Action está em andamento; linha permanece interativa individualmente
+- **`src/utils/stripe/client.ts`**: instância Stripe server-side
+
 ## O que está mockado
 
-- Step 3 (cartão) é visual placeholder — integração Stripe na Fase 5
 - Email de confirmação na página de sucesso é placeholder (badge "Mock — email real na Fase 6")
 
 ## O que não existe ainda
 
-- Finalizacao da Fase 4.7 (validacao manual desktop/mobile e fechamento de docs de conclusao)
-- Integração Stripe (Fase 5)
 - Integração Resend (Fase 6)
 - Admin Features & UX (Fase 7)
 - UI Polish & Padronização (Fase 8)
@@ -163,4 +180,4 @@
 
 ## Próximos Passos
 
-Concluir Fase 4.7 — Refinamentos UX/UI: validacao manual desktop/mobile das telas Dashboard e Reservas, depois marcar fase como COMPLETE e seguir para Fase 5 (Stripe).
+Fase 6 — Integração Resend: templates de email (confirmação, cancelamento, no-show), envio no idioma do cliente (PT/EN/ES), link de cancelamento funcional.

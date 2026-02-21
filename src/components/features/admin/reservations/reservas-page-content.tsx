@@ -12,6 +12,7 @@ import { ReservationFilters } from "@/components/features/admin/reservations/res
 import { ReservationTable } from "@/components/features/admin/reservations/reservation-table";
 import { ReservationCreateDialog } from "@/components/features/admin/reservations/reservation-create-dialog";
 import { ReservationEditDialog } from "@/components/features/admin/reservations/reservation-edit-dialog";
+import { ChargeNoShowDialog } from "@/components/features/admin/reservations/charge-no-show-dialog";
 import type { ReservationFull, AccommodationType, TimeSlot } from "@/types";
 import { ReservationStatus } from "@/types";
 import { getStatusLabel } from "@/lib/status-transitions";
@@ -33,15 +34,10 @@ function buildFiltersQuery(filters: {
   accommodationType: string;
 }): string {
   const params = new URLSearchParams();
-  if (filters.date) {
-    params.set("date", filters.date);
-  }
-  if (filters.status) {
-    params.set("status", filters.status);
-  }
-  if (filters.accommodationType) {
+  if (filters.date) params.set("date", filters.date);
+  if (filters.status) params.set("status", filters.status);
+  if (filters.accommodationType)
     params.set("accommodation", filters.accommodationType);
-  }
   return params.toString();
 }
 
@@ -72,13 +68,21 @@ export function ReservasPageContent({
   const [isFiltering, startFilteringNavigation] = useTransition();
   const [, startRefreshTransition] = useTransition();
 
-  // Dialog states
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingReservation, setEditingReservation] =
     useState<ReservationFull | null>(null);
   const [reservations, setReservations] =
     useState<ReservationFull[]>(initialReservations);
+
+  // Loading state por reserva (mudança de status)
+  const [loadingStatusId, setLoadingStatusId] = useState<string | null>(null);
+
+  // Dialog de cobrança no-show
+  const [chargeTarget, setChargeTarget] = useState<ReservationFull | null>(
+    null
+  );
+  const [isCharging, setIsCharging] = useState(false);
 
   useEffect(() => {
     setReservations(initialReservations);
@@ -112,11 +116,7 @@ export function ReservasPageContent({
         status: filterStatus,
         accommodationType: filterAccommodationType,
       });
-
-      if (nextQuery === currentQuery) {
-        return;
-      }
-
+      if (nextQuery === currentQuery) return;
       startFilteringNavigation(() => {
         router.replace(`/admin/reservas${nextQuery ? `?${nextQuery}` : ""}`);
       });
@@ -126,36 +126,33 @@ export function ReservasPageContent({
 
   const handleStatusChange = useCallback(
     async (id: string, newStatus: ReservationStatus) => {
+      setLoadingStatusId(id);
       const result = await updateReservationStatus(id, newStatus);
+      setLoadingStatusId(null);
+
       if (result.success) {
         setReservations((current) => {
-          const updated = current
-            .map((reservation) => {
-              if (reservation.id !== id) return reservation;
-              return {
-                ...reservation,
-                status: newStatus,
-                cancelled_at:
-                  newStatus === ReservationStatus.CANCELLED
-                    ? new Date().toISOString()
-                    : reservation.cancelled_at,
-                cancelled_by:
-                  newStatus === ReservationStatus.CANCELLED
-                    ? "admin"
-                    : reservation.cancelled_by,
-              };
-            });
-
+          const updated = current.map((reservation) => {
+            if (reservation.id !== id) return reservation;
+            return {
+              ...reservation,
+              status: newStatus,
+              cancelled_at:
+                newStatus === ReservationStatus.CANCELLED
+                  ? new Date().toISOString()
+                  : reservation.cancelled_at,
+              cancelled_by:
+                newStatus === ReservationStatus.CANCELLED
+                  ? "admin"
+                  : reservation.cancelled_by,
+            };
+          });
           if (filterStatus && newStatus !== filterStatus) {
-            return updated.filter((reservation) => reservation.id !== id);
+            return updated.filter((r) => r.id !== id);
           }
-
           return updated;
         });
-
-        toast.success(
-          `Status alterado para ${getStatusLabel(newStatus)}`
-        );
+        toast.success(`Status alterado para ${getStatusLabel(newStatus)}`);
         refreshReservations();
       } else {
         toast.error(result.error);
@@ -168,6 +165,49 @@ export function ReservasPageContent({
     setEditingReservation(reservation);
     setEditDialogOpen(true);
   }, []);
+
+  // Abre o dialog de confirmação
+  const handleChargeNoShow = useCallback((reservation: ReservationFull) => {
+    setChargeTarget(reservation);
+  }, []);
+
+  // Executa a cobrança após confirmação no dialog
+  const handleConfirmCharge = useCallback(async () => {
+    if (!chargeTarget) return;
+    setIsCharging(true);
+    try {
+      const res = await fetch("/api/stripe/charge-no-show", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reservationId: chargeTarget.id }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error ?? "Erro ao cobrar no-show");
+        return;
+      }
+
+      toast.success("No-show cobrado com sucesso");
+      setReservations((current) =>
+        current.map((r) =>
+          r.id === chargeTarget.id
+            ? {
+                ...r,
+                no_show_charged: true,
+                no_show_charge_amount: data.amount,
+              }
+            : r
+        )
+      );
+      refreshReservations();
+      setChargeTarget(null);
+    } catch {
+      toast.error("Erro de conexão ao cobrar no-show");
+    } finally {
+      setIsCharging(false);
+    }
+  }, [chargeTarget, refreshReservations]);
 
   const handleSuccess = useCallback(() => {
     refreshReservations();
@@ -208,6 +248,8 @@ export function ReservasPageContent({
             reservations={reservations}
             onStatusChange={handleStatusChange}
             onEdit={handleEdit}
+            onChargeNoShow={handleChargeNoShow}
+            loadingStatusId={loadingStatusId}
           />
         )}
       </div>
@@ -227,6 +269,15 @@ export function ReservasPageContent({
         accommodationTypes={accommodationTypes}
         timeSlots={timeSlots}
         onSuccess={handleSuccess}
+      />
+      <ChargeNoShowDialog
+        reservation={chargeTarget}
+        open={chargeTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setChargeTarget(null);
+        }}
+        onConfirm={handleConfirmCharge}
+        isCharging={isCharging}
       />
     </div>
   );
