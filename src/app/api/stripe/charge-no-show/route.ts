@@ -3,6 +3,8 @@ import { stripe } from "@/utils/stripe/client";
 import { createClient } from "@/utils/supabase/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import type { ExceptionDate, Settings } from "@/types";
+import { sendNoShowChargeEmail } from "@/services/email-service";
+import type { Locale } from "@/lib/email-translations";
 
 // Resolve o valor do no-show pela ordem de prioridade definida no schema:
 // 1. no_show_fee_override da reserva
@@ -58,10 +60,14 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  // Buscar reserva
+  // Buscar reserva (com joins para o email de no-show)
   const { data: reservation, error: fetchError } = await supabase
     .from("reservations")
-    .select("*")
+    .select(`
+      *,
+      customer:customers(first_name, last_name, email),
+      time_slot:time_slots(name)
+    `)
     .eq("id", reservationId)
     .single();
 
@@ -161,6 +167,25 @@ export async function POST(request: NextRequest) {
       no_show_charge_id: paymentIntent.id,
     })
     .eq("id", reservationId);
+
+  // Enviar email de no-show (não-bloqueante)
+  const customer = Array.isArray(reservation.customer)
+    ? reservation.customer[0]
+    : reservation.customer;
+  const timeSlot = Array.isArray(reservation.time_slot)
+    ? reservation.time_slot[0]
+    : reservation.time_slot;
+
+  if (customer?.email) {
+    await sendNoShowChargeEmail({
+      to: customer.email,
+      firstName: customer.first_name,
+      date: reservation.date,
+      timeLabel: timeSlot?.name ?? "",
+      amount,
+      locale: (reservation.locale as Locale) ?? "pt",
+    });
+  }
 
   return NextResponse.json({
     success: true,

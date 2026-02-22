@@ -166,53 +166,80 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 ### Propósito
 - Envio de emails transacionais usando React Email templates
 - Emails no idioma preferido do cliente (PT/EN/ES)
+- Admin sempre recebe notificações em PT
 
 ### Variáveis de Ambiente
 ```env
-RESEND_API_KEY=                        # Chave de API (server only)
+RESEND_API_KEY=                   # Chave de API (server only)
+RESEND_FROM_EMAIL=                # Endereço remetente (ex: reservas@seudominio.com)
+ADMIN_NOTIFICATION_EMAIL=         # Email do restaurante para notificações (fallback: RESEND_FROM_EMAIL)
+```
+
+### Arquitetura
+
+```
+src/lib/resend.ts                        # Singleton: new Resend(RESEND_API_KEY)
+src/lib/email-translations.ts            # Strings i18n tipadas (PT/EN/ES) por tipo de email
+src/lib/email-templates/
+  confirmation.tsx                       # Template de confirmação de reserva
+  cancellation.tsx                       # Template de cancelamento
+  no-show-charge.tsx                     # Template de cobrança no-show
+  admin-notification.tsx                 # Template de notificação interna (PT fixo)
+src/services/email-service.ts            # 4 funções de envio (não-bloqueantes)
 ```
 
 ### Padrão de Uso
 
-**Client** (`src/lib/resend.ts`)
+**Singleton** (`src/lib/resend.ts`)
 ```typescript
 import { Resend } from 'resend';
-export const resend = new Resend(process.env.RESEND_API_KEY);
+export const resend = new Resend(process.env.RESEND_API_KEY!);
 ```
 
-**Envio** (`src/services/email-service.ts`)
+**Envio via service** (`src/services/email-service.ts`)
 ```typescript
-await resend.emails.send({
-  from: 'Domo <reservas@seudominio.com>',
-  to: customerEmail,
-  subject: getSubject(locale),
-  react: ConfirmationTemplate({ ...props }),
-});
+import { render } from '@react-email/components';
+import React from 'react';
+
+const html = await render(React.createElement(ConfirmationEmail, props));
+await resend.emails.send({ from, to, subject, html });
 ```
 
-### Templates
+> **Importante**: Usar `React.createElement` + `render()` para gerar HTML — não `react` prop do Resend. Os templates usam **inline styles** (não Tailwind), requisito do React Email para compatibilidade entre clientes de email.
 
-| Template | Trigger | Dados |
-|----------|---------|-------|
-| Confirmação de reserva | Reserva criada | Detalhes + link cancelamento |
-| Cancelamento confirmado | Reserva cancelada pelo cliente | Detalhes da reserva cancelada |
-| Cobrança de no-show | No-show cobrado com sucesso | Valor cobrado + detalhes |
-| Nova reserva (admin) | Reserva criada (configurável) | Resumo para o admin |
+### Gatilhos
 
-### Localização de Emails
-- Templates recebem `locale: 'pt' | 'en' | 'es'`
-- Traduções em `src/lib/email-templates/email-translations.ts`
-- Apenas os templates de email são traduzidos, não o site
+| Evento | Função | Destinatário |
+|--------|--------|--------------|
+| Reserva criada (`POST /api/reservations`) | `sendConfirmationEmail` | Cliente |
+| Reserva criada (`POST /api/reservations`) | `sendAdminNotificationEmail` | Admin (`ADMIN_NOTIFICATION_EMAIL`) |
+| Cancelamento pelo cliente (`POST /api/reservations/cancel`) | `sendCancellationEmail` | Cliente |
+| No-show cobrado (`POST /api/stripe/charge-no-show`) | `sendNoShowChargeEmail` | Cliente |
+
+### Localização
+
+- `locale: "pt" | "en" | "es"` vem do campo `reservations.locale` (copiado de `customers.preferred_locale` no momento da reserva)
+- Strings centralizadas em `src/lib/email-translations.ts` — objeto `emailTranslations[locale]`
+- Template admin (`admin-notification.tsx`) usa sempre PT, não recebe `locale`
 
 ### Tratamento de Erros
-- Se o envio falhar, logar o erro mas não bloquear a operação principal
-- A reserva deve ser criada mesmo que o email falhe
-- Implementar retry simples (1 tentativa extra) em caso de erro transiente
+
+Todos os `sendXxxEmail` fazem `try/catch` interno — erros são logados (`console.error`) mas **não relançados**. A operação principal (criação de reserva, cancelamento, cobrança) conclui normalmente mesmo que o email falhe.
+
+### Configuração de Desenvolvimento
+
+```env
+# Sem domínio verificado no Resend, usar:
+RESEND_FROM_EMAIL=onboarding@resend.dev
+ADMIN_NOTIFICATION_EMAIL=onboarding@resend.dev
+# Destinatários devem ser o email cadastrado na conta Resend
+```
 
 ### Pré-requisitos para Produção
-- Verificar domínio no Resend (DNS records)
-- Configurar `from` com email do domínio verificado
-- Em desenvolvimento: usar domínio de teste do Resend (`onboarding@resend.dev`)
+
+1. Verificar domínio no painel Resend (adicionar registros DNS)
+2. Trocar `RESEND_FROM_EMAIL` para email do domínio verificado (ex: `reservas@seudominio.com`)
+3. Configurar `ADMIN_NOTIFICATION_EMAIL` com o email operacional do restaurante
 
 ---
 

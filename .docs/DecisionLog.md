@@ -265,3 +265,35 @@
 **Decisão**: (1) Adicionar sufixo aleatório ao nome do canal: `realtime-${table}-${random}`. (2) Armazenar `onEvent` em um `useRef` atualizado a cada render, removendo-o das dependências do `useEffect`.
 **Razão**: Canais com nome único evitam conflito entre instâncias. O padrão de ref para callback é a forma correta de usar funções estáveis em `useEffect` sem re-subscrever — garante que o canal seja criado uma vez por montagem e destruído apenas no unmount.
 **⚠️ Regra crítica**: Ao usar `useRealtimeSubscription`, nunca passar uma função instável (criada inline) como `onEvent` — embora o hook seja robusto via ref, manter o callback estável (via `useCallback`) é boa prática.
+
+---
+
+### 2026-02-22 — Resend: render via React.createElement + render(), não prop `react`
+
+**Contexto**: Ao integrar Resend com React Email, a SDK do Resend aceita uma prop `react` no `emails.send()` que renderiza o componente internamente. Porém, em contextos Next.js App Router com RSC e TypeScript strict, essa abordagem gera conflitos de tipos.
+**Decisão**: Usar `render()` do `@react-email/components` explicitamente para gerar o HTML, passando-o como prop `html` para o `resend.emails.send()`. Instanciar o componente via `React.createElement(Component, props)`.
+**Razão**: Abordagem mais explícita, sem dependência de comportamento interno da SDK, e sem conflitos de tipos. Validado em produção com entrega confirmada.
+
+---
+
+### 2026-02-22 — Resend: emails não-bloqueantes (fire-and-forget com log)
+
+**Contexto**: Os emails são enviados após operações críticas (criar reserva, cancelar, cobrar no-show). Uma falha no Resend não deve impedir a operação principal de retornar sucesso ao usuário.
+**Decisão**: Todas as funções em `src/services/email-service.ts` fazem `try/catch` interno — erros são logados via `console.error` mas nunca relançados. A chamada `await sendXxxEmail(...)` nas rotas aguarda a conclusão mas não propaga erros.
+**Razão**: A reserva existe independentemente do email. Forçar falha na reserva por falha no email cria experiência ruim e perde dados. O log permite diagnóstico sem impacto no fluxo principal. Para produção, pode-se evoluir para fila/retry assíncrono.
+
+---
+
+### 2026-02-22 — Resend: templates com inline styles obrigatórios
+
+**Contexto**: Os templates React Email precisam funcionar em clientes de email como Gmail, Outlook, Apple Mail, que suportam apenas subconjuntos de CSS.
+**Decisão**: Usar exclusivamente inline styles (objetos `React.CSSProperties`) nos templates. Não usar Tailwind, CSS Modules ou styled-components.
+**Razão**: React Email foi projetado para isso — clientes de email removem `<style>` tags e classes externas. Inline styles são a única forma confiável de estilização cross-client. Validado com entrega bem-formada no Gmail.
+
+---
+
+### 2026-02-22 — Resend: locale da reserva para idioma do email
+
+**Contexto**: Ao enviar email de cancelamento ou no-show, precisamos saber o idioma preferido do cliente sem query extra.
+**Decisão**: Usar `reservations.locale` (copiado de `customers.preferred_locale` no momento da criação da reserva via `POST /api/reservations`). Para cancelamento e no-show, o campo `locale` é selecionado diretamente no select da reserva — sem join adicional em `customers`.
+**Razão**: O campo `locale` na tabela `reservations` existe exatamente para esse caso de uso — snapshot do idioma no momento da reserva, acessível sem join. Evita uma query desnecessária.

@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { formatDatePtBr } from "@/lib/availability";
 
@@ -138,7 +137,7 @@ export default async function SucessoPage({
 
           <Separator />
 
-          {/* Email confirmation mock */}
+          {/* Email confirmation */}
           <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
             <Mail className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
             <div>
@@ -149,9 +148,6 @@ export default async function SucessoPage({
                 Um email de confirmação foi enviado para{" "}
                 <strong>{email}</strong> com os detalhes da reserva.
               </p>
-              <Badge variant="outline" className="mt-2">
-                Mock — email real na Fase 6
-              </Badge>
             </div>
           </div>
 

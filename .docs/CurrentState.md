@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-02-21 | Fase: 5 (Stripe) — CONCLUÍDA + polish | Próxima: Fase 6 (Resend)
+> Atualizado: 2026-02-22 | Fase: 6 (Resend) — CONCLUÍDA | Próxima: Fase 7 (Admin Features & UX)
 
 ## O que funciona
 
@@ -163,21 +163,32 @@
 - **Loading por linha no status**: `StatusDropdown` recebe `isLoading` prop; mostra `Loader2` animado no lugar do `ChevronDown` enquanto a Server Action está em andamento; linha permanece interativa individualmente
 - **`src/utils/stripe/client.ts`**: instância Stripe server-side
 
+### Resend (Fase 6)
+
+- **Singleton Resend** em `src/lib/resend.ts`
+- **Traduções i18n** PT/EN/ES em `src/lib/email-translations.ts`
+- **Templates React Email** (inline styles) em `src/lib/email-templates/`: confirmation, cancellation, no-show-charge, admin-notification
+- **Email service** em `src/services/email-service.ts` — 4 funções não-bloqueantes
+- **Gatilhos**: confirmação + notif admin ao criar reserva, cancelamento ao cancelar via link, cobrança no-show ao cobrar
+- **Locale do cliente**: emails enviados no idioma escolhido (PT/EN/ES); admin sempre em PT
+- **ADMIN_NOTIFICATION_EMAIL** configurado em `.env.local`
+- Badge "Mock — email real na Fase 6" removido da página `/reserva/sucesso`
+
 ## O que está mockado
 
-- Email de confirmação na página de sucesso é placeholder (badge "Mock — email real na Fase 6")
+Nada — todos os fluxos principais estão funcionando com integrações reais.
 
 ## O que não existe ainda
 
-- Integração Resend (Fase 6)
 - Admin Features & UX (Fase 7)
 - UI Polish & Padronização (Fase 8)
 - Relatórios e Produção (Fase 9)
+
+## Próximos Passos
+
+Fase 7 — Admin Features & UX: drawer de detalhes de reserva, filtros em passantes/lista de espera, seletor de período no dashboard, controle de acesso.
 
 ## Issues Conhecidas
 
 - Warnings do React Compiler sobre `form.watch()` do React Hook Form (esperado, não afeta funcionalidade)
 
-## Próximos Passos
-
-Fase 6 — Integração Resend: templates de email (confirmação, cancelamento, no-show), envio no idioma do cliente (PT/EN/ES), link de cancelamento funcional.

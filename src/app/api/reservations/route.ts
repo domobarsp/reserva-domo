@@ -15,6 +15,10 @@ import type {
   Settings,
 } from "@/types";
 import { ReservationStatus } from "@/types";
+import {
+  sendConfirmationEmail,
+  sendAdminNotificationEmail,
+} from "@/services/email-service";
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -62,6 +66,7 @@ export async function POST(request: NextRequest) {
     { data: reservations },
     { data: exceptionDates },
     { data: settings },
+    { data: accommodationTypes },
   ] = await Promise.all([
     supabase
       .from("time_slots")
@@ -84,6 +89,10 @@ export async function POST(request: NextRequest) {
     supabase
       .from("settings")
       .select("*")
+      .eq("restaurant_id", restaurantId),
+    supabase
+      .from("accommodation_types")
+      .select("id, name")
       .eq("restaurant_id", restaurantId),
   ]);
 
@@ -125,6 +134,11 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   }
+
+  // Encontrar tipo de acomodação para o email
+  const accommodationType = (accommodationTypes ?? []).find(
+    (at) => at.id === data.accommodation_type_id
+  );
 
   // Validar: capacidade disponível
   const remaining = getRemainingCapacityFrom(
@@ -218,6 +232,37 @@ export async function POST(request: NextRequest) {
     from_status: null,
     to_status: ReservationStatus.PENDING,
   });
+
+  // 4. Send emails (non-blocking)
+  const cancellationLink = `${process.env.NEXT_PUBLIC_APP_URL}/cancelar/${cancellationToken}`;
+  const timeLabel = timeSlot.name;
+  const accommodationLabel = accommodationType?.name ?? "";
+
+  await Promise.all([
+    sendConfirmationEmail({
+      to: data.email,
+      firstName: data.first_name,
+      date: data.date,
+      timeLabel,
+      accommodationLabel,
+      partySize: data.party_size,
+      specialRequests: data.special_requests ?? undefined,
+      cancellationLink,
+      locale: data.preferred_locale,
+    }),
+    sendAdminNotificationEmail({
+      customerName: `${data.first_name} ${data.last_name}`,
+      email: data.email,
+      phone: data.phone,
+      date: data.date,
+      timeLabel,
+      accommodationLabel,
+      partySize: data.party_size,
+      specialRequests: data.special_requests ?? undefined,
+      hasCard: !!data.stripe_payment_method_id,
+      reservationId: reservation.id,
+    }),
+  ]);
 
   return NextResponse.json({
     id: reservation.id,

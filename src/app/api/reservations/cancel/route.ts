@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isValidTransition } from "@/lib/status-transitions";
 import { ReservationStatus } from "@/types";
+import { sendCancellationEmail } from "@/services/email-service";
+import type { Locale } from "@/lib/email-translations";
 
 export async function POST(request: NextRequest) {
   let body: { token?: string };
@@ -24,10 +26,15 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  // Buscar reserva pelo token
+  // Buscar reserva pelo token (com joins para o email de cancelamento)
   const { data: reservation, error: fetchError } = await supabase
     .from("reservations")
-    .select("id, status")
+    .select(`
+      id, status, locale, date, party_size,
+      customer:customers(first_name, last_name, email),
+      time_slot:time_slots(name),
+      accommodation_type:accommodation_types(name)
+    `)
     .eq("cancellation_token", token)
     .single();
 
@@ -72,6 +79,29 @@ export async function POST(request: NextRequest) {
     to_status: ReservationStatus.CANCELLED,
     notes: "Cancelado pelo cliente",
   });
+
+  // Enviar email de cancelamento (não-bloqueante)
+  const customer = Array.isArray(reservation.customer)
+    ? reservation.customer[0]
+    : reservation.customer;
+  const timeSlot = Array.isArray(reservation.time_slot)
+    ? reservation.time_slot[0]
+    : reservation.time_slot;
+  const accommodationType = Array.isArray(reservation.accommodation_type)
+    ? reservation.accommodation_type[0]
+    : reservation.accommodation_type;
+
+  if (customer?.email) {
+    await sendCancellationEmail({
+      to: customer.email,
+      firstName: customer.first_name,
+      date: reservation.date,
+      timeLabel: timeSlot?.name ?? "",
+      accommodationLabel: accommodationType?.name ?? "",
+      partySize: reservation.party_size,
+      locale: (reservation.locale as Locale) ?? "pt",
+    });
+  }
 
   return NextResponse.json({ success: true });
 }

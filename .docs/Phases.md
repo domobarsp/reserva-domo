@@ -239,7 +239,7 @@ Ajustes visuais e de feedback de carregamento para elevar a qualidade percebida 
 ---
 
 ## Fase 6 — Integração Resend
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 - Templates React Email (confirmação, cancelamento, no-show, admin)
@@ -247,11 +247,11 @@ Ajustes visuais e de feedback de carregamento para elevar a qualidade percebida 
 - Fluxo de cancelamento completo via link
 
 **Critérios de aceitação**:
-- [ ] Email de confirmação enviado ao reservar
-- [ ] Link de cancelamento funcional
-- [ ] Email de cobrança ao cobrar no-show
-- [ ] Emails no idioma correto (PT/EN/ES)
-- [ ] Política de cancelamento configurável
+- [x] Email de confirmação enviado ao reservar
+- [x] Link de cancelamento funcional
+- [x] Email de cobrança ao cobrar no-show
+- [x] Emails no idioma correto (PT/EN/ES)
+- [ ] Política de cancelamento configurável (fora de escopo — adiado)
 
 ---
 
