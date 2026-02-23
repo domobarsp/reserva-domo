@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-02-22 | Fase: 7 (Admin Features & UX) — CONCLUÍDA | Próxima: Fase 8 (UI Polish & Padronização)
+> Atualizado: 2026-02-22 | Fase: 7 (Admin Features & UX) — CONCLUÍDA | Próxima: Fase 8 (Relatórios)
 
 ## O que funciona
 
@@ -194,12 +194,13 @@ Nada — todos os fluxos principais estão funcionando com integrações reais.
 
 ## O que não existe ainda
 
-- UI Polish & Padronização (Fase 8)
-- Relatórios e Produção (Fase 9)
+- Relatórios (Fase 8)
+- Refinamento visual por página — Home & Formulário (9), Dashboard (10), Calendário (11), Reservas (12), Lista de Espera & Passantes (13), Configurações & Acessos (14)
+- Produção & Deploy (Fase 15)
 
 ## Próximos Passos
 
-Fase 8 — UI Polish & Padronização: revisão visual completa, responsividade, acessibilidade, consistência de estados (loading/empty/error).
+Fase 8 — Relatórios: página `/admin/relatorios` com dados reais, gráficos, seletor de período e exportação CSV.
 
 ## Issues Conhecidas
 

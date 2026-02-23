@@ -10,12 +10,18 @@ Fase 0 (Docs) ✅
             └─ Fase 4 (Supabase) ✅
                  └─ Fase 4.5 (Polish Pós-Supabase) ✅
                       └─ Fase 4.6 (Design System) ✅
-                           └─ Fase 4.7 (Refinamentos UX/UI)
-                                └─ Fase 5 (Stripe)
-                                └─ Fase 6 (Resend)
-                                     └─ Fase 7 (Admin Features & UX)
-                                          └─ Fase 8 (UI Polish)
-                                               └─ Fase 9 (Relatórios + Produção)
+                           └─ Fase 4.7 (Refinamentos UX/UI) ✅
+                                └─ Fase 5 (Stripe) ✅
+                                └─ Fase 6 (Resend) ✅
+                                     └─ Fase 7 (Admin Features & UX) ✅
+                                          └─ Fase 8 (Relatórios)
+                                               └─ Fase 9 (Refinamento — Home & Formulário)
+                                                    └─ Fase 10 (Refinamento — Dashboard)
+                                                         └─ Fase 11 (Refinamento — Calendário)
+                                                              └─ Fase 12 (Refinamento — Reservas)
+                                                                   └─ Fase 13 (Refinamento — Lista de Espera & Passantes)
+                                                                        └─ Fase 14 (Refinamento — Configurações & Acessos)
+                                                                             └─ Fase 15 (Produção & Deploy)
 ```
 
 > **Planejamento granular**: Antes de iniciar cada fase, o agente deve criar um plano
@@ -281,40 +287,182 @@ Features e melhorias de UX no painel admin que aumentam a usabilidade operaciona
 
 ---
 
-## Fase 8 — UI Polish & Padronização
+## Fase 8 — Relatórios
 **Status**: `NOT STARTED`
 
 **Escopo**:
-Revisão visual completa para padronizar e melhorar a experiência do usuário em todas as páginas.
+Implementação da página `/admin/relatorios` com dados reais, gráficos e exportação.
 
 **Itens**:
-- Padronizar espaçamentos, tipografia e cores entre páginas admin
-- Melhorar responsividade em telas pequenas
-- Consistência de empty states, loading states e error states
-- Transições e animações sutis
-- Acessibilidade (foco, contraste, aria labels)
+- Visão geral do período: total de reservas, covers, taxa de no-show, taxa de ocupação
+- Gráfico de reservas por dia (linha ou barra) com seletor de intervalo (7d / 30d / 90d / custom)
+- Gráfico de distribuição por status (pizza ou donut)
+- Tabela de top acomodações (mais reservadas, mais no-shows)
+- Exportação CSV (reservas filtradas por período)
+- Comparativo de período (ex: esta semana vs semana anterior)
 
 **Critérios de aceitação**:
-- [ ] UI consistente entre todas as páginas admin
-- [ ] Responsivo em mobile, tablet e desktop
-- [ ] Loading/empty/error states padronizados
-- [ ] Acessibilidade básica (WCAG AA)
+- [ ] Página `/admin/relatorios` com dados reais do Supabase
+- [ ] Pelo menos 2 gráficos funcionais com biblioteca de charts
+- [ ] Seletor de período funcional (atualiza todos os dados)
+- [ ] Exportação CSV das reservas do período
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
 
 ---
 
-## Fase 9 — Relatórios, Polish e Produção
+## Fase 9 — Refinamento Visual — Home & Formulário de Agendamento
 **Status**: `NOT STARTED`
 
 **Escopo**:
-- Relatórios (reservas, no-shows, ocupação) com gráficos
-- Exportação CSV
-- Error boundaries, SEO
-- Rate limiting, prevenção de double-booking
-- Deploy Vercel
+Revisão completa da experiência pública: landing page, formulário multi-step, página de sucesso e página de cancelamento.
+
+**Itens**:
+- Landing page: revisão de copy, hierarquia visual, CTA, responsividade mobile
+- Formulário multi-step: UX de cada step (datas, acomodação, dados do cliente, cartão, confirmação), indicador de progresso, transições entre steps
+- Step de cartão (Stripe): layout e feedback visual
+- Página de sucesso: design, informações exibidas, link de cancelamento
+- Página de cancelamento: fluxo, estados (carregando, já cancelado, erro)
+- Consistência tipográfica e de espaçamento em todas as páginas públicas
 
 **Critérios de aceitação**:
-- [ ] Relatórios com dados reais e gráficos
-- [ ] Exportação CSV funcional
+- [ ] Landing page responsiva e com hierarquia visual clara
+- [ ] Formulário fluído em mobile e desktop, sem overflow ou truncamento
+- [ ] Transições suaves entre steps
+- [ ] Página de sucesso e cancelamento polidas
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase 10 — Refinamento Visual — Dashboard
+**Status**: `NOT STARTED`
+
+**Escopo**:
+Revisão profunda do dashboard admin: cards de estatísticas, seletor de período, tabela de reservas do dia e estados de loading/empty/error.
+
+**Itens**:
+- Cards de Big Numbers: revisão de layout, hierarquia, microcopy e cores por contexto (ok / alerta / crítico)
+- Seletor de período: UX das pills, feedback visual de período ativo
+- Tabela do período: densidade, legibilidade, coluna de Data para períodos >1 dia
+- Empty state quando não há reservas no período
+- Loading skeleton fiel à estrutura real dos dados
+- Responsividade: comportamento em tablet e mobile
+
+**Critérios de aceitação**:
+- [ ] Cards visualmente consistentes e informativos
+- [ ] Tabela legível em qualquer tamanho de tela
+- [ ] Empty e loading states polidos
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase 11 — Refinamento Visual — Calendário
+**Status**: `NOT STARTED`
+
+**Escopo**:
+Revisão do calendário visual mensal: grid, células, legenda, navegação e estados de ocupação.
+
+**Itens**:
+- Grid mensal: espaçamento, proporção das células, tipografia do número do dia
+- Indicadores de ocupação: revisão das cores (verde/amarelo/vermelho/cinza), legenda
+- Célula com múltiplos dados (nº reservas, covers): hierarquia visual
+- Dia atual e dia selecionado: destaque visual claro
+- Navegação mês anterior/próximo: botões, exibição do mês/ano
+- Responsividade: comportamento em telas menores (compactar ou scroll horizontal)
+- Estado de loading ao mudar de mês
+
+**Critérios de aceitação**:
+- [ ] Grid proporcional e legível em desktop e tablet
+- [ ] Indicadores de ocupação claros e com legenda
+- [ ] Navegação fluída com feedback de loading
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase 12 — Refinamento Visual — Reservas (Lista + Drawer)
+**Status**: `NOT STARTED`
+
+**Escopo**:
+Revisão da página de gestão de reservas: filtros, tabela e drawer de detalhes.
+
+**Itens**:
+- Filtros: layout, UX do date picker, select de status e acomodação, botão de limpar
+- Tabela: colunas, densidade, badges de status, ícones de cartão/cobrança, ações no dropdown
+- Estados: loading skeleton, empty state (sem reservas no filtro), erro de busca
+- Drawer de detalhes: revisão de cada seção (cabeçalho, cliente, histórico, garantia), tipografia, espaçamento
+- Ações no drawer: botões de status (tamanho, cor, feedback de loading), painel de cobrança no-show
+- Responsividade: tabela em mobile (colunas colapsáveis ou scroll), drawer em tela cheia no mobile
+
+**Critérios de aceitação**:
+- [ ] Filtros intuitivos e sem overflow
+- [ ] Tabela legível com todas as informações necessárias
+- [ ] Drawer polido com ações claras
+- [ ] Experiência funcional em mobile
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase 13 — Refinamento Visual — Lista de Espera & Passantes
+**Status**: `NOT STARTED`
+
+**Escopo**:
+Revisão das páginas de Lista de Espera e Passantes: filtros, tabelas e drawers.
+
+**Itens**:
+- Filtros compartilhados (TableFilters): refinamento do layout e UX
+- Tabela de Lista de Espera: colunas, status badges, ações (Acomodar/Remover)
+- Tabela de Passantes: colunas, densidade, empty state
+- Drawer de Lista de Espera: cabeçalho, seções de contato e timeline, ações no rodapé
+- Drawer de Passantes: cabeçalho, seção de contato, solicitações especiais
+- Consistência visual entre as duas páginas (mesmos padrões)
+
+**Critérios de aceitação**:
+- [ ] Filtros e tabelas consistentes entre as duas páginas
+- [ ] Drawers com mesmo padrão visual da página de Reservas
+- [ ] Empty states e loading states polidos
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase 14 — Refinamento Visual — Configurações & Acessos
+**Status**: `NOT STARTED`
+
+**Escopo**:
+Revisão das páginas de Configurações (hub + 6 sub-páginas) e Acessos.
+
+**Itens**:
+- Hub de Configurações: cards de navegação, descrições, ícones
+- Sub-páginas (Horários, Acomodações, Capacidade, Garantia, Taxa, Exceções): layout dos formulários, tabelas de CRUD, dialogs de criação/edição
+- Consistência de padrões entre sub-páginas (headers, botões de ação, empty states)
+- Página de Acessos: tabela de usuários, badges de cargo/status, dialog de criação
+- Feedback de ações: toasts, loading states nos botões
+
+**Critérios de aceitação**:
+- [ ] Hub de Configurações visualmente claro e navegável
+- [ ] Sub-páginas com layout consistente
+- [ ] Página de Acessos polida
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase 15 — Produção & Deploy
+**Status**: `NOT STARTED`
+
+**Escopo**:
+Preparação para produção: robustez técnica, segurança, SEO e deploy na Vercel.
+
+**Itens**:
+- Error boundaries em páginas críticas
+- Rate limiting nas API routes públicas (`/api/reservations`, `/api/availability`)
+- Prevenção de double-booking (lock otimista ou verificação transacional)
+- SEO: meta tags, Open Graph, sitemap para páginas públicas
+- Variáveis de ambiente de produção e checklist de segurança
+- Deploy na Vercel com domínio customizado
+- Verificação end-to-end completa (fluxo de reserva, cancelamento, no-show, emails)
+
+**Critérios de aceitação**:
 - [ ] Zero mocks restantes
-- [ ] Sistema deployado na Vercel
-- [ ] Verificação end-to-end completa (12 itens)
+- [ ] Rate limiting ativo nas rotas públicas
+- [ ] Double-booking impossível sob carga concorrente
+- [ ] SEO básico implementado
+- [ ] Sistema deployado e funcionando em produção
+- [ ] Verificação end-to-end completa

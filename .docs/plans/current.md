@@ -1,4 +1,4 @@
-# Fase 8 — UI Polish & Padronização
+# Fase 8 — Relatórios
 
 **Status**: `NOT STARTED`
 
