@@ -64,6 +64,43 @@ export async function getReservationsFull(
   return (data ?? []) as unknown as ReservationFull[];
 }
 
+export interface ReservationDetails extends ReservationFull {
+  statusHistory: import("@/types").ReservationStatusHistory[];
+}
+
+export async function getReservationDetails(
+  id: string
+): Promise<ReservationDetails | null> {
+  const supabase = await createClient();
+
+  const [reservationRes, historyRes] = await Promise.all([
+    supabase
+      .from("reservations")
+      .select(
+        `
+        *,
+        customer:customers(*),
+        accommodation_type:accommodation_types(*),
+        time_slot:time_slots(*)
+      `
+      )
+      .eq("id", id)
+      .single(),
+    supabase
+      .from("reservation_status_history")
+      .select("*")
+      .eq("reservation_id", id)
+      .order("created_at", { ascending: true }),
+  ]);
+
+  if (reservationRes.error || !reservationRes.data) return null;
+
+  return {
+    ...(reservationRes.data as unknown as ReservationFull),
+    statusHistory: (historyRes.data ?? []) as import("@/types").ReservationStatusHistory[],
+  };
+}
+
 export async function getReservationsForDate(
   dateStr: string
 ): Promise<ReservationFull[]> {

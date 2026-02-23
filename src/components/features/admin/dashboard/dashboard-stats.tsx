@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { CalendarCheck, Clock, Users, BarChart3 } from "lucide-react";
+import { CalendarCheck, Clock, Users, BarChart3, PersonStanding } from "lucide-react";
 import { useRealtimeSubscription } from "@/hooks/use-realtime";
 import { Card, CardContent } from "@/components/ui/card";
 import { ReservationStatus } from "@/types";
@@ -14,10 +14,12 @@ import type {
 } from "@/types";
 import { getTotalCapacityForDate, getTodayStr } from "@/lib/availability";
 import { cn } from "@/lib/utils";
+import type { DashboardPeriod } from "@/app/admin/(authenticated)/dashboard/actions";
 
 interface DashboardStatsProps {
   className?: string;
-  todayReservations: ReservationFull[];
+  periodReservations: ReservationFull[];
+  period: DashboardPeriod;
   timeSlots: TimeSlot[];
   accommodationTypes: AccommodationType[];
   capacityRules: CapacityRule[];
@@ -26,7 +28,8 @@ interface DashboardStatsProps {
 
 export function DashboardStats({
   className,
-  todayReservations,
+  periodReservations,
+  period,
   timeSlots,
   accommodationTypes,
   capacityRules,
@@ -35,39 +38,40 @@ export function DashboardStats({
   useRealtimeSubscription({ table: "reservations" });
 
   const stats = useMemo(() => {
-    const nonCancelled = todayReservations.filter(
+    const nonCancelled = periodReservations.filter(
       (r) => r.status !== ReservationStatus.CANCELLED
     );
-
-    const confirmed = todayReservations.filter(
+    const confirmed = nonCancelled.filter(
       (r) => r.status === ReservationStatus.CONFIRMED
     );
-
-    const pending = todayReservations.filter(
+    const pending = nonCancelled.filter(
       (r) => r.status === ReservationStatus.PENDING
     );
-
     const activeStatuses = [
       ReservationStatus.PENDING,
       ReservationStatus.CONFIRMED,
       ReservationStatus.SEATED,
     ];
-    const activePartySize = todayReservations
+    const activePartySize = nonCancelled
       .filter((r) => activeStatuses.includes(r.status))
       .reduce((sum, r) => sum + r.party_size, 0);
 
-    const totalCapacity = getTotalCapacityForDate(
-      getTodayStr(),
-      timeSlots,
-      accommodationTypes,
-      capacityRules,
-      exceptionDates
-    );
-
+    // Ocupação só faz sentido para "hoje"
+    const totalCapacity =
+      period === "today"
+        ? getTotalCapacityForDate(
+            getTodayStr(),
+            timeSlots,
+            accommodationTypes,
+            capacityRules,
+            exceptionDates
+          )
+        : 0;
     const occupancyPercent =
       totalCapacity > 0
         ? Math.round((activePartySize / totalCapacity) * 100)
         : 0;
+
     const confirmedRate =
       nonCancelled.length > 0
         ? Math.round((confirmed.length / nonCancelled.length) * 100)
@@ -78,7 +82,7 @@ export function DashboardStats({
         : 0;
 
     return {
-      totalToday: nonCancelled.length,
+      total: nonCancelled.length,
       confirmed: confirmed.length,
       pending: pending.length,
       confirmedRate,
@@ -88,23 +92,31 @@ export function DashboardStats({
       occupancyPercent,
     };
   }, [
-    todayReservations,
+    periodReservations,
+    period,
     timeSlots,
     accommodationTypes,
     capacityRules,
     exceptionDates,
   ]);
 
+  const isToday = period === "today";
+  const periodLabel = isToday
+    ? "Hoje"
+    : period === "week"
+    ? "Esta semana"
+    : "Próximos 15 dias";
+
   const cards = [
     {
-      label: "Reservas Hoje",
-      value: stats.totalToday,
+      label: isToday ? "Reservas Hoje" : "Reservas no Período",
+      value: stats.total,
       icon: CalendarCheck,
       dotColor: "bg-primary/70",
       iconColor: "text-primary",
-      badgeText: `${stats.totalToday} no dia`,
+      badgeText: `${stats.total} ${isToday ? "no dia" : "no período"}`,
       badgeClasses: "border-primary/20 bg-primary/10 text-primary",
-      insight: "Movimento principal do dia",
+      insight: isToday ? "Movimento principal do dia" : `Movimento em ${periodLabel.toLowerCase()}`,
       description: "Inclui reservas pendentes, confirmadas e sentadas",
     },
     {
@@ -114,10 +126,9 @@ export function DashboardStats({
       dotColor: "bg-emerald-500/80",
       iconColor: "text-emerald-700",
       badgeText: `${stats.confirmedRate}%`,
-      badgeClasses:
-        "border-emerald-200/80 bg-emerald-100/80 text-emerald-800",
-      insight: "Boa taxa de confirmacao",
-      description: "Percentual sobre o total de reservas do dia",
+      badgeClasses: "border-emerald-200/80 bg-emerald-100/80 text-emerald-800",
+      insight: "Boa taxa de confirmação",
+      description: "Percentual sobre o total de reservas",
     },
     {
       label: "Pendentes",
@@ -127,20 +138,32 @@ export function DashboardStats({
       iconColor: "text-amber-700",
       badgeText: `${stats.pendingRate}%`,
       badgeClasses: "border-amber-200/80 bg-amber-100/80 text-amber-800",
-      insight: "Reservas aguardando acao",
+      insight: "Reservas aguardando ação",
       description: "Foco de acompanhamento para a equipe",
     },
-    {
-      label: "Ocupacao",
-      value: `${stats.occupancyPercent}%`,
-      icon: BarChart3,
-      dotColor: "bg-violet-500/80",
-      iconColor: "text-violet-700",
-      badgeText: `${stats.activePartySize}/${stats.totalCapacity}`,
-      badgeClasses: "border-violet-200/80 bg-violet-100/80 text-violet-800",
-      insight: "Uso da capacidade operacional",
-      description: "Relacao entre pessoas ativas e capacidade total",
-    },
+    isToday
+      ? {
+          label: "Ocupação",
+          value: `${stats.occupancyPercent}%`,
+          icon: BarChart3,
+          dotColor: "bg-violet-500/80",
+          iconColor: "text-violet-700",
+          badgeText: `${stats.activePartySize}/${stats.totalCapacity}`,
+          badgeClasses: "border-violet-200/80 bg-violet-100/80 text-violet-800",
+          insight: "Uso da capacidade operacional",
+          description: "Relação entre pessoas ativas e capacidade total",
+        }
+      : {
+          label: "Pessoas no Período",
+          value: stats.activePartySize,
+          icon: PersonStanding,
+          dotColor: "bg-violet-500/80",
+          iconColor: "text-violet-700",
+          badgeText: `${stats.activePartySize} pessoas`,
+          badgeClasses: "border-violet-200/80 bg-violet-100/80 text-violet-800",
+          insight: "Total de cobertos esperados",
+          description: "Soma de pessoas em reservas ativas",
+        },
   ] as const;
 
   return (

@@ -20,9 +20,10 @@ interface WaitlistTableProps {
   entries: WaitlistEntry[];
   onSeat: (id: string) => void;
   onRemove: (id: string) => void;
+  onRowClick?: (entry: WaitlistEntry) => void;
 }
 
-export function WaitlistTable({ entries, onSeat, onRemove }: WaitlistTableProps) {
+export function WaitlistTable({ entries, onSeat, onRemove, onRowClick }: WaitlistTableProps) {
   const sorted = useMemo(() => {
     const statusOrder: Record<WaitlistStatus, number> = {
       [WaitlistStatus.WAITING]: 0,
@@ -61,7 +62,11 @@ export function WaitlistTable({ entries, onSeat, onRemove }: WaitlistTableProps)
       </TableHeader>
       <TableBody>
         {sorted.map((entry) => (
-          <TableRow key={entry.id}>
+          <TableRow
+              key={entry.id}
+              className={onRowClick ? "cursor-pointer" : undefined}
+              onClick={() => onRowClick?.(entry)}
+            >
             <TableCell>
               <div className="flex items-center gap-1.5">
                 <ClockIcon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -77,7 +82,7 @@ export function WaitlistTable({ entries, onSeat, onRemove }: WaitlistTableProps)
             <TableCell>
               <WaitlistStatusBadge status={entry.status} />
             </TableCell>
-            <TableCell>
+            <TableCell onClick={(e) => e.stopPropagation()}>
               {entry.status === WaitlistStatus.WAITING && (
                 <div className="flex gap-2">
                   <Button

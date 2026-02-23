@@ -15,9 +15,10 @@ import type { WalkIn } from "@/types";
 
 interface WalkinTableProps {
   walkIns: WalkIn[];
+  onRowClick?: (walkIn: WalkIn) => void;
 }
 
-export function WalkinTable({ walkIns }: WalkinTableProps) {
+export function WalkinTable({ walkIns, onRowClick }: WalkinTableProps) {
   const sorted = useMemo(() => {
     return [...walkIns].sort(
       (a, b) =>
@@ -60,7 +61,11 @@ export function WalkinTable({ walkIns }: WalkinTableProps) {
           });
 
           return (
-            <TableRow key={walkIn.id}>
+            <TableRow
+                key={walkIn.id}
+                className={onRowClick ? "cursor-pointer" : undefined}
+                onClick={() => onRowClick?.(walkIn)}
+              >
               <TableCell>
                 <span className="text-muted-foreground">{dateStr}</span>{" "}
                 <span className="font-medium">{timeStr}</span>

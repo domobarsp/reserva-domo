@@ -6,15 +6,35 @@ import { getRestaurantId } from "@/lib/queries/restaurant";
 import type { ActionResult } from "@/lib/actions/types";
 import type { WalkIn, CreateWalkInInput } from "@/types";
 
-export async function getWalkIns(): Promise<WalkIn[]> {
+export interface WalkInFilters {
+  name?: string;
+  date?: string;
+  phone?: string;
+}
+
+export async function getWalkIns(filters: WalkInFilters = {}): Promise<WalkIn[]> {
   const supabase = await createClient();
   const restaurantId = await getRestaurantId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("walk_ins")
     .select("*")
     .eq("restaurant_id", restaurantId)
     .order("created_at", { ascending: false });
+
+  if (filters.name) {
+    query = query.ilike("customer_name", `%${filters.name}%`);
+  }
+  if (filters.phone) {
+    query = query.ilike("customer_phone", `%${filters.phone}%`);
+  }
+  if (filters.date) {
+    query = query
+      .gte("created_at", `${filters.date}T00:00:00`)
+      .lte("created_at", `${filters.date}T23:59:59`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Erro ao buscar passantes:", error);

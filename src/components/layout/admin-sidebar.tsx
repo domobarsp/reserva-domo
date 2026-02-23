@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { AdminRole } from "@/types";
 import {
   LayoutDashboard,
   CalendarDays,
@@ -15,18 +16,29 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/reservas", label: "Reservas", icon: BookOpen },
-  { href: "/admin/calendario", label: "Calendário", icon: CalendarDays },
-  { href: "/admin/lista-espera", label: "Lista de Espera", icon: Clock },
-  { href: "/admin/passantes", label: "Passantes", icon: Users },
-  { href: "/admin/relatorios", label: "Relatórios", icon: BarChart3 },
-  { href: "/admin/configuracoes", label: "Configurações", icon: Settings },
-  { href: "/admin/acessos", label: "Acessos", icon: Shield },
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, staffHidden: false, ownerOnly: false },
+  { href: "/admin/reservas", label: "Reservas", icon: BookOpen, staffHidden: false, ownerOnly: false },
+  { href: "/admin/calendario", label: "Calendário", icon: CalendarDays, staffHidden: false, ownerOnly: false },
+  { href: "/admin/lista-espera", label: "Lista de Espera", icon: Clock, staffHidden: false, ownerOnly: false },
+  { href: "/admin/passantes", label: "Passantes", icon: Users, staffHidden: false, ownerOnly: false },
+  { href: "/admin/relatorios", label: "Relatórios", icon: BarChart3, staffHidden: false, ownerOnly: false },
+  { href: "/admin/configuracoes", label: "Configurações", icon: Settings, staffHidden: true, ownerOnly: false },
+  { href: "/admin/acessos", label: "Acessos", icon: Shield, staffHidden: false, ownerOnly: true },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  userRole: AdminRole;
+}
+
+export function AdminSidebar({ userRole }: AdminSidebarProps) {
   const pathname = usePathname();
+  const isStaff = userRole === AdminRole.STAFF;
+  const isOwner = userRole === AdminRole.OWNER;
+  const visibleItems = navItems.filter((item) => {
+    if (item.staffHidden && isStaff) return false;
+    if (item.ownerOnly && !isOwner) return false;
+    return true;
+  });
 
   return (
     <aside className="hidden w-64 shrink-0 border-r bg-sidebar lg:block">
@@ -39,7 +51,7 @@ export function AdminSidebar() {
         </span>
       </div>
       <nav className="flex flex-col gap-1 p-4">
-        {navItems.map((item) => {
+        {visibleItems.map((item) => {
           const isActive =
             pathname === item.href || pathname.startsWith(item.href + "/");
           return (

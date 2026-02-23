@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/utils/supabase/client";
+import { AdminRole } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -25,19 +26,30 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/reservas", label: "Reservas", icon: BookOpen },
-  { href: "/admin/calendario", label: "Calendário", icon: CalendarDays },
-  { href: "/admin/lista-espera", label: "Lista de Espera", icon: Clock },
-  { href: "/admin/passantes", label: "Passantes", icon: Users },
-  { href: "/admin/relatorios", label: "Relatórios", icon: BarChart3 },
-  { href: "/admin/configuracoes", label: "Configurações", icon: Settings },
-  { href: "/admin/acessos", label: "Acessos", icon: Shield },
+  { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, staffHidden: false, ownerOnly: false },
+  { href: "/admin/reservas", label: "Reservas", icon: BookOpen, staffHidden: false, ownerOnly: false },
+  { href: "/admin/calendario", label: "Calendário", icon: CalendarDays, staffHidden: false, ownerOnly: false },
+  { href: "/admin/lista-espera", label: "Lista de Espera", icon: Clock, staffHidden: false, ownerOnly: false },
+  { href: "/admin/passantes", label: "Passantes", icon: Users, staffHidden: false, ownerOnly: false },
+  { href: "/admin/relatorios", label: "Relatórios", icon: BarChart3, staffHidden: false, ownerOnly: false },
+  { href: "/admin/configuracoes", label: "Configurações", icon: Settings, staffHidden: true, ownerOnly: false },
+  { href: "/admin/acessos", label: "Acessos", icon: Shield, staffHidden: false, ownerOnly: true },
 ];
 
-export function AdminTopbar() {
+interface AdminTopbarProps {
+  userRole: AdminRole;
+}
+
+export function AdminTopbar({ userRole }: AdminTopbarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const isStaff = userRole === AdminRole.STAFF;
+  const isOwner = userRole === AdminRole.OWNER;
+  const visibleItems = navItems.filter((item) => {
+    if (item.staffHidden && isStaff) return false;
+    if (item.ownerOnly && !isOwner) return false;
+    return true;
+  });
 
   async function handleLogout() {
     const supabase = createClient();
@@ -65,7 +77,7 @@ export function AdminTopbar() {
             </span>
           </div>
           <nav className="flex flex-col gap-1 p-4">
-            {navItems.map((item) => {
+            {visibleItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/");
               return (

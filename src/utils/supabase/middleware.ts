@@ -36,12 +36,28 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdminRoute = pathname.startsWith("/admin");
   const isLoginRoute = pathname === "/admin/login";
+  const isLogoutRoute = pathname === "/admin/logout";
 
-  // Sem sessão + rota admin (exceto login) → redirect login
-  if (!user && isAdminRoute && !isLoginRoute) {
+  // Sem sessão + rota admin (exceto login/logout) → redirect login
+  if (!user && isAdminRoute && !isLoginRoute && !isLogoutRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     return NextResponse.redirect(url);
+  }
+
+  // Com sessão + rota admin autenticada → verifica is_active
+  if (user && isAdminRoute && !isLoginRoute && !isLogoutRoute) {
+    const { data: adminUser } = await supabase
+      .from("admin_users")
+      .select("is_active")
+      .eq("id", user.id)
+      .single();
+
+    if (!adminUser?.is_active) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/logout";
+      return NextResponse.redirect(url);
+    }
   }
 
   // Com sessão + rota login → redirect dashboard

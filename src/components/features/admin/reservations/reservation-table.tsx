@@ -35,6 +35,7 @@ interface ReservationTableProps {
   onStatusChange: (id: string, status: ReservationStatus) => void;
   onEdit: (reservation: ReservationFull) => void;
   onChargeNoShow: (reservation: ReservationFull) => void;
+  onRowClick: (reservation: ReservationFull) => void;
   loadingStatusId: string | null;
 }
 
@@ -48,6 +49,7 @@ export function ReservationTable({
   onStatusChange,
   onEdit,
   onChargeNoShow,
+  onRowClick,
   loadingStatusId,
 }: ReservationTableProps) {
   const sorted = useMemo(() => {
@@ -92,7 +94,11 @@ export function ReservationTable({
               const canChargeNoShow = isNoShow && hasCard && !wasCharged;
 
               return (
-                <TableRow key={reservation.id}>
+                <TableRow
+                  key={reservation.id}
+                  className="cursor-pointer"
+                  onClick={() => onRowClick(reservation)}
+                >
                   <TableCell>{formatDateDdMmYyyy(reservation.date)}</TableCell>
                   <TableCell>
                     {formatTime(reservation.reservation_time)}
@@ -103,7 +109,7 @@ export function ReservationTable({
                   </TableCell>
                   <TableCell>{reservation.accommodation_type.name}</TableCell>
                   <TableCell>{reservation.party_size}</TableCell>
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <StatusDropdown
                       reservation={reservation}
                       onStatusChange={onStatusChange}
@@ -154,7 +160,7 @@ export function ReservationTable({
                     ) : null}
                   </TableCell>
 
-                  <TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button

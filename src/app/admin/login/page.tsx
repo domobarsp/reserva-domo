@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,14 +26,18 @@ export default function AdminLoginPage() {
     setError(null);
     setIsLoading(true);
 
+    const emailToUse = identifier.includes("@")
+      ? identifier
+      : `${identifier.trim().toLowerCase()}@domo.local`;
+
     const supabase = createClient();
     const { error: authError } = await supabase.auth.signInWithPassword({
-      email,
+      email: emailToUse,
       password,
     });
 
     if (authError) {
-      setError("Email ou senha inválidos.");
+      setError("Usuário ou senha inválidos.");
       setIsLoading(false);
       return;
     }
@@ -55,15 +59,16 @@ export default function AdminLoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="identifier">Usuário ou email</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="admin@domo.com.br"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                type="text"
+                placeholder="joao.silva"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 required
                 autoFocus
+                autoComplete="username"
               />
             </div>
             <div className="space-y-2">

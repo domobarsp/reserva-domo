@@ -1,4 +1,4 @@
-# Fase 8 — UI Polish & Padronização
+# Fase 6 — Integração Resend
 
 **Status**: `NOT STARTED`
 

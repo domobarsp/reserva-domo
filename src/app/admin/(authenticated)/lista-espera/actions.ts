@@ -7,15 +7,37 @@ import type { ActionResult } from "@/lib/actions/types";
 import type { WaitlistEntry, CreateWaitlistInput } from "@/types";
 import { WaitlistStatus } from "@/types";
 
-export async function getWaitlistEntries(): Promise<WaitlistEntry[]> {
+export interface WaitlistFilters {
+  name?: string;
+  date?: string;
+  phone?: string;
+}
+
+export async function getWaitlistEntries(
+  filters: WaitlistFilters = {}
+): Promise<WaitlistEntry[]> {
   const supabase = await createClient();
   const restaurantId = await getRestaurantId();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("waitlist_entries")
     .select("*")
     .eq("restaurant_id", restaurantId)
     .order("arrival_time", { ascending: false });
+
+  if (filters.name) {
+    query = query.ilike("customer_name", `%${filters.name}%`);
+  }
+  if (filters.phone) {
+    query = query.ilike("customer_phone", `%${filters.phone}%`);
+  }
+  if (filters.date) {
+    query = query
+      .gte("arrival_time", `${filters.date}T00:00:00`)
+      .lte("arrival_time", `${filters.date}T23:59:59`);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Erro ao buscar lista de espera:", error);

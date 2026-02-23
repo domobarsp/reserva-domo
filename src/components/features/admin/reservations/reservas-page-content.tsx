@@ -13,6 +13,7 @@ import { ReservationTable } from "@/components/features/admin/reservations/reser
 import { ReservationCreateDialog } from "@/components/features/admin/reservations/reservation-create-dialog";
 import { ReservationEditDialog } from "@/components/features/admin/reservations/reservation-edit-dialog";
 import { ChargeNoShowDialog } from "@/components/features/admin/reservations/charge-no-show-dialog";
+import { ReservationDetailDrawer } from "@/components/features/admin/reservations/reservation-detail-drawer";
 import type { ReservationFull, AccommodationType, TimeSlot } from "@/types";
 import { ReservationStatus } from "@/types";
 import { getStatusLabel } from "@/lib/status-transitions";
@@ -161,9 +162,15 @@ export function ReservasPageContent({
     [filterStatus, refreshReservations]
   );
 
+  const [detailReservationId, setDetailReservationId] = useState<string | null>(null);
+
   const handleEdit = useCallback((reservation: ReservationFull) => {
     setEditingReservation(reservation);
     setEditDialogOpen(true);
+  }, []);
+
+  const handleRowClick = useCallback((reservation: ReservationFull) => {
+    setDetailReservationId(reservation.id);
   }, []);
 
   // Abre o dialog de confirmação
@@ -249,6 +256,7 @@ export function ReservasPageContent({
             onStatusChange={handleStatusChange}
             onEdit={handleEdit}
             onChargeNoShow={handleChargeNoShow}
+            onRowClick={handleRowClick}
             loadingStatusId={loadingStatusId}
           />
         )}
@@ -278,6 +286,11 @@ export function ReservasPageContent({
         }}
         onConfirm={handleConfirmCharge}
         isCharging={isCharging}
+      />
+      <ReservationDetailDrawer
+        reservationId={detailReservationId}
+        onClose={() => setDetailReservationId(null)}
+        onActionSuccess={handleSuccess}
       />
     </div>
   );

@@ -292,6 +292,62 @@
 
 ---
 
+### 2026-02-22 — Fase 7: Seletor de período no dashboard via searchParams
+
+**Contexto**: O dashboard mostrava apenas dados do dia atual. A Fase 7 introduz pills de período (Hoje / Esta semana / Próximos 15 dias).
+**Decisão**: Período controlado via `searchParams.period` na page server-side. `getDashboardData(period)` calcula range de datas e retorna reservas do período. Card de Ocupação (%) mantido apenas para "Hoje" — para multi-day, substituído por "Total de Pessoas no Período" (ocupação não é significativa para múltiplos dias sem capacidade diária separada).
+**Razão**: Padrão consistente com filtros de Reservas (server-driven via searchParams). Evita estado client-side extra. Permite deep-link/refresh preservando o período selecionado.
+
+---
+
+### 2026-02-22 — Fase 7: RBAC via Server Components, não middleware
+
+**Contexto**: Precisávamos restringir acesso a `/admin/configuracoes/*` e `/admin/acessos` para usuários com role `staff`.
+**Decisão**: Proteção aplicada nos Server Components das páginas protegidas (e no layout autenticado para o sidebar), não no middleware. `getCurrentAdminUser()` helper centralizado em `src/lib/queries/admin-users.ts`. Middleware continua verificando apenas autenticação (sessão válida). Roles mapeadas para UI: owner/manager → "Administrador", staff → "Operador".
+**Razão**: Adicionar queries de banco no middleware aumentaria latência de todas as requisições. Server Components protegem as páginas com custo de performance mínimo (query cached por request). O middleware fica leve e focado em autenticação.
+
+---
+
+### 2026-02-22 — Fase 7: Convite via Supabase Auth Admin + insert manual em admin_users
+
+**Contexto**: Para convidar novos admins, precisamos criar o usuário no Supabase Auth e registrá-lo em `admin_users`.
+**Decisão**: Usar `supabase.auth.admin.inviteUserByEmail(email)` (requer service role key) para criar o usuário e enviar email de convite. O user retornado pela API contém o `id` — usado para inserir imediatamente em `admin_users` com o role e display_name escolhidos.
+**Razão**: Fluxo atômico: convite e registro em admin_users na mesma Server Action. O email de convite do Supabase é enviado automaticamente (sem depender do Resend). Não é necessário webhook para sincronizar.
+
+---
+
+### 2026-02-22 — Fase 7: Drawers de detalhes com lazy loading
+
+**Contexto**: Os drawers de detalhes (reservas, passantes, lista de espera) precisam exibir informações completas — incluindo histórico de status para reservas — que não são buscadas na listagem principal.
+**Decisão**: Os dados de detalhe são buscados ao abrir o drawer (lazy), não pré-carregados. O drawer recebe o `id` do item selecionado e faz a busca internamente (ou via action chamada no `onOpenChange`). Para reservas, inclui `reservation_status_history` ordered by `created_at ASC`.
+**Razão**: Evita over-fetching na listagem (que pode ter dezenas de linhas). Histórico de status é raramente consultado — buscar só quando necessário reduz carga no banco.
+
+---
+
+### 2026-02-22 — Login admin por usuário (sem email obrigatório)
+
+**Contexto**: Funcionários sem email corporativo não conseguiam usar o fluxo de convite por email do Supabase. O link de convite redirecionava para a home sem completar o cadastro.
+**Decisão**: Substituir `inviteUserByEmail` por `createUser` com email sintético no formato `{login}@domo.local` e `email_confirm: true`. A tela de login aceita usuário simples (ex: `joao.silva`) ou email completo — se não contiver `@`, o sufixo `@domo.local` é acrescentado antes de autenticar. A tabela de usuários exibe o login sem o sufixo.
+**Razão**: Elimina dependência de email real para acesso ao painel. Fluxo simples: admin cria usuário com login + senha diretamente, funcionário usa essas credenciais. O domínio `@domo.local` é fictício e nunca recebe emails reais.
+
+---
+
+### 2026-02-22 — RBAC: página Acessos restrita a Proprietário
+
+**Contexto**: Definição de quem pode gerenciar usuários do sistema.
+**Decisão**: Apenas `role = owner` pode acessar `/admin/acessos`. Gerentes (`manager`) têm acesso a Configurações mas não a Acessos. Operadores (`staff`) não acessam nenhum dos dois. Proteção em duas camadas: middleware verifica `is_active`, page verifica `role !== owner`.
+**Razão**: Gestão de acessos é responsabilidade exclusiva do proprietário — permite que gerentes operem o restaurante sem poder criar/desativar contas.
+
+---
+
+### 2026-02-22 — Desativação de conta força logout imediato via middleware
+
+**Contexto**: Ao desativar uma conta em `/admin/acessos`, o usuário desativado continuava navegando normalmente até o próximo full reload (o layout autenticado é um Server Component que não re-executa em navegações client-side do Next.js App Router).
+**Decisão**: Mover a verificação de `is_active` para o middleware (`updateSession`), que executa em toda request. Se o usuário autenticado tiver `is_active = false` em `admin_users`, o middleware redireciona para `/admin/logout` (Route Handler que faz `signOut()` e redireciona para login). O layout mantém o check como defesa em profundidade.
+**Razão**: O middleware é o único ponto que roda em toda navegação (incluindo client-side routing do Next.js). O custo de uma query extra por request é aceitável para um painel admin com poucos usuários simultâneos — a query é um lookup por PK indexada. Alternativas (JWT custom claims, polling, WebSocket) adicionariam complexidade desproporcional ao caso de uso.
+
+---
+
 ### 2026-02-22 — Resend: locale da reserva para idioma do email
 
 **Contexto**: Ao enviar email de cancelamento ou no-show, precisamos saber o idioma preferido do cliente sem query extra.

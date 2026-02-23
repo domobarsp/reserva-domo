@@ -256,7 +256,7 @@ Ajustes visuais e de feedback de carregamento para elevar a qualidade percebida 
 ---
 
 ## Fase 7 — Admin Features & UX
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Features e melhorias de UX no painel admin que aumentam a usabilidade operacional do sistema.
@@ -268,14 +268,16 @@ Features e melhorias de UX no painel admin que aumentam a usabilidade operaciona
 - Drawer lateral de detalhes ao clicar em Reserva (dados do cliente, info completa da reserva, histórico de status)
 - Drawer lateral para Passantes e Lista de Espera
 - Controle de Acesso (`/admin/acessos`): gestão de admin users (convidar, ativar/desativar, alterar roles)
+- RBAC: proteção de rotas e sidebar por role (staff sem acesso a configurações e acessos)
 
 **Critérios de aceitação**:
-- [ ] Dashboard com seletor de período funcional
-- [ ] Passantes com filtros
-- [ ] Lista de Espera com filtros
-- [ ] Drawer de detalhes de reserva com dados do cliente e histórico
-- [ ] Drawer de detalhes para passantes e lista de espera
-- [ ] Página de controle de acesso com CRUD de admin users
+- [x] Dashboard com seletor de período funcional
+- [x] Passantes com filtros
+- [x] Lista de Espera com filtros
+- [x] Drawer de detalhes de reserva com dados do cliente e histórico
+- [x] Drawer de detalhes para passantes e lista de espera
+- [x] Página de controle de acesso com CRUD de admin users
+- [x] Proteção de rotas e sidebar por role
 
 ---
 

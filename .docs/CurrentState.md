@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-02-22 | Fase: 6 (Resend) — CONCLUÍDA | Próxima: Fase 7 (Admin Features & UX)
+> Atualizado: 2026-02-22 | Fase: 7 (Admin Features & UX) — CONCLUÍDA | Próxima: Fase 8 (UI Polish & Padronização)
 
 ## O que funciona
 
@@ -178,15 +178,28 @@
 
 Nada — todos os fluxos principais estão funcionando com integrações reais.
 
+### Admin Features & UX (Fase 7)
+
+- **RBAC**: `getCurrentAdminUser()` em `src/lib/queries/admin-users.ts`, layout autenticado busca role e passa para sidebar/topbar; staff não vê Configurações; apenas owner vê Acessos
+- **Configurações protegidas**: `src/app/admin/(authenticated)/configuracoes/layout.tsx` redireciona staff para `/admin/dashboard`
+- **Controle de Acesso** (`/admin/acessos`): exclusivo para `owner`; lista de admin_users; criação via login+senha (`{login}@domo.local`, sem email real); ativar/desativar, alterar cargo; proteção anti-auto-rebaixamento
+- **Login por usuário**: tela de login aceita usuário simples (`joao.silva`) ou email completo; sufixo `@domo.local` acrescentado automaticamente se não houver `@`
+- **Desativação força logout imediato**: middleware verifica `is_active` em toda request; usuário desativado é redirecionado para `/admin/logout` (Route Handler que faz `signOut()`) em qualquer navegação, sem precisar de reload
+- **Dashboard período**: pills "Hoje / Esta semana / Próximos 15 dias" via `searchParams.period`; `getDashboardData(period)` com range de datas; card Ocupação (%) substituído por "Pessoas no Período" em multi-day; tabela com coluna Data para períodos >1 dia
+- **Passantes — Filtros**: filtros nome/data/telefone server-driven via `searchParams`; `<TableFilters>` componente compartilhado; skeleton com `useTransition`
+- **Lista de Espera — Filtros**: idem passantes
+- **Drawer de Detalhes — Reservas**: `<ReservationDetailDrawer>` com cabeçalho fixo, corpo scrollável (cliente, solicitações, garantia Stripe, histórico de status) e rodapé fixo com ações (mudar status, cobrar no-show inline); lazy-loaded
+- **Drawer de Detalhes — Passantes**: `<WalkInDetailDrawer>` read-only com mesmo padrão visual (cabeçalho fixo, corpo scrollável)
+- **Drawer de Detalhes — Lista de Espera**: `<WaitlistDetailDrawer>` com ações rápidas (Acomodar/Remover) no rodapé fixo para entradas `waiting`
+
 ## O que não existe ainda
 
-- Admin Features & UX (Fase 7)
 - UI Polish & Padronização (Fase 8)
 - Relatórios e Produção (Fase 9)
 
 ## Próximos Passos
 
-Fase 7 — Admin Features & UX: drawer de detalhes de reserva, filtros em passantes/lista de espera, seletor de período no dashboard, controle de acesso.
+Fase 8 — UI Polish & Padronização: revisão visual completa, responsividade, acessibilidade, consistência de estados (loading/empty/error).
 
 ## Issues Conhecidas
 
