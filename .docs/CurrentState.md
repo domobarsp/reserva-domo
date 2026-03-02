@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-02-22 | Fase: 7 (Admin Features & UX) — CONCLUÍDA | Próxima: Fase 8 (Relatórios)
+> Atualizado: 2026-03-02 | Fase: 8 (Relatórios) — CONCLUÍDA | Próxima: Fase 9 (Refinamento — Home & Formulário)
 
 ## O que funciona
 
@@ -192,15 +192,26 @@ Nada — todos os fluxos principais estão funcionando com integrações reais.
 - **Drawer de Detalhes — Passantes**: `<WalkInDetailDrawer>` read-only com mesmo padrão visual (cabeçalho fixo, corpo scrollável)
 - **Drawer de Detalhes — Lista de Espera**: `<WaitlistDetailDrawer>` com ações rápidas (Acomodar/Remover) no rodapé fixo para entradas `waiting`
 
+### Relatórios (Fase 8)
+
+- **Página `/admin/relatorios`**: dados reais do Supabase, seletor de período (7d/30d/90d/custom via searchParams)
+- **KPI Cards com delta comparativo**: Total Reservas, Total Covers, Taxa No-Show, Taxa Cancelamento — cada card exibe ↑/↓ % vs. período anterior
+- **BarChart (Recharts via shadcn chart)**: reservas por dia do período, com tooltip de data + reservas + covers
+- **Donut Chart (Recharts via shadcn chart)**: distribuição por status com legenda e percentuais
+- **Tabela de Acomodações**: total de reservas, covers, no-shows e taxa de no-show por acomodação
+- **Exportação CSV**: `GET /api/relatorios/export?start=X&end=Y` — autenticado via sessão Supabase, UTF-8 BOM para Excel
+- **loading.tsx**: skeleton completo (header, pills, 4 cards, 2 gráficos, tabela)
+- **Biblioteca**: `recharts` instalada via `npx shadcn add chart` — `src/components/ui/chart.tsx`
+- **Server Actions**: `getReportData(startDate, endDate)` em `relatorios/actions.ts` — computa KPIs, byDay, byStatus, byAccommodation e previousKPIs para comparativo
+
 ## O que não existe ainda
 
-- Relatórios (Fase 8)
 - Refinamento visual por página — Home & Formulário (9), Dashboard (10), Calendário (11), Reservas (12), Lista de Espera & Passantes (13), Configurações & Acessos (14)
 - Produção & Deploy (Fase 15)
 
 ## Próximos Passos
 
-Fase 8 — Relatórios: página `/admin/relatorios` com dados reais, gráficos, seletor de período e exportação CSV.
+Fase 9 — Refinamento Visual — Home & Formulário: revisão completa da experiência pública (landing page, formulário multi-step, sucesso, cancelamento).
 
 ## Issues Conhecidas
 

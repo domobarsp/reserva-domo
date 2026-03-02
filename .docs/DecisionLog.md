@@ -348,6 +348,46 @@
 
 ---
 
+### 2026-03-02 — Fase 8: biblioteca de gráficos — shadcn chart (Recharts)
+
+**Contexto**: A página de relatórios precisa de gráficos. Nenhuma biblioteca estava instalada.
+**Decisão**: Usar `shadcn chart` (`npx shadcn add chart`), que é um wrapper sobre Recharts com integração ao design system via CSS variables e `ChartConfig`.
+**Razão**: Já usávamos shadcn/ui — adicionar o chart mantém a consistência de API e estilo. Recharts é maduro, bem suportado no React 19 e Server Components. Alternativas (Chart.js, Nivo, Tremor) adicionariam uma segunda biblioteca visual ao projeto.
+
+---
+
+### 2026-03-02 — Fase 8: cores dos gráficos de status — hex semântico, não CSS variables do chart
+
+**Contexto**: As variáveis `--chart-1` a `--chart-5` do design system são todas variações de lime (cor primária). Usá-las no gráfico de distribuição por status tornava todos os segmentos indistinguíveis.
+**Decisão**: Para gráficos que representam status de reserva, usar cores hexadecimais semânticas diretas no `ChartConfig` e no atributo `fill` dos componentes Recharts: amber-500 (`#f59e0b`) para Pendente, blue-500 (`#3b82f6`) para Confirmado, emerald-500 (`#10b981`) para Sentado, gray-500 (`#6b7280`) para Completo, rose-500 (`#f43f5e`) para Não Compareceu, slate-300 (`#cbd5e1`) para Cancelado.
+**Razão**: As mesmas famílias de cor já são usadas nos badges de status (`status-transitions.ts`) — manter consistência semântica é mais importante do que usar as CSS variables do tema nesse contexto. As CSS variables do chart são reservadas para gráficos de métrica única (ex: total de reservas por dia).
+
+---
+
+### 2026-03-02 — Fase 8: stacked bar chart sem border-radius nas camadas
+
+**Contexto**: O Recharts aplica `radius` em cada segmento individualmente no stacked bar. Se uma camada do meio tem valor 0, o segmento acima fica com arredondamento na base ao invés do topo, gerando artefato visual.
+**Decisão**: Usar `radius={0}` em todos os `<Bar>` de gráficos empilhados.
+**Razão**: Não há forma simples de aplicar radius apenas no topo do stack total sem implementar um `shape` customizado. O custo visual de barras sem arredondamento é zero — a alternativa seria complexidade desnecessária.
+
+---
+
+### 2026-03-02 — Regra de componentes: sempre preferir shadcn/ui sobre HTML nativo
+
+**Contexto**: O seletor de datas nos relatórios foi inicialmente implementado com `<input type="date">` nativo, ficando visualmente inconsistente com o restante do painel admin.
+**Decisão**: Sempre usar o componente shadcn/ui equivalente quando disponível. Para date picker: `<Calendar>` + `<Popover>`. Regra documentada em `DesignSystem.md` com tabela de mapeamento e exemplo de código.
+**Razão**: Consistência visual com o design system. O `<input type="date">` tem aparência dependente de OS/browser e não segue o tema lime/gray do projeto.
+
+---
+
+### 2026-03-02 — Fase 8: terminologia "Pessoas" em vez de "Covers"
+
+**Contexto**: O termo "covers" (padrão do setor de restaurantes para número de pessoas atendidas) não é intuitivo para usuários brasileiros sem experiência no setor.
+**Decisão**: Usar "Pessoas" em toda a UI de relatórios. O campo interno continua sendo `party_size` no banco — apenas o label de exibição foi alterado.
+**Razão**: Clareza para o operador. O sistema é para uso diário por funcionários que podem não conhecer jargão técnico do setor.
+
+---
+
 ### 2026-02-22 — Resend: locale da reserva para idioma do email
 
 **Contexto**: Ao enviar email de cancelamento ou no-show, precisamos saber o idioma preferido do cliente sem query extra.

@@ -14,7 +14,7 @@ Fase 0 (Docs) ✅
                                 └─ Fase 5 (Stripe) ✅
                                 └─ Fase 6 (Resend) ✅
                                      └─ Fase 7 (Admin Features & UX) ✅
-                                          └─ Fase 8 (Relatórios)
+                                          └─ Fase 8 (Relatórios) ✅
                                                └─ Fase 9 (Refinamento — Home & Formulário)
                                                     └─ Fase 10 (Refinamento — Dashboard)
                                                          └─ Fase 11 (Refinamento — Calendário)
@@ -288,7 +288,7 @@ Features e melhorias de UX no painel admin que aumentam a usabilidade operaciona
 ---
 
 ## Fase 8 — Relatórios
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Implementação da página `/admin/relatorios` com dados reais, gráficos e exportação.
@@ -317,18 +317,44 @@ Implementação da página `/admin/relatorios` com dados reais, gráficos e expo
 Revisão completa da experiência pública: landing page, formulário multi-step, página de sucesso e página de cancelamento.
 
 **Itens**:
-- Landing page: revisão de copy, hierarquia visual, CTA, responsividade mobile
-- Formulário multi-step: UX de cada step (datas, acomodação, dados do cliente, cartão, confirmação), indicador de progresso, transições entre steps
-- Step de cartão (Stripe): layout e feedback visual
-- Página de sucesso: design, informações exibidas, link de cancelamento
-- Página de cancelamento: fluxo, estados (carregando, já cancelado, erro)
-- Consistência tipográfica e de espaçamento em todas as páginas públicas
+
+### Landing Page
+- Hero muito minimalista: ausência de imagens, texturas ou seções de conteúdo torna a página "estéril"
+- Header sem links de navegação úteis (ex: âncora para seção de info, horários)
+- Footer sem dados relevantes do restaurante (endereço, horários, redes sociais)
+- CTA único — avaliar adicionar uma seção "Como funciona" ou "Destaques" abaixo do hero
+- Botão "Reservar" no navbar fica sem respiro nas laterais em mobile
+- Revisar contraste do texto branco sobre `bg-primary` (verde-limão) para acessibilidade
+
+### Formulário Multi-step
+- Popover do calendário de datas sobrepõe os campos que aparecem abaixo (time slots), confundindo o usuário — fechar automaticamente ao selecionar data
+- Campos surgem dinamicamente (data → horário → acomodação → pessoas): adicionar transição suave (fade/slide-in) para evitar "saltos" de layout
+- Cards de acomodação (Mesa vs Balcão): hierarquia visual das informações de vagas/capacidade ligeiramente desorganizada
+- Seletor de número de pessoas é dropdown simples — avaliar incrementador (+/-) para facilitar
+- Step 2 (dados do cliente): campos Nome + Sobrenome em grid 2 colunas ficam estreitos demais em mobile — empilhar verticalmente
+- Label "(emails de confirmação)" ao lado do seletor de idioma com pouco contraste e tamanho de fonte pequeno
+- Botões "Voltar" / "Avançar" com pouco respiro em relação ao último campo do formulário
+
+### Step de Cartão (Stripe)
+- Revisar layout do Stripe Payment Element no contexto do card do formulário
+- Garantir feedback visual de loading/erro durante comunicação com Stripe
+
+### Página de Sucesso
+- Revisar quais informações são exibidas (data, horário, acomodação, nome do cliente)
+- Verificar se o link de cancelamento está visível e claro
+- Polimento visual geral da página
+
+### Página de Cancelamento
+- Garantir estados distintos e informativos: carregando, já cancelado, erro, sucesso
+- Texto e hierarquia visual claros para cada estado
 
 **Critérios de aceitação**:
-- [ ] Landing page responsiva e com hierarquia visual clara
-- [ ] Formulário fluído em mobile e desktop, sem overflow ou truncamento
-- [ ] Transições suaves entre steps
-- [ ] Página de sucesso e cancelamento polidas
+- [ ] Landing page com pelo menos uma seção de conteúdo adicional ao hero (destaques, como funciona ou info do restaurante)
+- [ ] Header e footer públicos com informações relevantes
+- [ ] Calendário fecha automaticamente ao selecionar data e não sobrepõe campos seguintes
+- [ ] Aparição de campos dinâmicos com transição suave (sem salto abrupto)
+- [ ] Formulário legível e sem overflow em mobile (320px+)
+- [ ] Página de sucesso e cancelamento com estados claros e design polido
 - [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
 
 ---
@@ -340,17 +366,32 @@ Revisão completa da experiência pública: landing page, formulário multi-step
 Revisão profunda do dashboard admin: cards de estatísticas, seletor de período, tabela de reservas do dia e estados de loading/empty/error.
 
 **Itens**:
-- Cards de Big Numbers: revisão de layout, hierarquia, microcopy e cores por contexto (ok / alerta / crítico)
-- Seletor de período: UX das pills, feedback visual de período ativo
-- Tabela do período: densidade, legibilidade, coluna de Data para períodos >1 dia
-- Empty state quando não há reservas no período
-- Loading skeleton fiel à estrutura real dos dados
-- Responsividade: comportamento em tablet e mobile
+
+### Cards de Estatísticas
+- 4 cards (Reservas Hoje, Confirmadas, Pendentes, Ocupação) com badge colorido no topo e microcopy descritivo — estrutura boa, mas cards com `0` ficam sem contexto visual de urgência vs. normalidade
+- Badge de ícone verde no card "Reservas Hoje" usa ícone de calendário mas o label do badge (`0 no dia`) repete informação do valor — avaliar badge mais informativo (ex: tendência, comparativo com dia anterior)
+- Card "Ocupação" mostra `0/76` no badge — `76` é pouco intuitivo sem unidade (deve ser `76 cadeiras` ou similar)
+- Cards com valor `0%` para "Confirmadas" e `0` para "Pendentes" têm microcopy fixo positivo ("Boa taxa de confirmação") — deve ser contextual ao valor real
+- Espaçamento entre os 4 cards e a seção "Reservas de Hoje" pode ter mais respiro
+
+### Seletor de Período
+- Pills (Hoje / Esta semana / Próximos 15 dias) funcionais, mas sem feedback visual claro de qual está ativo além do outline
+- Pill ativo deveria ter preenchimento sólido para contraste maior
+
+### Tabela do Período
+- Estado empty "Nenhuma reserva para hoje" com texto simples e sem ícone — adicionar ícone e texto mais encorajador
+- Para períodos > 1 dia, adicionar coluna de Data à tabela (atualmente não visível)
+- Sem coluna de resumo de covers (pax) na tabela do dashboard
+
+### Responsividade
+- Cards em grid de 4 colunas — verificar comportamento em tablet (provavelmente quebra feio)
+- Tabela precisa de colunas colapsáveis ou scroll horizontal em mobile
 
 **Critérios de aceitação**:
-- [ ] Cards visualmente consistentes e informativos
-- [ ] Tabela legível em qualquer tamanho de tela
-- [ ] Empty e loading states polidos
+- [ ] Cards com microcopy contextual ao valor atual (não texto fixo positivo quando há pendências)
+- [ ] Pill ativo com visual sólido/preenchido
+- [ ] Empty state da tabela com ícone e texto adequado
+- [ ] Cards responsivos em tablet (2 colunas) e mobile (1 coluna)
 - [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
 
 ---
@@ -362,18 +403,34 @@ Revisão profunda do dashboard admin: cards de estatísticas, seletor de períod
 Revisão do calendário visual mensal: grid, células, legenda, navegação e estados de ocupação.
 
 **Itens**:
-- Grid mensal: espaçamento, proporção das células, tipografia do número do dia
-- Indicadores de ocupação: revisão das cores (verde/amarelo/vermelho/cinza), legenda
-- Célula com múltiplos dados (nº reservas, covers): hierarquia visual
-- Dia atual e dia selecionado: destaque visual claro
-- Navegação mês anterior/próximo: botões, exibição do mês/ano
-- Responsividade: comportamento em telas menores (compactar ou scroll horizontal)
-- Estado de loading ao mudar de mês
+
+### Grid e Células
+- Células dos dias sem reserva ficam completamente vazias — sem indicador visual de "disponível" vs. "fechado"
+- Células com dados (ex: dia 27: "4 res. 9 pax") ficam com texto pequeno e sem hierarquia — número de reservas e pax deveriam ter pesos diferentes
+- Proporção das células: altura relativamente baixa, tornando o calendário comprimido — aumentar altura mínima por célula
+- O número do dia (ex: "22") está em verde (dia atual) mas sem ring/destaque de borda suficientemente forte para destacar
+- Dias sem movimento têm apenas o número — uma célula cinza sutil ou um ponto indicaria "sem reservas" vs. "fechado"
+
+### Legenda
+- Legenda (Baixa / Média / Alta / Fechado) está no rodapé do calendário — funciona, mas os ícones de cor são muito pequenos
+- Considerar mover a legenda para próximo do header do calendário ou tooltip em hover
+
+### Navegação
+- Botões de navegar mês (‹ ›) são pequenos e sem label — adicionar `aria-label` e talvez exibir o mês de destino em hover (tooltip)
+- Sem feedback de loading ao mudar de mês (troca imediata pode parecer travamento)
+
+### Clique em Célula
+- Clicar em um dia navega para `/admin/reservas?data=X` — confirmar que esse comportamento é perceptível (talvez cursor pointer e hover state na célula)
+
+### Responsividade
+- Em telas menores que 768px o grid de 7 colunas fica muito comprimido — avaliar scroll horizontal ou visualização alternativa compacta
 
 **Critérios de aceitação**:
-- [ ] Grid proporcional e legível em desktop e tablet
-- [ ] Indicadores de ocupação claros e com legenda
-- [ ] Navegação fluída com feedback de loading
+- [ ] Células com altura mínima maior e texto com hierarquia (res. em bold, pax em muted)
+- [ ] Dia atual com destaque de borda visível e cor
+- [ ] Dias sem reservas com indicador visual sutil de status (disponível vs. fechado)
+- [ ] Navegação de mês com feedback de loading
+- [ ] Responsividade adequada em tablet
 - [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
 
 ---
@@ -385,18 +442,38 @@ Revisão do calendário visual mensal: grid, células, legenda, navegação e es
 Revisão da página de gestão de reservas: filtros, tabela e drawer de detalhes.
 
 **Itens**:
-- Filtros: layout, UX do date picker, select de status e acomodação, botão de limpar
-- Tabela: colunas, densidade, badges de status, ícones de cartão/cobrança, ações no dropdown
-- Estados: loading skeleton, empty state (sem reservas no filtro), erro de busca
-- Drawer de detalhes: revisão de cada seção (cabeçalho, cliente, histórico, garantia), tipografia, espaçamento
-- Ações no drawer: botões de status (tamanho, cor, feedback de loading), painel de cobrança no-show
-- Responsividade: tabela em mobile (colunas colapsáveis ou scroll), drawer em tela cheia no mobile
+
+### Filtros
+- Filtro de data exibe texto truncado ("sexta-feira, 27 de feve...") — aumentar largura ou abreviar formato de exibição
+- Select "Todas acomodacoe" sem acento — corrigir texto ("Todas as acomodações")
+- Os 3 filtros + "Limpar filtros" ficam em uma linha plana sem agrupamento visual — poderia ter um label "Filtros:" ou separador
+- Botão "Nova Reserva" muito distante dos filtros (extremo oposto da tela) — avaliar se faz sentido ou se o header poderia ser reestruturado
+
+### Tabela
+- Coluna "DATA" repete a mesma data em todas as linhas quando filtrado por dia — desnecessário; pode ser suprimida quando há filtro de data ativo
+- Badge de status "Cancelado" exibido em texto cinza sem cor de fundo — sem destaque visual (diferente de "Não Compareceu" que tem fundo vermelho) — padronizar
+- Ícones de cartão (coluna antes de "...") têm significado pouco claro sem tooltip — o que o ícone de cartão cinza vs. laranja significa?
+- Coluna "ACÕES" sem acento — corrigir para "AÇÕES"
+- Sem indicador de clique na linha (cursor pointer, hover state) — usuário pode não saber que a linha é clicável para abrir o drawer
+
+### Drawer de Detalhes
+- Estrutura boa: cabeçalho com nome + badge de status, metadados (data, horário, tipo, pessoas), seções Cliente, Garantia & Cobrança, Histórico
+- Seções com label em uppercase pequeno (`CLIENTE`, `GARANTIA & COBRANÇA`, `HISTÓRICO`) — boa hierarquia
+- Histórico: timestamps no formato `21/02 17:23` sem o ano — pode gerar ambiguidade; avaliar `21/02/2026 17:23`
+- Falta de ações de transição de status diretamente no drawer (ex: botões "Confirmar", "Check-in", "No-show") — o usuário precisa ir ao menu `...` na tabela
+- Drawer não tem scroll próprio quando o conteúdo é longo — avaliar overflow interno
+- Sem ação de "Fechar" óbvia além do `X` no canto — ESC deveria funcionar (confirmar)
+
+### Responsividade
+- Tabela com 7 colunas em mobile ficaria muito comprimida — colunas menos relevantes devem ser ocultadas (DATA, ACOMODAÇÃO)
+- Drawer deve ocupar tela cheia em mobile
 
 **Critérios de aceitação**:
-- [ ] Filtros intuitivos e sem overflow
-- [ ] Tabela legível com todas as informações necessárias
-- [ ] Drawer polido com ações claras
-- [ ] Experiência funcional em mobile
+- [ ] Textos com erros de acentuação corrigidos em toda a página
+- [ ] Badge "Cancelado" com cor de fundo consistente com os demais status
+- [ ] Linha da tabela com hover state e cursor pointer indicando clicabilidade
+- [ ] Drawer com botões de ação de transição de status
+- [ ] Drawer responsivo (fullscreen em mobile)
 - [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
 
 ---
@@ -408,17 +485,36 @@ Revisão da página de gestão de reservas: filtros, tabela e drawer de detalhes
 Revisão das páginas de Lista de Espera e Passantes: filtros, tabelas e drawers.
 
 **Itens**:
-- Filtros compartilhados (TableFilters): refinamento do layout e UX
-- Tabela de Lista de Espera: colunas, status badges, ações (Acomodar/Remover)
-- Tabela de Passantes: colunas, densidade, empty state
-- Drawer de Lista de Espera: cabeçalho, seções de contato e timeline, ações no rodapé
-- Drawer de Passantes: cabeçalho, seção de contato, solicitações especiais
-- Consistência visual entre as duas páginas (mesmos padrões)
+
+### Filtros (compartilhados entre as duas páginas)
+- Layout de filtros idêntico em ambas as páginas (Nome, Telefone, Data) — campo de busca ocupa ~70% da largura, os outros 2 ficam menores e sem label visível
+- Input de telefone sem formatação/máscara — pode confundir o operador ao digitar
+- Filtro de Data exibe apenas o placeholder "Data" sem indicar se é para filtro de data de entrada ou data de criação
+
+### Lista de Espera
+- Empty state bem executado (ícone + texto centralizado)
+- Botão "Adicionar" no canto superior direito — pouco visível se a lista estiver vazia (sem CTA de destaque no empty state)
+- Tabela deve ter colunas: Nome, Pessoas, Horário desejado, Contato, Status, Ações — confirmar que todas estão presentes
+- Ação "Acomodar" deve ter confirmação ou transição de status clara
+
+### Passantes
+- Tabela tem: Horário (formato `22/02 20:29` — legível), Nome, Telefone, Email, Pessoas, Solicitações
+- Coluna "Solicitações" exibe `—` quando vazia — frio visualmente; avaliar `Nenhuma` em muted
+- Horário com data e hora junto (`22/02 20:29`) — data em muted e hora em negrito melhoraria hierarquia
+- Sem destaque visual para registros do dia atual vs. passados
+- Empty state: sem registros = página muito vazia sem direcionamento para o operador
+- Linha clicável para drawer? Verificar se o drawer de passantes está acessível via clique na linha (não só pelo `...`)
+
+### Consistência entre páginas
+- Header pattern idêntico (título + botão de ação) ✓
+- Filtros no mesmo layout ✓
+- Garantir que os drawers de ambas as páginas sigam o mesmo padrão visual do drawer de Reservas
 
 **Critérios de aceitação**:
-- [ ] Filtros e tabelas consistentes entre as duas páginas
-- [ ] Drawers com mesmo padrão visual da página de Reservas
-- [ ] Empty states e loading states polidos
+- [ ] Filtros com labels visíveis e espaçamento adequado em ambas as páginas
+- [ ] Empty states com CTA de destaque (botão "Adicionar" visível no estado vazio)
+- [ ] Hierarquia visual na coluna de Horário (data muted, hora bold)
+- [ ] Drawers de Lista de Espera e Passantes com mesmo padrão visual do drawer de Reservas
 - [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
 
 ---
@@ -430,16 +526,40 @@ Revisão das páginas de Lista de Espera e Passantes: filtros, tabelas e drawers
 Revisão das páginas de Configurações (hub + 6 sub-páginas) e Acessos.
 
 **Itens**:
-- Hub de Configurações: cards de navegação, descrições, ícones
-- Sub-páginas (Horários, Acomodações, Capacidade, Garantia, Taxa, Exceções): layout dos formulários, tabelas de CRUD, dialogs de criação/edição
-- Consistência de padrões entre sub-páginas (headers, botões de ação, empty states)
-- Página de Acessos: tabela de usuários, badges de cargo/status, dialog de criação
-- Feedback de ações: toasts, loading states nos botões
+
+### Hub de Configurações
+- Grid de cards de navegação — verificar se os cards têm ícone, título e descrição curta visível
+- Verificar hierarquia e tamanho dos cards; cards muito grandes ou muito pequenos para o conteúdo que descrevem
+
+### Sub-página: Horários
+- Tabela limpa e funcional (NOME / INÍCIO / TÉRMINO / DIAS DA SEMANA / ATIVO / AÇÕES)
+- Chips dos dias da semana (Dom, Seg, Ter...) individualmente — quando todos são exibidos, a coluna fica larga e densa
+  - Avaliar exibir em formato compacto quando são todos os dias ("Diário" ou "Dom–Sáb")
+- Toggle "Ativo" (switch verde) bem posicionado — confirmar que há feedback de carregamento ao alternar
+- Botões de ação (editar ✏️ e excluir 🗑️) pequenos, sem label — confirmar que têm tooltip
+- Dialog de edição/criação: revisar layout e UX dos campos (nome, horário início/fim, dias, ativo)
+
+### Sub-páginas: Acomodações, Capacidade, Garantia, Taxa, Exceções
+- Garantir que todas seguem o mesmo padrão de header de sub-página (botão de voltar ← + título + descrição + botão de ação primária)
+- Formulários de CRUD devem ter labels claros, campos com tamanho adequado e feedback de erro inline
+- Empty states padronizados com mesmo ícone + texto + CTA
+
+### Página de Acessos
+- Tabela com badges de cargo e status — verificar legibilidade e contraste
+- Menu de ações por linha (`...`) — avaliar se ações críticas (desativar, remover) têm confirmação
+- Dialog de criação/convite: campo de email + seletor de role; revisar layout e feedback
+
+### Feedback Global
+- Toasts de confirmação (sucesso/erro) padronizados e com posição consistente
+- Loading states nos botões de submit dos formulários e dialogs
+- Confirmar que todas as sub-páginas têm breadcrumb ou link de volta ao hub de Configurações
 
 **Critérios de aceitação**:
-- [ ] Hub de Configurações visualmente claro e navegável
-- [ ] Sub-páginas com layout consistente
-- [ ] Página de Acessos polida
+- [ ] Chips de dias da semana com versão comprimida para "todos os dias"
+- [ ] Todas as sub-páginas com header padrão (voltar + título + descrição + ação)
+- [ ] Empty states padronizados em todas as sub-páginas
+- [ ] Toasts de feedback presentes em todas as ações de CRUD
+- [ ] Botões com loading state ao submeter
 - [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
 
 ---

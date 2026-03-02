@@ -360,6 +360,56 @@ Em vez de `border` para delimitar secoes, usar:
 
 ---
 
+## Regra de Componentes: Sempre Preferir shadcn/ui
+
+**Regra**: Nunca usar elementos HTML nativos quando houver um componente shadcn/ui equivalente instalado.
+
+| Necessidade | Componente correto | Proibido |
+|------------|-------------------|----------|
+| Seleção de data | `<Calendar>` + `<Popover>` | `<input type="date">` nativo |
+| Input de texto | `<Input>` | `<input>` nativo sem estilo |
+| Botão | `<Button variant="...">` | `<button>` nativo sem classe |
+| Caixa de diálogo | `<Dialog>` | `<dialog>` nativo ou `window.confirm` |
+| Seleção de opção | `<Select>` | `<select>` nativo |
+| Checkbox | `<Checkbox>` | `<input type="checkbox">` nativo |
+| Toggle | `<Switch>` | `<input type="checkbox">` com CSS |
+| Tooltip | `<Tooltip>` | `title` attribute HTML |
+| Textarea | `<Textarea>` | `<textarea>` nativo |
+
+### Date picker — padrão do projeto
+
+```tsx
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { formatDatePtBr, dateToStr } from "@/lib/availability";
+
+<Popover>
+  <PopoverTrigger asChild>
+    <Button variant="outline" className="justify-start text-left font-normal">
+      <CalendarIcon className="mr-2 h-4 w-4" />
+      {value ? formatDatePtBr(value) : "Selecionar data"}
+    </Button>
+  </PopoverTrigger>
+  <PopoverContent className="w-auto p-0" align="start">
+    <Calendar
+      mode="single"
+      selected={value ? strToDate(value) : undefined}
+      onSelect={(date) => date && onChange(dateToStr(date))}
+      initialFocus
+    />
+  </PopoverContent>
+</Popover>
+```
+
+Helpers já existentes em `src/lib/availability.ts`:
+- `formatDatePtBr(dateStr)` — formata `YYYY-MM-DD` para exibição em PT-BR
+- `dateToStr(date)` — converte `Date` para `YYYY-MM-DD`
+- `getTodayStr()` — retorna data de hoje como `YYYY-MM-DD`
+
+---
+
 ## Mudancas Tecnicas Necessarias
 
 ### 1. `globals.css`
