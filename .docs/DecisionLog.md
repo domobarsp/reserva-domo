@@ -393,3 +393,21 @@
 **Contexto**: Ao enviar email de cancelamento ou no-show, precisamos saber o idioma preferido do cliente sem query extra.
 **Decisão**: Usar `reservations.locale` (copiado de `customers.preferred_locale` no momento da criação da reserva via `POST /api/reservations`). Para cancelamento e no-show, o campo `locale` é selecionado diretamente no select da reserva — sem join adicional em `customers`.
 **Razão**: O campo `locale` na tabela `reservations` existe exatamente para esse caso de uso — snapshot do idioma no momento da reserva, acessível sem join. Evita uma query desnecessária.
+
+---
+
+### 2026-03-02 — Redesign do sistema visual: premium, minimalista e sofisticado
+
+**Contexto**: O design system original usava lime (verde-lima vibrante) como cor primária, com fundo branco puro e raio de borda pequeno (0.45rem). A direção visual não transmitia a sofisticação esperada para uma interface de reservas de restaurante premium.
+**Decisão**: Adotar nova direção visual documentada em `DesignSystem.md`:
+- Cor primária: verde escuro `#1F3A34` (forest green profundo)
+- Fundo: off-white quente `#F6F3EE` — nunca branco puro
+- Cards: branco puro sobre fundo tintado, criando profundidade sutil
+- Acento: terracota `#C97C6A` — usado com parcimônia
+- Detalhe premium: dourado queimado `#B59A5A` — apenas em microdetalhes (avaliações, progresso)
+- Raio de borda: `0.75rem` (de 0.45rem) — mais arredondado, mais moderno
+- Sombras: suaves e realistas, nunca dramáticas
+- Tipografia: Inter mantida, mas com tracking-tight em títulos e leading-relaxed no corpo
+- Estética geral: editorial, hotelaria de alto padrão, "luxo moderno não extravagante"
+**Razão**: O produto é uma interface de reservas para restaurante sofisticado. A experiência pública (formulário de reserva) é a vitrine do restaurante e deve transmitir elegância e confiança. O lime vibrante era inconsistente com essa proposta.
+**Impacto**: Afeta principalmente as fases de refinamento visual (9–14). O `DesignSystem.md` foi reescrito com todos os tokens, diretrizes de componentes e notas de implementação técnica.

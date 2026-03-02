@@ -1,6 +1,7 @@
 # Estado Atual do Sistema
 
 > Atualizado: 2026-03-02 | Fase: 8 (Relatórios) — CONCLUÍDA | Próxima: Fase 9 (Refinamento — Home & Formulário)
+> ⚠️ Design system atualizado em 2026-03-02: nova direção visual premium (verde escuro, off-white, terracota). Ver `DesignSystem.md`. **Código ainda não migrado** — será implementado nas fases 9–14.
 
 ## O que funciona
 
