@@ -23,7 +23,7 @@ export function StepCustomerInfo() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {/* First Name */}
         <FormField
           control={form.control}
@@ -101,7 +101,7 @@ export function StepCustomerInfo() {
           <FormItem>
             <FormLabel>
               Idioma para comunicações{" "}
-              <span className="font-normal text-muted-foreground">
+              <span className="text-xs font-normal text-muted-foreground">
                 (emails de confirmação)
               </span>
             </FormLabel>

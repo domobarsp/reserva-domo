@@ -9,13 +9,9 @@ import {
   Armchair,
   AlertTriangle,
   CheckCircle2,
+  Info,
+  Loader2,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { formatDatePtBr } from "@/lib/availability";
@@ -41,6 +37,40 @@ interface CancelPageContentProps {
     name: string;
   } | null;
   isAlreadyCancelled: boolean;
+}
+
+function ReservationDetailsCard({
+  reservation,
+  timeSlot,
+  accommodation,
+}: Pick<CancelPageContentProps, "reservation" | "timeSlot" | "accommodation">) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-5 space-y-3 shadow-sm">
+      <div className="flex items-center gap-3">
+        <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm">{formatDatePtBr(reservation.date)}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm">
+          {timeSlot
+            ? `${timeSlot.name} (${timeSlot.start_time} — ${timeSlot.end_time})`
+            : "—"}
+        </span>
+      </div>
+      <div className="flex items-center gap-3">
+        <Armchair className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm">{accommodation?.name ?? "—"}</span>
+      </div>
+      <div className="flex items-center gap-3">
+        <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm">
+          {reservation.party_size}{" "}
+          {reservation.party_size === 1 ? "pessoa" : "pessoas"}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 export function CancelPageContent({
@@ -75,141 +105,139 @@ export function CancelPageContent({
     }
   };
 
-  // Already cancelled (either from DB status or from user action in this session)
-  if (isAlreadyCancelled || isCancelled) {
+  // Cancelled successfully in this session
+  if (isCancelled) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12">
-        <Card>
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900/30">
-              <CheckCircle2 className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+      <div className="bg-background px-4 py-16">
+        <div className="mx-auto max-w-lg text-center space-y-6">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <CheckCircle2 className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl">
-              {isCancelled ? "Reserva Cancelada" : "Reserva Já Cancelada"}
-            </CardTitle>
-            <p className="text-muted-foreground">
-              {isCancelled
-                ? "Sua reserva foi cancelada com sucesso."
-                : "Esta reserva já foi cancelada anteriormente."}
-            </p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-lg border p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {formatDatePtBr(reservation.date)}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {timeSlot
-                    ? `${timeSlot.name} (${timeSlot.start_time} — ${timeSlot.end_time})`
-                    : "—"}
-                </span>
-              </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">
+                Reserva Cancelada
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Sua reserva foi cancelada com sucesso.
+              </p>
             </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Button asChild variant="outline">
-                <Link href="/">Voltar ao início</Link>
-              </Button>
-              <Button asChild>
-                <Link href="/reserva">Fazer nova reserva</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+          <ReservationDetailsCard
+            reservation={reservation}
+            timeSlot={timeSlot}
+            accommodation={accommodation}
+          />
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <Button asChild variant="ghost" className="text-muted-foreground">
+              <Link href="/">Voltar ao início</Link>
+            </Button>
+            <Button asChild className="rounded-xl">
+              <Link href="/reserva">Nova Reserva</Link>
+            </Button>
+          </div>
+        </div>
       </div>
     );
   }
 
-  // Active reservation — show details and cancel button
-  return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Cancelar Reserva</CardTitle>
-          <p className="text-muted-foreground">
-            Revise os detalhes antes de cancelar.
-          </p>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Reservation Details */}
-          <div className="rounded-lg border p-4 space-y-3">
-            <h3 className="font-semibold">Detalhes da reserva</h3>
-
-            <div className="grid gap-3">
-              <div className="flex items-center gap-3">
-                <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {formatDatePtBr(reservation.date)}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {timeSlot
-                    ? `${timeSlot.name} (${timeSlot.start_time} — ${timeSlot.end_time})`
-                    : "—"}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Armchair className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">{accommodation?.name ?? "—"}</span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {reservation.party_size}{" "}
-                  {reservation.party_size === 1 ? "pessoa" : "pessoas"}
-                </span>
-              </div>
+  // Already cancelled in DB
+  if (isAlreadyCancelled) {
+    return (
+      <div className="bg-background px-4 py-16">
+        <div className="mx-auto max-w-lg text-center space-y-6">
+          <div className="flex flex-col items-center gap-3">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-amber-100">
+              <Info className="h-8 w-8 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold tracking-tight">
+                Reserva Já Cancelada
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Esta reserva já foi cancelada anteriormente.
+              </p>
             </div>
           </div>
-
-          <Separator />
-
-          {/* Customer Info */}
-          <div className="space-y-2">
-            <h3 className="font-semibold">Reservado por</h3>
-            <p className="text-sm">
-              {customer.first_name} {customer.last_name}
-            </p>
-            <p className="text-sm text-muted-foreground">{customer.email}</p>
-          </div>
-
-          <Separator />
-
-          {/* Warning */}
-          <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-950/30">
-            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-sm text-amber-700 dark:text-amber-300">
-              Esta ação não pode ser desfeita. Após cancelar, você precisará
-              fazer uma nova reserva.
-            </p>
-          </div>
-
-          {/* Action buttons */}
+          <ReservationDetailsCard
+            reservation={reservation}
+            timeSlot={timeSlot}
+            accommodation={accommodation}
+          />
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button asChild variant="outline">
-              <Link href="/">Manter reserva</Link>
+            <Button asChild variant="ghost" className="text-muted-foreground">
+              <Link href="/">Voltar ao início</Link>
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleCancel}
-              disabled={isCancelling}
-            >
-              {isCancelling ? "Cancelando..." : "Cancelar Reserva"}
+            <Button asChild className="rounded-xl">
+              <Link href="/reserva">Nova Reserva</Link>
             </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Active reservation — confirm cancellation
+  return (
+    <div className="bg-background px-4 py-16">
+      <div className="mx-auto max-w-lg space-y-6">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Cancelar Reserva
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Revise os detalhes antes de confirmar o cancelamento.
+          </p>
+        </div>
+
+        <ReservationDetailsCard
+          reservation={reservation}
+          timeSlot={timeSlot}
+          accommodation={accommodation}
+        />
+
+        <Separator />
+
+        <div>
+          <p className="text-sm font-medium">
+            {customer.first_name} {customer.last_name}
+          </p>
+          <p className="text-sm text-muted-foreground">{customer.email}</p>
+        </div>
+
+        <Separator />
+
+        {/* Warning */}
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <p className="text-sm text-amber-700">
+            Esta ação não pode ser desfeita. Após cancelar, você precisará fazer
+            uma nova reserva.
+          </p>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button asChild variant="ghost" className="text-muted-foreground">
+            <Link href="/">Manter reserva</Link>
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleCancel}
+            disabled={isCancelling}
+            className="rounded-xl"
+          >
+            {isCancelling ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Cancelando...
+              </>
+            ) : (
+              "Cancelar Reserva"
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

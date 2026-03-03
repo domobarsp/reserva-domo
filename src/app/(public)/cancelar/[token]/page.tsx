@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { XCircle } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { CancelPageContent } from "@/components/features/reservation/cancel-page-content";
@@ -15,7 +14,6 @@ export default async function CancelarPage({
 
   const supabase = createAdminClient();
 
-  // Fetch reservation by cancellation token with joined data
   const { data: reservation } = await supabase
     .from("reservations")
     .select(
@@ -27,21 +25,22 @@ export default async function CancelarPage({
   // Not found
   if (!reservation) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12">
-        <Card>
-          <CardContent className="py-12 text-center space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
-              <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
-            </div>
-            <h2 className="text-xl font-semibold">Reserva não encontrada</h2>
-            <p className="text-muted-foreground">
-              O link de cancelamento é inválido ou a reserva não existe.
-            </p>
-            <Button asChild variant="outline">
-              <Link href="/">Voltar ao início</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="bg-background px-4 py-16">
+        <div className="mx-auto max-w-lg text-center space-y-4">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+            <XCircle className="h-8 w-8 text-destructive" />
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight">
+            Reserva não encontrada
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            O link de cancelamento é inválido ou a reserva não existe. Verifique
+            o link enviado por email.
+          </p>
+          <Button asChild variant="outline" className="rounded-xl">
+            <Link href="/">Voltar ao início</Link>
+          </Button>
+        </div>
       </div>
     );
   }

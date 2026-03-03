@@ -220,17 +220,19 @@ export function ReservationForm({
   const customerName = `${values.first_name} ${values.last_name}`.trim();
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">Fazer Reserva</CardTitle>
+    <div className="bg-background min-h-full px-4 py-12">
+      <Card className="mx-auto max-w-xl rounded-2xl shadow-md">
+        <CardHeader className="pb-0">
+          <CardTitle className="text-center text-xl font-semibold tracking-tight">
+            Fazer Reserva
+          </CardTitle>
           <StepIndicator
             currentStep={currentStep}
             totalSteps={totalSteps}
             labels={stepLabels}
           />
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-2">
           <FormProvider {...form}>
             <form onSubmit={(e) => e.preventDefault()}>
               {/* Step 1 — Informações da Reserva */}
@@ -271,13 +273,14 @@ export function ReservationForm({
               )}
 
               {/* Navigation buttons */}
-              <div className="mt-8 flex justify-between">
+              <div className="mt-8 flex justify-between gap-3">
                 {currentStep > 1 ? (
                   <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost"
                     onClick={handleBack}
                     disabled={isSubmitting || isConfirmingCard}
+                    className="text-muted-foreground"
                   >
                     Voltar
                   </Button>
@@ -290,6 +293,7 @@ export function ReservationForm({
                     type="button"
                     onClick={handleNext}
                     disabled={isConfirmingCard}
+                    className="h-12 rounded-xl px-8 font-medium"
                   >
                     {isConfirmingCard && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -301,6 +305,7 @@ export function ReservationForm({
                     type="button"
                     onClick={handleSubmit}
                     disabled={isSubmitting}
+                    className="h-12 rounded-xl px-8 font-medium"
                   >
                     {isSubmitting && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

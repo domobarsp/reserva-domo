@@ -7,12 +7,6 @@ import {
   CheckCircle2,
   Mail,
 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { createAdminClient } from "@/utils/supabase/admin";
@@ -35,7 +29,6 @@ export default async function SucessoPage({
   const lastName = (params.last_name as string) ?? "";
   const email = (params.email as string) ?? "";
 
-  // Fetch time slot and accommodation from Supabase
   const supabase = createAdminClient();
   const [{ data: timeSlotData }, { data: accommodationData }] =
     await Promise.all([
@@ -51,130 +44,115 @@ export default async function SucessoPage({
 
   if (!id) {
     return (
-      <div className="mx-auto max-w-2xl px-4 py-12">
-        <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">
-              Nenhuma reserva encontrada. Acesse a{" "}
-              <Link href="/reserva" className="underline text-primary">
-                página de reserva
-              </Link>{" "}
-              para fazer uma nova reserva.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="mx-auto max-w-lg px-4 py-16 text-center">
+        <p className="text-muted-foreground">
+          Nenhuma reserva encontrada.{" "}
+          <Link href="/reserva" className="text-primary underline">
+            Fazer uma reserva
+          </Link>
+          .
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-12">
-      <Card>
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-            <CheckCircle2 className="h-8 w-8 text-green-600 dark:text-green-400" />
+    <div className="bg-background px-4 py-16">
+      <div className="mx-auto max-w-lg space-y-6">
+        {/* Check icon */}
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+            <CheckCircle2 className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Reserva Confirmada!</CardTitle>
-          <p className="text-muted-foreground">
-            Sua reserva foi realizada com sucesso.
-          </p>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Reservation ID */}
-          <div className="rounded-lg border bg-muted/50 p-4 text-center">
-            <p className="text-xs text-muted-foreground mb-1">
-              ID da reserva
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Reserva Confirmada!
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Sua reserva foi realizada com sucesso.
             </p>
-            <p className="font-mono text-sm font-medium break-all">{id}</p>
           </div>
+        </div>
 
-          {/* Reservation Details */}
-          <div className="space-y-3">
-            <h3 className="font-semibold">Detalhes da reserva</h3>
+        {/* Details card */}
+        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
+            Detalhes
+          </h2>
 
-            <div className="grid gap-3">
-              <div className="flex items-center gap-3">
-                <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {date ? formatDatePtBr(date) : "—"}
-                </span>
-              </div>
+          <div className="grid gap-3">
+            <div className="flex items-center gap-3">
+              <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="text-sm">
+                {date ? formatDatePtBr(date) : "—"}
+              </span>
+            </div>
 
-              <div className="flex items-center gap-3">
-                <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {timeSlot
-                    ? `${timeSlot.name} (${timeSlot.start_time} — ${timeSlot.end_time})`
-                    : "—"}
-                </span>
-              </div>
+            <div className="flex items-center gap-3">
+              <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="text-sm">
+                {timeSlot
+                  ? `${timeSlot.name} (${timeSlot.start_time} — ${timeSlot.end_time})`
+                  : "—"}
+              </span>
+            </div>
 
-              <div className="flex items-center gap-3">
-                <Armchair className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">{accommodation?.name ?? "—"}</span>
-              </div>
+            <div className="flex items-center gap-3">
+              <Armchair className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="text-sm">{accommodation?.name ?? "—"}</span>
+            </div>
 
-              <div className="flex items-center gap-3">
-                <Users className="h-4 w-4 text-muted-foreground shrink-0" />
-                <span className="text-sm">
-                  {partySize} {partySize === 1 ? "pessoa" : "pessoas"}
-                </span>
-              </div>
+            <div className="flex items-center gap-3">
+              <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="text-sm">
+                {partySize} {partySize === 1 ? "pessoa" : "pessoas"}
+              </span>
             </div>
           </div>
 
           <Separator />
 
-          {/* Customer Info */}
-          <div className="space-y-2">
-            <h3 className="font-semibold">Reservado por</h3>
-            <p className="text-sm">
+          <div className="space-y-0.5">
+            <p className="text-sm font-medium">
               {firstName} {lastName}
             </p>
             <p className="text-sm text-muted-foreground">{email}</p>
           </div>
+        </div>
 
-          <Separator />
+        {/* Email confirmation */}
+        <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+          <p className="text-sm text-muted-foreground">
+            Um email de confirmação foi enviado para{" "}
+            <strong className="text-foreground">{email}</strong> com os
+            detalhes da reserva.
+          </p>
+        </div>
 
-          {/* Email confirmation */}
-          <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
-            <Mail className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400" />
-            <div>
-              <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                Email de confirmação enviado
-              </p>
-              <p className="text-sm text-blue-700 dark:text-blue-300">
-                Um email de confirmação foi enviado para{" "}
-                <strong>{email}</strong> com os detalhes da reserva.
-              </p>
-            </div>
-          </div>
-
-          {/* Cancellation link */}
-          <div className="rounded-lg border p-4">
-            <p className="text-sm text-muted-foreground mb-2">
-              Precisa cancelar? Use o link abaixo:
-            </p>
+        {/* Cancellation link */}
+        {token && (
+          <p className="text-center text-sm text-muted-foreground">
+            Precisa cancelar?{" "}
             <Link
               href={`/cancelar/${token}`}
-              className="text-sm text-primary underline break-all"
+              className="text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
             >
-              /cancelar/{token}
+              Link de cancelamento
             </Link>
-          </div>
+          </p>
+        )}
 
-          {/* Action buttons */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Button asChild variant="outline">
-              <Link href="/">Voltar ao início</Link>
-            </Button>
-            <Button asChild>
-              <Link href="/reserva">Fazer nova reserva</Link>
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Action buttons */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button asChild variant="ghost" className="text-muted-foreground">
+            <Link href="/">Voltar ao início</Link>
+          </Button>
+          <Button asChild className="rounded-xl">
+            <Link href="/reserva">Nova Reserva</Link>
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
