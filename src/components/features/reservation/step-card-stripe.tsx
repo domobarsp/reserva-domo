@@ -8,11 +8,15 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { Info, Loader2 } from "lucide-react";
+import { ShieldAlert, Loader2 } from "lucide-react";
 
 const stripePromise = loadStripe(
   process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 );
+
+function formatFee(amountInCents: number): string {
+  return `R$ ${(amountInCents / 100).toFixed(2).replace(".", ",")}`;
+}
 
 // ─── Inner form (precisa estar dentro de <Elements>) ─────────────────────────
 
@@ -32,7 +36,6 @@ function CardForm({
   const stripe = useStripe();
   const elements = useElements();
 
-  // Expõe a função de confirmação para o pai via ref
   useEffect(() => {
     triggerRef.current = async () => {
       if (!stripe || !elements) return;
@@ -66,15 +69,16 @@ function CardForm({
 interface StepCardStripeProps {
   email: string;
   name: string;
+  noShowFee?: number; // em centavos
   onSuccess: (stripeCustomerId: string, paymentMethodId: string) => void;
   onError: (message: string) => void;
-  /** O pai chama este trigger quando o usuário clica em "Avançar" */
   triggerRef: React.MutableRefObject<(() => Promise<void>) | null>;
 }
 
 export function StepCardStripe({
   email,
   name,
+  noShowFee,
   onSuccess,
   onError,
   triggerRef,
@@ -106,19 +110,27 @@ export function StepCardStripe({
   }, [email, name]);
 
   return (
-    <div className="space-y-6">
-      {/* Info banner */}
-      <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-        <Info className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-foreground">
+    <div className="space-y-5">
+      {/* Aviso em âmbar — destacado */}
+      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+        <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+        <div className="space-y-1.5">
+          <p className="text-sm font-semibold text-amber-900">
             Garantia com cartão de crédito
           </p>
-          <p className="text-sm text-muted-foreground">
-            Para reservas nesta data, é necessário fornecer um cartão de crédito
-            como garantia. Nenhuma cobrança será realizada no momento da
-            reserva. O cartão só será utilizado em caso de não comparecimento
-            (no-show).
+          <p className="text-sm text-amber-800 leading-relaxed">
+            Para reservas nesta data é necessário um cartão de crédito como
+            garantia.{" "}
+            <strong>Nenhuma cobrança será realizada agora.</strong>
+          </p>
+          <p className="text-sm text-amber-800">
+            Em caso de não comparecimento (no-show), será cobrado{" "}
+            <strong>
+              {noShowFee != null
+                ? formatFee(noShowFee)
+                : "conforme política do estabelecimento"}
+            </strong>
+            .
           </p>
         </div>
       </div>

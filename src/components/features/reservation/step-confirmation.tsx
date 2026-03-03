@@ -3,7 +3,6 @@
 import { useFormContext } from "react-hook-form";
 import { useMemo } from "react";
 import { CalendarDays, Clock, Users, Armchair, CreditCard } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import type { FullReservationData } from "@/lib/validations/reservation";
 import type { AvailabilityResponse } from "@/types";
 import { formatDatePtBr } from "@/lib/availability";
@@ -14,6 +13,8 @@ interface StepConfirmationProps {
   availabilityData: AvailabilityResponse | null;
 }
 
+const BOX = "rounded-xl border border-border p-5 space-y-3";
+
 export function StepConfirmation({
   needsCard,
   availabilityData,
@@ -21,45 +22,38 @@ export function StepConfirmation({
   const form = useFormContext<FullReservationData>();
   const values = form.getValues();
 
-  const timeSlot = useMemo(() => {
-    return availabilityData?.timeSlots.find(
-      (ts) => ts.id === values.time_slot_id
-    );
-  }, [values.time_slot_id, availabilityData]);
+  const timeSlot = useMemo(
+    () => availabilityData?.timeSlots.find((ts) => ts.id === values.time_slot_id),
+    [values.time_slot_id, availabilityData]
+  );
 
-  const accommodation = useMemo(() => {
-    if (!timeSlot) return undefined;
-    return timeSlot.accommodations.find(
-      (at) => at.id === values.accommodation_type_id
-    );
-  }, [timeSlot, values.accommodation_type_id]);
+  const accommodation = useMemo(
+    () =>
+      timeSlot?.accommodations.find((at) => at.id === values.accommodation_type_id),
+    [timeSlot, values.accommodation_type_id]
+  );
 
-  const localeLabel = {
-    pt: "Português",
-    en: "English",
-    es: "Español",
-  }[values.preferred_locale];
+  const localeLabel =
+    { pt: "Português", en: "English", es: "Español" }[values.preferred_locale] ??
+    values.preferred_locale;
 
   return (
-    <div className="space-y-6">
-      <p className="text-center text-muted-foreground">
-        Revise os dados da sua reserva antes de confirmar.
-      </p>
-
-      {/* Reservation Details */}
-      <div className="rounded-lg border p-4 space-y-4">
-        <h3 className="font-semibold">Detalhes da reserva</h3>
-
-        <div className="grid gap-3">
+    <div className="space-y-4">
+      {/* Box 1 — Detalhes da reserva */}
+      <div className={BOX}>
+        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          Reserva
+        </p>
+        <div className="grid gap-2.5">
           <div className="flex items-center gap-3">
-            <CalendarDays className="h-4 w-4 text-muted-foreground shrink-0" />
+            <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="text-sm">
               {values.date ? formatDatePtBr(values.date) : "—"}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="text-sm">
               {timeSlot
                 ? `${timeSlot.name} (${formatTime(timeSlot.start_time)} — ${formatTime(timeSlot.end_time)})`
@@ -68,12 +62,12 @@ export function StepConfirmation({
           </div>
 
           <div className="flex items-center gap-3">
-            <Armchair className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Armchair className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="text-sm">{accommodation?.name ?? "—"}</span>
           </div>
 
           <div className="flex items-center gap-3">
-            <Users className="h-4 w-4 text-muted-foreground shrink-0" />
+            <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span className="text-sm">
               {values.party_size}{" "}
               {values.party_size === 1 ? "pessoa" : "pessoas"}
@@ -81,9 +75,9 @@ export function StepConfirmation({
           </div>
 
           {values.special_requests && (
-            <div className="rounded-md bg-muted p-3">
-              <p className="text-xs text-muted-foreground mb-1">
-                Solicitações especiais:
+            <div className="mt-1 rounded-lg bg-muted/50 px-3 py-2">
+              <p className="text-xs text-muted-foreground mb-0.5">
+                Solicitações especiais
               </p>
               <p className="text-sm">{values.special_requests}</p>
             </div>
@@ -91,43 +85,69 @@ export function StepConfirmation({
         </div>
       </div>
 
-      <Separator />
-
-      {/* Customer Details */}
-      <div className="rounded-lg border p-4 space-y-3">
-        <h3 className="font-semibold">Seus dados</h3>
-
+      {/* Box 2 — Dados pessoais */}
+      <div className={BOX}>
+        <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+          Dados pessoais
+        </p>
         <div className="grid gap-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Nome</span>
-            <span>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-muted-foreground shrink-0">Nome</span>
+            <span className="text-right truncate">
               {values.first_name} {values.last_name}
             </span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Email</span>
-            <span>{values.email}</span>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-muted-foreground shrink-0">Email</span>
+            <span className="text-right truncate">{values.email}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Telefone</span>
-            <span>{values.phone}</span>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-muted-foreground shrink-0">Telefone</span>
+            <span className="text-right">{values.phone}</span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Idioma</span>
-            <span>{localeLabel}</span>
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-muted-foreground shrink-0">Idioma</span>
+            <span className="text-right">{localeLabel}</span>
           </div>
         </div>
       </div>
 
-      {/* Card guarantee notice */}
+      {/* Box 3 — Cartão de garantia (mesmo estilo dos demais) */}
       {needsCard && (
-        <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
-          <CreditCard className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-          <p className="text-sm text-emerald-700 dark:text-emerald-300">
-            Cartão registrado como garantia. Nenhuma cobrança foi realizada.
+        <div className={BOX}>
+          <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+            Garantia
           </p>
+          <div className="flex items-start gap-3">
+            <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <div>
+              <p className="text-sm font-medium">Cartão de garantia registrado</p>
+              <p className="text-sm text-muted-foreground">
+                Nenhuma cobrança foi realizada agora.
+              </p>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Termos de uso */}
+      <p className="pt-1 text-center text-xs text-muted-foreground leading-relaxed">
+        Ao confirmar, você concorda com os{" "}
+        <a
+          href="/termos"
+          className="underline underline-offset-2 transition-colors hover:text-foreground"
+        >
+          termos de uso
+        </a>{" "}
+        e a{" "}
+        <a
+          href="/privacidade"
+          className="underline underline-offset-2 transition-colors hover:text-foreground"
+        >
+          política de privacidade
+        </a>
+        .
+      </p>
     </div>
   );
 }

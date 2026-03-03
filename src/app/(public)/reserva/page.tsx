@@ -29,6 +29,12 @@ export default async function ReservaPage() {
     .filter((ex) => ex.is_closed)
     .map((ex) => ex.date);
 
+  const noShowFeeSetting = allSettings.find((s) => s.key === "no_show_fee");
+  const noShowFee =
+    noShowFeeSetting != null
+      ? ((noShowFeeSetting.value as { amount?: number }).amount ?? null)
+      : null;
+
   return (
     <ReservationForm
       initialBookingWindow={{
@@ -36,6 +42,7 @@ export default async function ReservaPage() {
         max: dateToStr(bookingWindow.max),
       }}
       closedDates={closedDates}
+      noShowFee={noShowFee ?? undefined}
     />
   );
 }

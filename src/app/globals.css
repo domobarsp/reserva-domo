@@ -24,6 +24,7 @@
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
+  --color-highlight: var(--highlight);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
@@ -48,6 +49,7 @@
 
 :root {
   --radius: 0.75rem;
+  --highlight: oklch(0.600 0.095 28);
   --background: oklch(0.970 0.008 75);
   --foreground: oklch(0.130 0.003 0);
   --card: oklch(1 0 0);

@@ -12,7 +12,7 @@ import {
   customerInfoSchema,
 } from "@/lib/validations/reservation";
 import type { AvailabilityResponse } from "@/types";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { StepReservationInfo } from "./step-reservation-info";
@@ -23,6 +23,7 @@ import { StepConfirmation } from "./step-confirmation";
 interface ReservationFormProps {
   initialBookingWindow: { min: string; max: string };
   closedDates: string[];
+  noShowFee?: number; // em centavos
 }
 
 const STEP_INFO: Record<string, { title: string; description: string }> = {
@@ -47,6 +48,7 @@ const STEP_INFO: Record<string, { title: string; description: string }> = {
 export function ReservationForm({
   initialBookingWindow,
   closedDates,
+  noShowFee,
 }: ReservationFormProps) {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
@@ -239,31 +241,40 @@ export function ReservationForm({
       </div>
 
       <Card className="mx-auto max-w-xl overflow-hidden rounded-2xl shadow-md">
-        {/* Progress bar — flush ao topo do card */}
+        {/* Card header — fundo levemente diferente */}
+        <div className="bg-muted px-6 pt-5 pb-4">
+          <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-0.5">
+            Reservas online
+          </p>
+          <h1 className="text-base font-semibold tracking-tight text-foreground">
+            Fazer uma Reserva
+          </h1>
+        </div>
+
+        {/* Barra de progresso — flush, sem gap, terracota */}
         <div className="flex w-full h-2">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}
               className={cn(
                 "flex-1 transition-colors duration-300",
-                i + 1 <= currentStep ? "bg-primary" : "bg-muted"
+                i + 1 <= currentStep ? "bg-highlight" : "bg-border"
               )}
             />
           ))}
         </div>
 
-        <CardHeader className="pt-6 pb-2">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight">
-              {currentStepInfo.title}
-            </h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {currentStepInfo.description}
-            </p>
-          </div>
-        </CardHeader>
+        {/* Título da etapa atual — próximo da barra, cor terracota */}
+        <div className="px-6 pt-3 pb-0">
+          <h2 className="text-sm font-semibold tracking-tight text-highlight">
+            {currentStepInfo.title}
+          </h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {currentStepInfo.description}
+          </p>
+        </div>
 
-        <CardContent className="pt-4">
+        <CardContent className="pt-5">
           <FormProvider {...form}>
             <form onSubmit={(e) => e.preventDefault()}>
               {currentStep === 1 && (
@@ -282,6 +293,7 @@ export function ReservationForm({
                   <StepCardStripe
                     email={values.email}
                     name={customerName}
+                    noShowFee={noShowFee}
                     onSuccess={handleCardSuccess}
                     onError={handleCardError}
                     triggerRef={cardTriggerRef}
