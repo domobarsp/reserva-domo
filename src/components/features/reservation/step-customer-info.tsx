@@ -109,7 +109,7 @@ export function StepCustomerInfo() {
             </FormLabel>
             <Select value={field.value} onValueChange={field.onChange}>
               <FormControl>
-                <SelectTrigger className="h-11 w-full">
+                <SelectTrigger className="!h-11 w-full">
                   <SelectValue />
                 </SelectTrigger>
               </FormControl>

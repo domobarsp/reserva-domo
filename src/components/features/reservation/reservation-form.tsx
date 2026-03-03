@@ -12,9 +12,9 @@ import {
   customerInfoSchema,
 } from "@/lib/validations/reservation";
 import type { AvailabilityResponse } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { StepIndicator } from "./step-indicator";
+import { cn } from "@/lib/utils";
 import { StepReservationInfo } from "./step-reservation-info";
 import { StepCustomerInfo } from "./step-customer-info";
 import { StepCardStripe } from "./step-card-stripe";
@@ -24,6 +24,25 @@ interface ReservationFormProps {
   initialBookingWindow: { min: string; max: string };
   closedDates: string[];
 }
+
+const STEP_INFO: Record<string, { title: string; description: string }> = {
+  Reserva: {
+    title: "Escolha a data e horário",
+    description: "Selecione quando você gostaria de vir",
+  },
+  Dados: {
+    title: "Seus dados",
+    description: "Como podemos entrar em contato com você",
+  },
+  Cartão: {
+    title: "Garantia com cartão",
+    description: "Necessário para reservas nesta data",
+  },
+  Confirmação: {
+    title: "Revise sua reserva",
+    description: "Confirme os detalhes antes de finalizar",
+  },
+};
 
 export function ReservationForm({
   initialBookingWindow,
@@ -41,7 +60,6 @@ export function ReservationForm({
   const [paymentMethodId, setPaymentMethodId] = useState("");
   const [isConfirmingCard, setIsConfirmingCard] = useState(false);
   const [cardError, setCardError] = useState<string | null>(null);
-  // Ref para acionar o confirmSetup do step de cartão
   const cardTriggerRef = useRef<(() => Promise<void>) | null>(null);
 
   const form = useForm<FullReservationData>({
@@ -63,7 +81,6 @@ export function ReservationForm({
 
   const selectedDate = form.watch("date");
 
-  // Fetch availability when date changes
   useEffect(() => {
     if (!selectedDate) {
       setAvailabilityData(null);
@@ -80,9 +97,7 @@ export function ReservationForm({
         }
       })
       .catch(() => {
-        if (!cancelled) {
-          setIsLoadingAvailability(false);
-        }
+        if (!cancelled) setIsLoadingAvailability(false);
       });
     return () => {
       cancelled = true;
@@ -99,33 +114,30 @@ export function ReservationForm({
   const getConfirmationStep = () => (needsCard ? 4 : 3);
   const getCardStep = () => (needsCard ? 3 : null);
 
+  const currentLabel = stepLabels[currentStep - 1];
+  const currentStepInfo = STEP_INFO[currentLabel] ?? {
+    title: currentLabel,
+    description: "",
+  };
+
   const validateCurrentStep = useCallback(
     async (): Promise<boolean> => {
       if (currentStep === 1) {
-        const values = form.getValues();
-        const result = reservationInfoSchema.safeParse(values);
+        const result = reservationInfoSchema.safeParse(form.getValues());
         if (!result.success) {
-          const isValid = await form.trigger([
+          return form.trigger([
             "date",
             "time_slot_id",
             "accommodation_type_id",
             "party_size",
           ]);
-          return isValid;
         }
         return true;
       }
       if (currentStep === 2) {
-        const values = form.getValues();
-        const result = customerInfoSchema.safeParse(values);
+        const result = customerInfoSchema.safeParse(form.getValues());
         if (!result.success) {
-          const isValid = await form.trigger([
-            "first_name",
-            "last_name",
-            "email",
-            "phone",
-          ]);
-          return isValid;
+          return form.trigger(["first_name", "last_name", "email", "phone"]);
         }
         return true;
       }
@@ -135,17 +147,14 @@ export function ReservationForm({
   );
 
   const handleNext = useCallback(async () => {
-    // Se estamos no card step, acionar o confirmSetup do Stripe
     if (currentStep === getCardStep()) {
       if (!cardTriggerRef.current) return;
       setCardError(null);
       setIsConfirmingCard(true);
       await cardTriggerRef.current();
       setIsConfirmingCard(false);
-      // O avanço de step ocorre no onSuccess do StepCardStripe
       return;
     }
-
     const isValid = await validateCurrentStep();
     if (!isValid) return;
     setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
@@ -173,7 +182,6 @@ export function ReservationForm({
     if (!isValid) return;
 
     setIsSubmitting(true);
-
     try {
       const values = form.getValues();
       const body: Record<string, unknown> = { ...values };
@@ -197,7 +205,6 @@ export function ReservationForm({
       }
 
       const data = await res.json();
-
       const params = new URLSearchParams({
         id: data.id,
         token: data.cancellation_token,
@@ -231,21 +238,34 @@ export function ReservationForm({
         </p>
       </div>
 
-      <Card className="mx-auto max-w-xl rounded-2xl shadow-md">
-        <CardHeader className="pb-0">
-          <CardTitle className="text-center text-xl font-semibold tracking-tight">
-            Fazer Reserva
-          </CardTitle>
-          <StepIndicator
-            currentStep={currentStep}
-            totalSteps={totalSteps}
-            labels={stepLabels}
-          />
+      <Card className="mx-auto max-w-xl overflow-hidden rounded-2xl shadow-md">
+        {/* Progress bar — flush ao topo do card */}
+        <div className="flex w-full h-2">
+          {Array.from({ length: totalSteps }).map((_, i) => (
+            <div
+              key={i}
+              className={cn(
+                "flex-1 transition-colors duration-300",
+                i + 1 <= currentStep ? "bg-primary" : "bg-muted"
+              )}
+            />
+          ))}
+        </div>
+
+        <CardHeader className="pt-6 pb-2">
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight">
+              {currentStepInfo.title}
+            </h2>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {currentStepInfo.description}
+            </p>
+          </div>
         </CardHeader>
-        <CardContent className="pt-2">
+
+        <CardContent className="pt-4">
           <FormProvider {...form}>
             <form onSubmit={(e) => e.preventDefault()}>
-              {/* Step 1 — Informações da Reserva */}
               {currentStep === 1 && (
                 <StepReservationInfo
                   bookingWindow={initialBookingWindow}
@@ -255,10 +275,8 @@ export function ReservationForm({
                 />
               )}
 
-              {/* Step 2 — Dados do Cliente */}
               {currentStep === 2 && <StepCustomerInfo />}
 
-              {/* Step 3 — Cartão (Stripe) */}
               {currentStep === getCardStep() && (
                 <div>
                   <StepCardStripe
@@ -274,7 +292,6 @@ export function ReservationForm({
                 </div>
               )}
 
-              {/* Step final — Confirmação */}
               {currentStep === getConfirmationStep() && (
                 <StepConfirmation
                   needsCard={needsCard}
