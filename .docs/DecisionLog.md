@@ -484,3 +484,15 @@
 **Decisão**: Labels dinâmicos: Step 1 → "Continuar"; Step 2 com cartão → "Continuar para garantia"; Step 2 sem cartão → "Continuar para revisão"; Step de cartão → "Revisar reserva"; Confirmação → "Confirmar e finalizar".
 **Razão**: Cada etapa tem um contexto diferente — antecipar o próximo passo reduz ansiedade e aumenta confiança no fluxo. "Confirmar e finalizar" comunica claramente que a reserva será criada.
 
+
+---
+
+### 2026-03-02 — Cancelamento: header neutro, ícones semânticos e botão único
+
+**Contexto**: A página de "Reserva cancelada" usava `bg-accent` (verde claro) no header e `CheckCircle2` como ícone — visual de "sucesso" inadequado para uma ação de cancelamento. O header de confirmação de cancelamento usava `XCircle`. Havia dois links de navegação ("Fazer nova reserva" + "Voltar ao início").
+**Decisão**:
+- Estado "Reserva cancelada": header `bg-muted` (neutro) + ícone `XCircle text-muted-foreground`
+- Estado "Cancelar reserva" (confirmação): ícone `AlertTriangle` (warning, mais semântico para ação destrutiva iminente)
+- Navegação pós-cancelamento: único link "Fazer nova reserva" — "Voltar ao início" removido
+**Razão**: Cancelamento não é uma ação positiva — o verde claro e o check transmitiam a mensagem errada. `XCircle` comunica encerramento/remoção; `AlertTriangle` comunica atenção antes de uma ação irreversível. Um único CTA pós-cancelamento é mais focado: o usuário ou refaz uma reserva ou fecha a aba.
+

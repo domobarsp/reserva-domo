@@ -8,7 +8,6 @@ import {
   Users,
   Armchair,
   AlertTriangle,
-  CheckCircle2,
   Info,
   Loader2,
   XCircle,
@@ -138,12 +137,12 @@ export function CancelPageContent({
         <Logo />
         <div className="mx-auto max-w-xl space-y-4">
           <Card className="overflow-hidden rounded-2xl shadow-md py-0 gap-0">
-            <div className="bg-accent px-6 pt-5 pb-5">
+            <div className="bg-muted px-6 pt-5 pb-5">
               <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">
                 Reservas online
               </p>
               <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" strokeWidth={2} />
+                <XCircle className="h-5 w-5 shrink-0 text-muted-foreground" strokeWidth={2} />
                 <h1 className="text-xl font-semibold tracking-tight text-foreground">
                   Reserva cancelada.
                 </h1>
@@ -162,18 +161,12 @@ export function CancelPageContent({
             </CardContent>
           </Card>
 
-          <div className="flex justify-center gap-6 pt-2">
+          <div className="flex justify-center pt-2">
             <Link
               href="/reserva"
               className="text-sm text-primary underline underline-offset-4 hover:text-primary/80 transition-colors"
             >
               Fazer nova reserva
-            </Link>
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Voltar ao início
             </Link>
           </div>
         </div>
@@ -235,7 +228,7 @@ export function CancelPageContent({
               Reservas online
             </p>
             <div className="flex items-center gap-2.5">
-              <XCircle className="h-5 w-5 shrink-0 text-muted-foreground" strokeWidth={2} />
+              <AlertTriangle className="h-5 w-5 shrink-0 text-muted-foreground" strokeWidth={2} />
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
                 Cancelar reserva
               </h1>
