@@ -15,7 +15,7 @@ Fase 0 (Docs) ✅
                                 └─ Fase 6 (Resend) ✅
                                      └─ Fase 7 (Admin Features & UX) ✅
                                           └─ Fase 8 (Relatórios) ✅
-                                               └─ Fase 9 (Refinamento — Home & Formulário)
+                                               └─ Fase 9 (Refinamento — Home & Formulário) ✅
                                                     └─ Fase 10 (Refinamento — Dashboard)
                                                          └─ Fase 11 (Refinamento — Calendário)
                                                               └─ Fase 12 (Refinamento — Reservas)

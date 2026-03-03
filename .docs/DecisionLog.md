@@ -411,3 +411,27 @@
 - Estética geral: editorial, hotelaria de alto padrão, "luxo moderno não extravagante"
 **Razão**: O produto é uma interface de reservas para restaurante sofisticado. A experiência pública (formulário de reserva) é a vitrine do restaurante e deve transmitir elegância e confiança. O lime vibrante era inconsistente com essa proposta.
 **Impacto**: Afeta principalmente as fases de refinamento visual (9–14). O `DesignSystem.md` foi reescrito com todos os tokens, diretrizes de componentes e notas de implementação técnica.
+
+---
+
+### 2026-03-02 — Fase 9: calendário auto-close com estado controlado
+
+**Contexto**: O Popover do calendário no formulário de reserva ficava aberto após selecionar uma data, sobrepondo os campos dinâmicos que aparecem abaixo.
+**Decisão**: Usar `open`/`onOpenChange` + `useState(false)` para controlar o Popover; fechar no callback `handleDateSelect` após setar o valor.
+**Razão**: Elimina sobreposição visual e melhora a percepção de fluidez — o usuário seleciona a data e o calendário fecha automaticamente, revelando os horários disponíveis.
+
+---
+
+### 2026-03-02 — Fase 9: incrementer +/- para seleção de pessoas (substituição do Select)
+
+**Contexto**: O `<Select>` de party_size era menos intuitivo em mobile e não comunicava os limites min/max da acomodação selecionada.
+**Decisão**: Substituir `<Select>` por um incrementer com botões ghost `−` e `+` e valor central, respeitando `min_seats` e `max_seats` da acomodação selecionada.
+**Razão**: Mais intuitivo em touch, comunica visualmente os limites (botão desabilitado quando no extremo), e elimina o dropdown que frequentemente causa problemas de scroll em mobile.
+
+---
+
+### 2026-03-02 — Fase 9: tokens globais aplicados antes das páginas individuais
+
+**Contexto**: A migração do design system afeta CSS variables que impactam toda a app (admin e público).
+**Decisão**: Atualizar `globals.css` como primeiro passo da Fase 9 (T1), verificar admin antes de prosseguir, e aplicar tokens nas páginas públicas nas tarefas seguintes.
+**Razão**: Centralização dos tokens evita inconsistências; o admin usa `--sidebar-*` que foram atualizados para verde escuro — visualmente melhora o admin mesmo sem tocar nos componentes admin individualmente.
