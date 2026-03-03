@@ -435,3 +435,52 @@
 **Contexto**: A migração do design system afeta CSS variables que impactam toda a app (admin e público).
 **Decisão**: Atualizar `globals.css` como primeiro passo da Fase 9 (T1), verificar admin antes de prosseguir, e aplicar tokens nas páginas públicas nas tarefas seguintes.
 **Razão**: Centralização dos tokens evita inconsistências; o admin usa `--sidebar-*` que foram atualizados para verde escuro — visualmente melhora o admin mesmo sem tocar nos componentes admin individualmente.
+
+---
+
+### 2026-03-02 — Fase 9: --accent repurposed como verde claro; --highlight para terracota
+
+**Contexto**: No sistema shadcn/ui, `--accent` é usado como background de hover em Calendar, Select, Command, etc. A Fase 9 precisava de terracota como cor de destaque (barra de progresso, títulos de etapa), mas usar terracota em `--accent` tornava todos os hovers visualmente agressivos.
+**Decisão**: Separar em dois tokens: `--accent: oklch(0.930 0.015 162)` (verde menta claro, para hover e bg de superfície sutil) e `--highlight: oklch(0.600 0.095 28)` (terracota, apenas para elementos decorativos pontuais). Mapeado em `@theme inline` como `--color-highlight` para uso via `bg-highlight`, `text-highlight`.
+**Razão**: Preserva o comportamento esperado dos componentes shadcn/ui (hover em verde sutil) enquanto mantém o terracota disponível para uso explícito. O `--highlight` é usado com parcimônia — não como bg de superfície grande.
+
+---
+
+### 2026-03-02 — Fase 9: --muted escurecido para contraste do header do card
+
+**Contexto**: O card do formulário usa `bg-muted` no header para criar uma camada visual distinta do body branco. Com `--muted: oklch(0.945 0.008 75)` (levemente mais claro que a página `oklch(0.970)`), a diferença era imperceptível em telas calibradas.
+**Decisão**: Alterar `--muted` para `oklch(0.925 0.015 75)` — mais escuro e levemente mais quente, equivalente a ~#EFEAE4. Criando a hierarquia correta: página (97% L) → header do card (92.5% L) → body do card (100% L branco).
+**Razão**: A profundidade visual (página → header → body) é fundamental para a identidade premium. Sem esse contraste, o card parece um bloco plano sem estrutura.
+
+---
+
+### 2026-03-02 — Fase 9: padrão de card público com py-0 gap-0
+
+**Contexto**: O componente `Card` do shadcn/ui tem `py-6 gap-6` por padrão (padding vertical e gap entre filhos flex). Para o layout desejado (header colado ao topo + barra de progresso sem gaps), essas classes bloqueavam a estrutura.
+**Decisão**: Sempre usar `<Card className="overflow-hidden rounded-2xl py-0 gap-0">` nos cards públicos (formulário, sucesso, cancelamento). O espaçamento vertical é controlado manualmente pelos filhos (header tem seus próprios `pt-5 pb-4`, CardContent tem `pt-5 pb-6`).
+**Razão**: `overflow-hidden` + `rounded-2xl` faz o header `bg-muted/accent` respeitar os cantos arredondados do card sem necessidade de adicionar raio ao header em separado. `py-0 gap-0` dá controle total do espaçamento.
+
+---
+
+### 2026-03-02 — Fase 9: identidade visual unificada entre formulário, sucesso e cancelamento
+
+**Contexto**: As páginas de sucesso e cancelamento tinham layouts próprios (centrado, sem card estruturado) que não correspondiam à identidade visual do formulário de reserva.
+**Decisão**: Todas as páginas públicas seguem o mesmo padrão: logo Domo no topo (círculo `bg-primary` + "D" + "Restaurante Domo") + card com header colorido + conteúdo em `CardContent`. O header usa `bg-accent` (verde claro) para estados de sucesso/confirmação e `bg-muted` para estados neutros ou de ação.
+**Razão**: Consistência visual cria confiança. O usuário navega pelo fluxo completo (formulário → sucesso → eventual cancelamento) sem perceber quebra de identidade. O padrão de card com header também facilita scan rápido: o header comunica o estado, o body traz os detalhes.
+
+---
+
+### 2026-03-02 — Fase 9: aviso de garantia em parchment/dourado em vez de âmbar
+
+**Contexto**: O aviso de garantia com cartão no step Stripe usava `bg-amber-50 border-amber-200` — padrão de alerta/warning que criava tensão visual desnecessária numa tela já sensível (dados de cartão).
+**Decisão**: Substituir por `bg-[#FAF4E8] border-[#C9A96E]` (parchment quente + borda dourado suave) com textos `text-[#4A3500]` / `text-[#5C4510]`. Ícone `ShieldAlert text-[#8B6914]`.
+**Razão**: O objetivo do aviso não é alarmar — é informar com elegância. O tom parchment/dourado é consistente com a paleta quente do design system e transmite "informação premium" em vez de "alerta de sistema".
+
+---
+
+### 2026-03-02 — Fase 9: botões de navegação com labels dinâmicos por etapa
+
+**Contexto**: O botão "Avançar" era genérico em todas as etapas, sem comunicar o que aconteceria a seguir.
+**Decisão**: Labels dinâmicos: Step 1 → "Continuar"; Step 2 com cartão → "Continuar para garantia"; Step 2 sem cartão → "Continuar para revisão"; Step de cartão → "Revisar reserva"; Confirmação → "Confirmar e finalizar".
+**Razão**: Cada etapa tem um contexto diferente — antecipar o próximo passo reduz ansiedade e aumenta confiança no fluxo. "Confirmar e finalizar" comunica claramente que a reserva será criada.
+

@@ -28,16 +28,16 @@ interface ReservationFormProps {
 
 const STEP_INFO: Record<string, { title: string; description: string }> = {
   Reserva: {
-    title: "Escolha a data e horário",
-    description: "Selecione quando você gostaria de vir",
+    title: "Quando você deseja reservar?",
+    description: "Escolha a data, horário e número de pessoas",
   },
   Dados: {
-    title: "Seus dados",
-    description: "Como podemos entrar em contato com você",
+    title: "Seus dados de contato",
+    description: "Usaremos essas informações para confirmar sua reserva",
   },
   Cartão: {
     title: "Garantia com cartão",
-    description: "Necessário para reservas nesta data",
+    description: "Necessário para confirmar sua reserva nesta data",
   },
   Confirmação: {
     title: "Revise sua reserva",
@@ -225,6 +225,14 @@ export function ReservationForm({
     }
   }, [form, router, needsCard, stripeCustomerId, paymentMethodId]);
 
+  const nextButtonLabel = (() => {
+    const cardStep = needsCard ? 3 : null;
+    if (cardStep !== null && currentStep === cardStep) return "Revisar reserva";
+    if (currentStep === 2 && needsCard) return "Continuar para garantia";
+    if (currentStep === totalSteps - 1 && !needsCard) return "Continuar para revisão";
+    return "Continuar";
+  })();
+
   const values = form.getValues();
   const customerName = `${values.first_name} ${values.last_name}`.trim();
 
@@ -240,41 +248,41 @@ export function ReservationForm({
         </p>
       </div>
 
-      <Card className="mx-auto max-w-xl overflow-hidden rounded-2xl shadow-md">
+      <Card className="mx-auto max-w-xl overflow-hidden rounded-2xl shadow-md py-0 gap-0">
         {/* Card header — fundo levemente diferente */}
         <div className="bg-muted px-6 pt-5 pb-4">
           <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-0.5">
             Reservas online
           </p>
-          <h1 className="text-base font-semibold tracking-tight text-foreground">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
             Fazer uma Reserva
           </h1>
         </div>
 
-        {/* Barra de progresso — flush, sem gap, terracota */}
-        <div className="flex w-full h-2">
+        {/* Barra de progresso — flush, 4px, verde suave */}
+        <div className="flex w-full h-1">
           {Array.from({ length: totalSteps }).map((_, i) => (
             <div
               key={i}
               className={cn(
                 "flex-1 transition-colors duration-300",
-                i + 1 <= currentStep ? "bg-highlight" : "bg-border"
+                i + 1 <= currentStep ? "bg-primary/60" : "bg-border"
               )}
             />
           ))}
         </div>
 
-        {/* Título da etapa atual — próximo da barra, cor terracota */}
-        <div className="px-6 pt-3 pb-0">
-          <h2 className="text-sm font-semibold tracking-tight text-highlight">
+        {/* Título da etapa atual */}
+        <div className="px-6 pt-4 pb-0">
+          <h2 className="text-base font-semibold tracking-tight text-primary">
             {currentStepInfo.title}
           </h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          <p className="mt-1 text-xs text-muted-foreground">
             {currentStepInfo.description}
           </p>
         </div>
 
-        <CardContent className="pt-5">
+        <CardContent className="pt-5 pb-6">
           <FormProvider {...form}>
             <form onSubmit={(e) => e.preventDefault()}>
               {currentStep === 1 && (
@@ -312,7 +320,7 @@ export function ReservationForm({
               )}
 
               {/* Navigation buttons */}
-              <div className="mt-8 flex justify-between gap-3">
+              <div className="mt-6 border-t border-border pt-5 flex justify-between gap-3">
                 {currentStep > 1 ? (
                   <Button
                     type="button"
@@ -337,7 +345,7 @@ export function ReservationForm({
                     {isConfirmingCard && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    {isConfirmingCard ? "Validando cartão..." : "Avançar"}
+                    {isConfirmingCard ? "Validando cartão..." : nextButtonLabel}
                   </Button>
                 ) : currentStep === getConfirmationStep() ? (
                   <Button
@@ -349,7 +357,7 @@ export function ReservationForm({
                     {isSubmitting && (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    {isSubmitting ? "Confirmando..." : "Confirmar Reserva"}
+                    {isSubmitting ? "Confirmando..." : "Confirmar e finalizar"}
                   </Button>
                 ) : null}
               </div>

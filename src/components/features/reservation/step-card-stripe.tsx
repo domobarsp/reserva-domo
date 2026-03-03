@@ -111,20 +111,20 @@ export function StepCardStripe({
 
   return (
     <div className="space-y-5">
-      {/* Aviso em âmbar — destacado */}
-      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
-        <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+      {/* Aviso de garantia — tom parchment/dourado */}
+      <div className="flex items-start gap-3 rounded-xl border border-[#C9A96E] bg-[#FAF4E8] p-4">
+        <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[#8B6914]" />
         <div className="space-y-1.5">
-          <p className="text-sm font-semibold text-amber-900">
+          <p className="text-sm font-semibold text-[#4A3500]">
             Garantia com cartão de crédito
           </p>
-          <p className="text-sm text-amber-800 leading-relaxed">
-            Para reservas nesta data é necessário um cartão de crédito como
+          <p className="text-sm text-[#5C4510] leading-relaxed">
+            Para confirmar sua reserva nesta data, solicitamos um cartão como
             garantia.{" "}
-            <strong>Nenhuma cobrança será realizada agora.</strong>
+            <strong>Nenhuma cobrança será feita agora.</strong>
           </p>
-          <p className="text-sm text-amber-800">
-            Em caso de não comparecimento (no-show), será cobrado{" "}
+          <p className="text-sm text-[#5C4510]">
+            Em caso de não comparecimento, será cobrado{" "}
             <strong>
               {noShowFee != null
                 ? formatFee(noShowFee)
@@ -136,7 +136,7 @@ export function StepCardStripe({
       </div>
 
       {/* Stripe Elements */}
-      <div className="rounded-xl border border-border p-6">
+      <div className="rounded-xl border border-border bg-white p-6">
         {loadError ? (
           <p className="text-sm text-destructive">{loadError}</p>
         ) : !clientSecret ? (
@@ -162,6 +162,11 @@ export function StepCardStripe({
           </Elements>
         )}
       </div>
+
+      <p className="text-center text-xs text-muted-foreground">
+        Seus dados são processados com segurança. A cobrança só ocorrerá em
+        caso de não comparecimento.
+      </p>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-03-02 | Fase: 8 (Relatórios) — CONCLUÍDA | Próxima: Fase 9 (Refinamento — Home & Formulário)
-> ⚠️ Design system atualizado em 2026-03-02: nova direção visual premium (verde escuro, off-white, terracota). Ver `DesignSystem.md`. **Código ainda não migrado** — será implementado nas fases 9–14.
+> Atualizado: 2026-03-02 | Fase: 9 (Refinamento — Home & Formulário) — CONCLUÍDA | Próxima: Fase 10 (Refinamento — Dashboard)
 
 ## O que funciona
 
@@ -66,21 +65,27 @@
 ### Formulário Público
 
 - **Formulário de reserva multi-step funcional** (`/reserva`):
-  - Step 1: seleção de data (calendar), horário (radio), acomodação (radio cards com capacidade), pessoas (select), solicitações especiais
+  - Step 1: seleção de data (calendar auto-close), horário (radio cards), acomodação (radio cards), pessoas (incrementer +/-), solicitações especiais
   - Step 2: dados do cliente (nome, sobrenome, email, telefone, idioma)
-  - Step 3: placeholder de cartão (condicional — aparece apenas em dias que exigem garantia)
-  - Step 4: confirmação com resumo completo
-  - Navegação avançar/voltar entre steps
-  - Indicador visual de etapas (dinâmico: 3 ou 4 etapas conforme necessidade de cartão)
+  - Step 3: garantia com cartão Stripe (condicional)
+  - Step 4: confirmação com resumo em boxes uniformes + aceite de termos
+  - Navegação com labels dinâmicos por etapa ("Continuar", "Continuar para garantia", "Revisar reserva", "Confirmar e finalizar")
+  - Indicador visual de etapas: barra `h-1` flush ao header, `bg-primary/60` para etapas completas
   - Validação Zod + React Hook Form em tempo real (mensagens em PT)
   - **Dados reais**: Disponibilidade via `/api/availability`, reserva via `/api/reservations`
   - **Persistência**: Reservas criadas são salvas no Supabase
 - **Página de sucesso** (`/reserva/sucesso`):
-  - Exibe ID real, detalhes da reserva (buscados do Supabase), link de cancelamento
+  - Mesma identidade visual do formulário: logo + card com header `bg-accent` (verde claro) + detalhes no body
+  - Header: ícone ✓ + "Sua mesa está reservada." + subtítulo dinâmico com data e hora
+  - Body: bloco "Detalhes da reserva", divisor, bloco "Reserva em nome de", confirmação de email, mensagem de acolhimento
+  - Box de cancelamento separado abaixo do card principal
 - **Página de cancelamento** (`/cancelar/[token]`):
-  - Server component busca reserva por token no Supabase (com joins em customer, time_slot, accommodation)
-  - Client component para o botão de cancelar (POST `/api/reservations/cancel`)
-  - Trata reserva não encontrada e já cancelada
+  - Mesma identidade visual: logo + card com header
+  - 4 estados visuais distintos:
+    - Não encontrado: `bg-muted` header + `AlertCircle`
+    - Já cancelada: `bg-muted` header + `Info`
+    - Cancelada nesta sessão: `bg-accent` header + `CheckCircle2`
+    - Confirmar cancelamento: `bg-muted` header + `XCircle` + aviso parchment/dourado + botões dentro do card
 
 ### Lógica de Disponibilidade
 
@@ -205,14 +210,36 @@ Nada — todos os fluxos principais estão funcionando com integrações reais.
 - **Biblioteca**: `recharts` instalada via `npx shadcn add chart` — `src/components/ui/chart.tsx`
 - **Server Actions**: `getReportData(startDate, endDate)` em `relatorios/actions.ts` — computa KPIs, byDay, byStatus, byAccommodation e previousKPIs para comparativo
 
+### Refinamento Visual — Home & Formulário (Fase 9 — CONCLUÍDA)
+
+- **Tokens globais atualizados** (`globals.css`):
+  - `--primary`: verde escuro `oklch(0.270 0.055 162)` (#1F3A34)
+  - `--background`: off-white quente `oklch(0.970 0.008 75)` (#F6F3EE)
+  - `--muted`: `oklch(0.925 0.015 75)` — mais escuro/quente para contraste do header do card
+  - `--accent`: verde claro `oklch(0.930 0.015 162)` — usado como bg de header em estados de sucesso
+  - `--highlight`: terracota `oklch(0.600 0.095 28)` — token decorativo (não usado em superfícies)
+  - `--radius`: 0.75rem
+  - `cursor: pointer` global em elementos interativos
+- **Padrão de card público**: `Card py-0 gap-0 overflow-hidden rounded-2xl` com:
+  - Header `bg-muted` ou `bg-accent` (conforme estado): eyebrow "Reservas online" + ícone + título + subtítulo
+  - Barra de progresso `h-1` flush ao header (apenas no formulário)
+  - `CardContent pt-X pb-6` para o conteúdo
+- **Skeletons**: `bg-muted animate-pulse` (cor quente, não cinza frio)
+- **Incrementer de pessoas**: botões `rounded-full variant="outline"` substituem `<Select>`
+- **Cards de seleção** (horário, acomodação): `bg-white` explícito, estado selecionado `ring-[1.5px] ring-primary bg-primary/[6%]`
+- **Badge de vagas**: `bg-emerald-50 text-emerald-700` / `bg-amber-50` para poucas vagas
+- **Aviso de garantia** (step de cartão): parchment/dourado `bg-[#FAF4E8] border-[#C9A96E]` — menos alarme, mais informação
+- **Home** (`/`): redireciona para `/reserva`
+- **Footer**: mantido com dados reais do restaurante (Server Component)
+
 ## O que não existe ainda
 
-- Refinamento visual por página — Home & Formulário (9), Dashboard (10), Calendário (11), Reservas (12), Lista de Espera & Passantes (13), Configurações & Acessos (14)
+- Refinamento visual por página — Dashboard (10), Calendário (11), Reservas (12), Lista de Espera & Passantes (13), Configurações & Acessos (14)
 - Produção & Deploy (Fase 15)
 
 ## Próximos Passos
 
-Fase 9 — Refinamento Visual — Home & Formulário: revisão completa da experiência pública (landing page, formulário multi-step, sucesso, cancelamento).
+Fase 10 — Refinamento Visual — Dashboard: cards de estatísticas, seletor de período, tabela e estados de loading/empty/error.
 
 ## Issues Conhecidas
 

@@ -113,13 +113,16 @@ Mantidas semânticas e distintas entre si, ajustadas para harmonia com o novo te
 --secondary: oklch(0.945 0.010 75);          /* bege levemente mais escuro que o bg */
 --secondary-foreground: oklch(0.270 0.055 162);
 
-/* Muted */
---muted: oklch(0.945 0.008 75);
+/* Muted — usado como bg do header dos cards */
+--muted: oklch(0.925 0.015 75);              /* bege escuro #EFEAE4 aprox. */
 --muted-foreground: oklch(0.480 0.010 60);   /* #6B6B6B texto secundário */
 
-/* Accent — terracota #C97C6A (usado com parcimônia) */
---accent: oklch(0.650 0.090 28);
---accent-foreground: oklch(1 0 0);
+/* Accent — verde claro (hover, bg de sucesso) */
+--accent: oklch(0.930 0.015 162);            /* verde menta claro */
+--accent-foreground: oklch(0.270 0.055 162); /* verde escuro sobre verde claro */
+
+/* Highlight — terracota decorativo (não usar como bg de superfície) */
+--highlight: oklch(0.600 0.095 28);          /* #C97C6A terracota */
 
 /* Destructive */
 --destructive: oklch(0.500 0.160 22);
@@ -396,17 +399,67 @@ Nunca usar elementos HTML nativos quando houver componente shadcn/ui equivalente
 
 A experiência pública é a vitrine do restaurante. Deve transmitir sofisticação máxima.
 
-- **Container**: card centralizado `max-w-xl`, `rounded-2xl border bg-card shadow-md p-8`
-- **Fundo da página**: `bg-background` (off-white quente), nunca branco puro
-- **Stepper**: indicador minimalista de etapas com cor primária para etapa ativa e `text-muted-foreground` para as demais. Sem números grandes, apenas pontos ou traços elegantes + label discreto.
-- **Calendário**: highlight da data selecionada com `bg-primary text-primary-foreground`, sem bordas visíveis nos dias não selecionados
-- **Seleções de horário/acomodação**: radio cards com `border border-border rounded-xl p-4` que ficam `border-primary bg-primary/5` quando selecionados
-- **Seletor de pessoas**: incrementador +/- em vez de dropdown
-- **Botão de avançar**: `w-full`, altura `h-12`, `rounded-xl`, `bg-primary text-primary-foreground font-medium`
-- **Botão de voltar**: ghost, `text-muted-foreground`
-- **Transições entre etapas**: fade suave (`transition-opacity duration-200`)
-- **Página de sucesso**: ícone de check grande com `text-primary`, resumo da reserva, link de cancelamento bem visível
-- **Página de cancelamento**: estados distintos com ícones e texto claro para cada situação
+### Estrutura do Card (padrão implementado na Fase 9)
+
+```
+Logo (fora do card)
+ └─ Círculo 56px bg-primary + letra "D" + "Restaurante Domo"
+
+Card  overflow-hidden rounded-2xl shadow-md py-0 gap-0
+ ├─ Header  bg-muted px-6 pt-5 pb-4
+ │    ├─ Eyebrow  text-[11px] uppercase tracking-widest text-muted-foreground
+ │    ├─ [ícone] + h1  text-xl font-semibold
+ │    └─ Subtítulo  text-sm text-muted-foreground  (quando aplicável)
+ ├─ Barra de progresso  h-1 flex  (só no formulário)
+ │    └─ Segmentos: bg-primary/60 (ativo) / bg-border (inativo)
+ ├─ Título da etapa  px-6 pt-4 pb-0
+ │    ├─ h2  text-base font-semibold text-primary
+ │    └─ p   text-xs text-muted-foreground
+ └─ CardContent  pt-5 pb-6
+      └─ conteúdo + border-t border-border pt-5 (acima dos botões)
+```
+
+**Nota sobre o Card shadcn**: o `Card` padrão tem `py-6 gap-6` — sempre sobrescrever com `py-0 gap-0` para controlar espaçamento manualmente.
+
+### Cores de header por contexto
+
+| Contexto | Header bg | Ícone |
+|----------|-----------|-------|
+| Formulário em andamento | `bg-muted` | — |
+| Sucesso (reserva ou cancelamento) | `bg-accent` (verde claro) | `CheckCircle2 text-primary` |
+| Estado neutro/informativo | `bg-muted` | `Info text-muted-foreground` |
+| Cancelamento/alerta | `bg-muted` | `XCircle text-muted-foreground` |
+| Erro/não encontrado | `bg-muted` | `AlertCircle text-muted-foreground` |
+
+### Outros padrões
+
+- **Fundo da página**: `bg-background min-h-full px-4 py-12`
+- **Calendário**: auto-close ao selecionar data (`open` state controlado)
+- **Seleções de horário/acomodação**: radio cards `bg-white rounded-xl border`; selecionado: `border-primary bg-primary/[6%] ring-[1.5px] ring-primary`
+- **Seletor de pessoas**: incrementer com botões `rounded-full variant="outline"` + número centralizado
+- **Badge de vagas**: `bg-emerald-50 text-emerald-700` (disponível) / `bg-amber-50 text-amber-700` (poucas vagas)
+- **Aviso de garantia de cartão**: `bg-[#FAF4E8] border-[#C9A96E]` com textos `text-[#5C4510]` — parchment/dourado, não âmbar
+- **Inputs**: `h-11` (44px) para consistência; `SelectTrigger` requer `!h-11` (especificidade CSS)
+- **Botão avançar**: dinâmico por etapa — "Continuar" / "Continuar para garantia" / "Revisar reserva"
+- **Botão de confirmação final**: "Confirmar e finalizar"
+- **Botão de voltar**: `h-12 rounded-xl ghost text-muted-foreground`
+- **Separador acima dos botões**: `border-t border-border pt-5 mt-6`
+
+### Caixas internas do body do card
+
+```tsx
+const BOX = "rounded-xl border border-border p-5 space-y-3";
+// Label de seção:
+<p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+```
+
+### Páginas de sucesso e cancelamento
+
+Seguem exatamente o padrão de card acima — logo + card com header colorido + detalhes no body em blocos separados por `border-t`. Nenhuma página pública usa layouts soltos (sem card).
+
+- **Sucesso**: header `bg-accent`, 2 blocos ("Detalhes da reserva" e "Reserva em nome de"), email note, mensagem de acolhimento, box de cancelamento abaixo
+- **Cancelamento ativo**: header `bg-muted`, 2 blocos + aviso parchment + botões com `border-t` acima
+- **Cancelamento concluído**: header `bg-accent`
 
 ---
 

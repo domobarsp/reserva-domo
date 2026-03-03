@@ -4,13 +4,13 @@ import {
   Clock,
   Users,
   Armchair,
-  CheckCircle2,
   Mail,
+  CheckCircle2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Card, CardContent } from "@/components/ui/card";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { formatDatePtBr } from "@/lib/availability";
+import { formatTime } from "@/lib/utils";
 
 export default async function SucessoPage({
   searchParams,
@@ -56,102 +56,146 @@ export default async function SucessoPage({
     );
   }
 
+  const subtitleDate = date ? formatDatePtBr(date) : null;
+  const subtitleTime = timeSlot ? formatTime(timeSlot.start_time) : null;
+
   return (
-    <div className="bg-background px-4 py-16">
-      <div className="mx-auto max-w-lg space-y-6">
-        {/* Check icon */}
-        <div className="flex flex-col items-center gap-3 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-            <CheckCircle2 className="h-8 w-8 text-primary" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Reserva Confirmada!
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sua reserva foi realizada com sucesso.
+    <div className="bg-background min-h-full px-4 py-12">
+      {/* Logo — idêntico ao formulário */}
+      <div className="mb-8 flex flex-col items-center gap-2">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <span className="text-2xl font-bold tracking-tight">D</span>
+        </div>
+        <p className="text-sm font-medium text-muted-foreground tracking-wide">
+          Restaurante Domo
+        </p>
+      </div>
+
+      <div className="mx-auto max-w-xl space-y-4">
+
+        {/* ── Card principal ─────────────────────────────────────── */}
+        <Card className="overflow-hidden rounded-2xl shadow-md py-0 gap-0">
+
+          {/* Header — confirmação, verde claro */}
+          <div className="bg-accent px-6 pt-5 pb-5">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground mb-2">
+              Reservas online
             </p>
-          </div>
-        </div>
-
-        {/* Details card */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-widest">
-            Detalhes
-          </h2>
-
-          <div className="grid gap-3">
-            <div className="flex items-center gap-3">
-              <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="text-sm">
-                {date ? formatDatePtBr(date) : "—"}
-              </span>
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" strokeWidth={2} />
+              <h1 className="text-xl font-semibold tracking-tight text-foreground">
+                Sua mesa está reservada.
+              </h1>
             </div>
-
-            <div className="flex items-center gap-3">
-              <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="text-sm">
-                {timeSlot
-                  ? `${timeSlot.name} (${timeSlot.start_time} — ${timeSlot.end_time})`
-                  : "—"}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Armchair className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="text-sm">{accommodation?.name ?? "—"}</span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="text-sm">
-                {partySize} {partySize === 1 ? "pessoa" : "pessoas"}
-              </span>
-            </div>
+            {subtitleDate && subtitleTime && (
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
+                Esperamos você em{" "}
+                <span className="font-medium text-foreground">{subtitleDate}</span>
+                {" "}às{" "}
+                <span className="font-medium text-foreground">{subtitleTime}</span>.
+              </p>
+            )}
           </div>
 
-          <Separator />
+          <CardContent className="pt-6 pb-6 space-y-5">
 
-          <div className="space-y-0.5">
-            <p className="text-sm font-medium">
-              {firstName} {lastName}
+            {/* Bloco 1 — Detalhes da reserva */}
+            <div className="space-y-3">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                Detalhes da reserva
+              </p>
+              <div className="grid gap-2.5">
+                <div className="flex items-center gap-3">
+                  <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="text-sm">
+                    {date ? formatDatePtBr(date) : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="text-sm">
+                    {timeSlot
+                      ? `${timeSlot.name} (${formatTime(timeSlot.start_time)} — ${formatTime(timeSlot.end_time)})`
+                      : "—"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Armchair className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="text-sm">{accommodation?.name ?? "—"}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="text-sm">
+                    {partySize} {partySize === 1 ? "pessoa" : "pessoas"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-border" />
+
+            {/* Bloco 2 — Hóspede */}
+            <div className="space-y-2">
+              <p className="text-[11px] font-medium uppercase tracking-widest text-muted-foreground">
+                Reserva em nome de
+              </p>
+              <p className="text-sm font-medium">
+                {firstName} {lastName}
+              </p>
+              <p className="text-sm text-muted-foreground">{email}</p>
+            </div>
+
+            <div className="border-t border-border" />
+
+            {/* Confirmação por email */}
+            <div className="flex items-start gap-3">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div>
+                <p className="text-sm text-muted-foreground">
+                  Confirmação enviada para{" "}
+                  <span className="font-medium text-foreground">{email}</span>.
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-0.5">
+                  Não recebeu? Verifique a caixa de spam.
+                </p>
+              </div>
+            </div>
+
+            {/* Mensagem de acolhimento */}
+            <p className="text-center text-sm text-muted-foreground italic leading-relaxed">
+              Estamos ansiosos para recebê-lo no Domo.
             </p>
-            <p className="text-sm text-muted-foreground">{email}</p>
-          </div>
-        </div>
 
-        {/* Email confirmation */}
-        <div className="flex items-start gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
-          <Mail className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-          <p className="text-sm text-muted-foreground">
-            Um email de confirmação foi enviado para{" "}
-            <strong className="text-foreground">{email}</strong> com os
-            detalhes da reserva.
-          </p>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Cancellation link */}
+        {/* ── Box de cancelamento ────────────────────────────────── */}
         {token && (
-          <p className="text-center text-sm text-muted-foreground">
-            Precisa cancelar?{" "}
-            <Link
-              href={`/cancelar/${token}`}
-              className="text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
-            >
-              Link de cancelamento
-            </Link>
-          </p>
+          <Card className="overflow-hidden rounded-2xl py-0 gap-0 shadow-sm">
+            <CardContent className="py-4 text-center space-y-0.5">
+              <p className="text-sm font-medium text-foreground">
+                Precisa alterar ou cancelar?
+              </p>
+              <Link
+                href={`/cancelar/${token}`}
+                className="text-sm text-primary underline underline-offset-4 hover:text-primary/80 transition-colors"
+              >
+                Gerenciar reserva
+              </Link>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Action buttons */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button asChild variant="ghost" className="text-muted-foreground">
-            <Link href="/">Voltar ao início</Link>
-          </Button>
-          <Button asChild className="rounded-xl">
-            <Link href="/reserva">Nova Reserva</Link>
-          </Button>
+        {/* Navegação */}
+        <div className="flex justify-center pt-2">
+          <Link
+            href="/"
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Voltar ao início
+          </Link>
         </div>
+
       </div>
     </div>
   );

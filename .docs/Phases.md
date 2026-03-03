@@ -311,7 +311,7 @@ Implementação da página `/admin/relatorios` com dados reais, gráficos e expo
 ---
 
 ## Fase 9 — Refinamento Visual — Home & Formulário de Agendamento
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Revisão completa da experiência pública: landing page, formulário multi-step, página de sucesso e página de cancelamento.

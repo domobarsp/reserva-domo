@@ -101,12 +101,7 @@ export function StepCustomerInfo() {
         name="preferred_locale"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>
-              Idioma para comunicações{" "}
-              <span className="text-xs font-normal text-muted-foreground">
-                (emails de confirmação)
-              </span>
-            </FormLabel>
+            <FormLabel>Idioma para confirmação da reserva</FormLabel>
             <Select value={field.value} onValueChange={field.onChange}>
               <FormControl>
                 <SelectTrigger className="!h-11 w-full">

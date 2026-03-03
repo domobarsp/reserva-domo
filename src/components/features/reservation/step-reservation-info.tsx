@@ -211,9 +211,9 @@ export function StepReservationInfo({
                         key={ts.id}
                         htmlFor={`ts-${ts.id}`}
                         className={cn(
-                          "flex cursor-pointer items-center gap-3 rounded-xl border border-border p-4 transition-all hover:border-primary/40 hover:bg-primary/5",
+                          "flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-white p-4 transition-all hover:border-primary/40 hover:bg-primary/5",
                           selectedTimeSlotId === ts.id &&
-                            "border-primary bg-primary/5 ring-1 ring-primary"
+                            "border-primary bg-primary/[6%] ring-[1.5px] ring-primary"
                         )}
                       >
                         <RadioGroupItem value={ts.id} id={`ts-${ts.id}`} />
@@ -261,13 +261,13 @@ export function StepReservationInfo({
                           key={at.id}
                           htmlFor={`at-${at.id}`}
                           className={cn(
-                            "flex cursor-pointer items-center justify-between rounded-xl border border-border p-4 transition-all",
+                            "flex cursor-pointer items-center justify-between rounded-xl border border-border bg-white p-4 transition-all",
                             isAvailable &&
                               "hover:border-primary/40 hover:bg-primary/5",
                             !isAvailable && "cursor-not-allowed opacity-50",
                             selectedAccommodationId === at.id &&
                               isAvailable &&
-                              "border-primary bg-primary/5 ring-1 ring-primary"
+                              "border-primary bg-primary/[6%] ring-[1.5px] ring-primary"
                           )}
                         >
                           <div className="flex items-center gap-3">
@@ -291,11 +291,11 @@ export function StepReservationInfo({
                           <div className="shrink-0">
                             <span
                               className={cn(
-                                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
+                                "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs",
                                 isAvailable && at.remaining <= 3
-                                  ? "bg-amber-100 text-amber-700"
+                                  ? "bg-amber-50 text-amber-700"
                                   : isAvailable
-                                  ? "bg-primary/10 text-primary"
+                                  ? "bg-emerald-50 text-emerald-700"
                                   : "bg-muted text-muted-foreground"
                               )}
                             >
@@ -325,12 +325,12 @@ export function StepReservationInfo({
               <FormItem>
                 <FormLabel>Número de pessoas</FormLabel>
                 <FormControl>
-                  <div className="flex items-center justify-between rounded-lg border border-input px-4 py-2.5">
+                  <div className="flex items-center justify-between rounded-xl border border-input bg-white px-4 py-3">
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
-                      className="h-8 w-8 shrink-0"
+                      className="h-8 w-8 rounded-full shrink-0"
                       onClick={handleDecrement}
                       disabled={!field.value || field.value <= partySizeMin}
                     >
@@ -342,9 +342,9 @@ export function StepReservationInfo({
                     </span>
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="icon"
-                      className="h-8 w-8 shrink-0"
+                      className="h-8 w-8 rounded-full shrink-0"
                       onClick={handleIncrement}
                       disabled={!field.value || field.value >= partySizeMax}
                     >
@@ -366,12 +366,12 @@ export function StepReservationInfo({
         render={({ field }) => (
           <FormItem>
             <FormLabel>
-              Solicitações especiais{" "}
+              Alguma solicitação especial?{" "}
               <span className="font-normal text-muted-foreground">(opcional)</span>
             </FormLabel>
             <FormControl>
               <Textarea
-                placeholder="Ex: Mesa perto da janela, aniversário, alergias alimentares..."
+                placeholder="Ex: comemoração especial, restrição alimentar, preferência de assento..."
                 className="min-h-[80px] resize-none"
                 {...field}
               />
