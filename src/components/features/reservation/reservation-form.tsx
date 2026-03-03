@@ -221,6 +221,16 @@ export function ReservationForm({
 
   return (
     <div className="bg-background min-h-full px-4 py-12">
+      {/* Logo placeholder */}
+      <div className="mb-8 flex flex-col items-center gap-2">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <span className="text-2xl font-bold tracking-tight">D</span>
+        </div>
+        <p className="text-sm font-medium text-muted-foreground tracking-wide">
+          Restaurante Domo
+        </p>
+      </div>
+
       <Card className="mx-auto max-w-xl rounded-2xl shadow-md">
         <CardHeader className="pb-0">
           <CardTitle className="text-center text-xl font-semibold tracking-tight">
@@ -280,7 +290,7 @@ export function ReservationForm({
                     variant="ghost"
                     onClick={handleBack}
                     disabled={isSubmitting || isConfirmingCard}
-                    className="text-muted-foreground"
+                    className="h-12 rounded-xl px-8 font-medium text-muted-foreground"
                   >
                     Voltar
                   </Button>

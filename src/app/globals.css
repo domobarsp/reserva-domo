@@ -60,8 +60,8 @@
   --secondary-foreground: oklch(0.130 0.003 0);
   --muted: oklch(0.945 0.008 75);
   --muted-foreground: oklch(0.480 0.003 0);
-  --accent: oklch(0.600 0.095 28);
-  --accent-foreground: oklch(1 0 0);
+  --accent: oklch(0.930 0.015 162);
+  --accent-foreground: oklch(0.270 0.055 162);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.895 0.012 75);
   --input: oklch(0.895 0.012 75);
@@ -94,8 +94,8 @@
   --secondary-foreground: oklch(0.970 0.008 75);
   --muted: oklch(0.220 0.008 0);
   --muted-foreground: oklch(0.650 0.003 0);
-  --accent: oklch(0.600 0.095 28);
-  --accent-foreground: oklch(1 0 0);
+  --accent: oklch(0.280 0.040 162);
+  --accent-foreground: oklch(0.970 0.008 75);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -118,10 +118,20 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-    @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-    @apply bg-background text-foreground;
+  }
+  button:not([disabled]),
+  a,
+  label,
+  select,
+  [role="button"]:not([aria-disabled="true"]),
+  [role="option"],
+  [role="menuitem"],
+  [role="tab"],
+  [role="checkbox"],
+  [role="radio"] {
+    cursor: pointer;
   }
 }

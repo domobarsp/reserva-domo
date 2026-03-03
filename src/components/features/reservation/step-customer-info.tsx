@@ -32,7 +32,7 @@ export function StepCustomerInfo() {
             <FormItem>
               <FormLabel>Nome</FormLabel>
               <FormControl>
-                <Input placeholder="Seu nome" {...field} />
+                <Input className="h-11" placeholder="Seu nome" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -47,7 +47,7 @@ export function StepCustomerInfo() {
             <FormItem>
               <FormLabel>Sobrenome</FormLabel>
               <FormControl>
-                <Input placeholder="Seu sobrenome" {...field} />
+                <Input className="h-11" placeholder="Seu sobrenome" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -64,6 +64,7 @@ export function StepCustomerInfo() {
             <FormLabel>Email</FormLabel>
             <FormControl>
               <Input
+                className="h-11"
                 type="email"
                 placeholder="seu@email.com"
                 {...field}
@@ -83,6 +84,7 @@ export function StepCustomerInfo() {
             <FormLabel>Telefone</FormLabel>
             <FormControl>
               <Input
+                className="h-11"
                 type="tel"
                 placeholder="+55 (11) 99999-9999"
                 {...field}
@@ -107,7 +109,7 @@ export function StepCustomerInfo() {
             </FormLabel>
             <Select value={field.value} onValueChange={field.onChange}>
               <FormControl>
-                <SelectTrigger className="w-full">
+                <SelectTrigger className="h-11 w-full">
                   <SelectValue />
                 </SelectTrigger>
               </FormControl>

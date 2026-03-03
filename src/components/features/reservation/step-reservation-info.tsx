@@ -2,7 +2,8 @@
 
 import { useFormContext } from "react-hook-form";
 import { useMemo, useState } from "react";
-import { CalendarIcon, Loader2, Users, Minus, Plus } from "lucide-react";
+import { CalendarIcon, Users, Minus, Plus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn, formatTime } from "@/lib/utils";
@@ -152,7 +153,7 @@ export function StepReservationInfo({
                   <Button
                     variant="outline"
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "h-11 w-full justify-start text-left font-normal",
                       !selectedDate && "text-muted-foreground"
                     )}
                   >
@@ -179,11 +180,14 @@ export function StepReservationInfo({
         )}
       />
 
-      {/* Loading indicator */}
+      {/* Loading skeletons */}
       {selectedDate && isLoadingAvailability && (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground animate-in fade-in duration-200">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Carregando horários...</span>
+        <div className="space-y-3 animate-in fade-in duration-200">
+          <Skeleton className="h-4 w-16 rounded" />
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+          </div>
         </div>
       )}
 
