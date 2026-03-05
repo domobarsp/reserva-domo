@@ -28,6 +28,7 @@ Transmite elegância, exclusividade e confiança — inspirada em hotelaria de a
 - Microanimações chamativas
 - Ilustrações caricatas
 - Branco puro como fundo de página
+- Bege ou qualquer tom quente (hue amarelo/marrom) em bordas, backgrounds ou filtros do admin
 
 ---
 
@@ -93,44 +94,49 @@ Mantidas semânticas e distintas entre si, ajustadas para harmonia com o novo te
 
 ### CSS Custom Properties — Light Mode (`:root`)
 
+> **Decisão (2026-03-04, Fase 12)**: Paleta migrada de bege quente para cinza neutro (zinc).
+> Backgrounds, bordas e estados muted usam zinc puro (chroma = 0). A cor primária verde e
+> o accent verde-claro permanecem intactos. O token `--background` é zinc-50 e o admin
+> sobrepõe com `bg-zinc-100` no layout autenticado.
+
 ```css
 /* Backgrounds */
---background: oklch(0.970 0.008 75);        /* #F6F3EE off-white quente */
---foreground: oklch(0.130 0.005 0);          /* #1C1C1C quase preto */
+--background: oklch(0.985 0 0);             /* zinc-50 #fafafa — neutro */
+--foreground: oklch(0.130 0 0);             /* #1C1C1C quase preto */
 
 /* Cards & Popovers */
---card: oklch(1 0 0);                        /* #FFFFFF branco puro */
---card-foreground: oklch(0.130 0.005 0);
+--card: oklch(1 0 0);                       /* #FFFFFF branco puro */
+--card-foreground: oklch(0.130 0 0);
 
 --popover: oklch(1 0 0);
---popover-foreground: oklch(0.130 0.005 0);
+--popover-foreground: oklch(0.130 0 0);
 
 /* Primary — verde escuro #1F3A34 */
 --primary: oklch(0.270 0.055 162);
---primary-foreground: oklch(0.970 0.008 75); /* off-white sobre verde */
+--primary-foreground: oklch(0.985 0 0);     /* zinc-50 sobre verde */
 
 /* Secondary */
---secondary: oklch(0.945 0.010 75);          /* bege levemente mais escuro que o bg */
---secondary-foreground: oklch(0.270 0.055 162);
+--secondary: oklch(0.974 0 0);              /* zinc-50 */
+--secondary-foreground: oklch(0.130 0 0);
 
-/* Muted — usado como bg do header dos cards */
---muted: oklch(0.925 0.015 75);              /* bege escuro #EFEAE4 aprox. */
---muted-foreground: oklch(0.480 0.010 60);   /* #6B6B6B texto secundário */
+/* Muted — usado como bg de headers de seção, skeletons */
+--muted: oklch(0.961 0 0);                  /* zinc-100 #f4f4f5 */
+--muted-foreground: oklch(0.44 0 0);        /* zinc-600 texto secundário */
 
 /* Accent — verde claro (hover, bg de sucesso) */
---accent: oklch(0.930 0.015 162);            /* verde menta claro */
---accent-foreground: oklch(0.270 0.055 162); /* verde escuro sobre verde claro */
+--accent: oklch(0.930 0.015 162);           /* verde menta claro */
+--accent-foreground: oklch(0.270 0.055 162);/* verde escuro sobre verde claro */
 
 /* Highlight — terracota decorativo (não usar como bg de superfície) */
---highlight: oklch(0.600 0.095 28);          /* #C97C6A terracota */
+--highlight: oklch(0.600 0.095 28);         /* #C97C6A terracota */
 
 /* Destructive */
---destructive: oklch(0.500 0.160 22);
+--destructive: oklch(0.577 0.245 27.325);
 
 /* Borders & Input */
---border: oklch(0.895 0.015 75);             /* #E2DDD6 */
---input: oklch(0.895 0.015 75);
---ring: oklch(0.270 0.055 162);              /* ring = primary */
+--border: oklch(0.922 0 0);                 /* zinc-200 #e4e4e7 */
+--input: oklch(0.922 0 0);                  /* zinc-200 */
+--ring: oklch(0.270 0.055 162);             /* ring = primary */
 
 /* Radius */
 --radius: 0.75rem;
@@ -285,11 +291,28 @@ No Tailwind, mapear em `globals.css` ou usar as classes utilitárias padrão com
 
 ### Sidebar (Admin)
 
-- Fundo: `bg-sidebar` (verde escuro `#1F3A34` aprox.)
-- Logo: texto `text-sidebar-foreground font-semibold`
-- Item ativo: `bg-sidebar-accent text-sidebar-primary-foreground font-medium`
-- Item hover: `hover:bg-sidebar-accent/60 hover:text-sidebar-foreground`
-- Ícones: `h-[18px] w-[18px]`, monocromáticos, cor do texto
+> **Decisão (2026-03-04)**: Sidebar branca (Notion/Figma-style) — verde escuro era muito temático para uma ferramenta.
+
+- Fundo: `bg-sidebar` → **branco `#FFFFFF`**
+- Borda direita: `border-r border-sidebar-border` (zinc-200 `#E4E4E7`)
+- Logo "Domo": `text-primary font-bold` (verde no branco = contraste + marca)
+- Badge "Admin": `bg-primary/10 text-primary`
+- Item ativo: `bg-sidebar-accent text-sidebar-primary font-medium` (zinc-100 bg, zinc-900 text)
+- Item hover: `hover:bg-sidebar-accent/60 hover:text-sidebar-primary`
+- Item inativo: `text-sidebar-foreground/70` (zinc-600 com opacity)
+- Ícones: `h-[18px] w-[18px]`, monocromáticos, cor do texto pai
+
+**CSS vars de sidebar (`globals.css`):**
+```css
+--sidebar: oklch(1 0 0);                          /* #FFFFFF */
+--sidebar-foreground: oklch(0.44 0.005 0);         /* zinc-600 */
+--sidebar-primary: oklch(0.13 0.005 0);            /* zinc-900 — texto ativo */
+--sidebar-primary-foreground: oklch(1 0 0);
+--sidebar-accent: oklch(0.961 0 0);                /* zinc-100 — bg ativo */
+--sidebar-accent-foreground: oklch(0.13 0.005 0);  /* zinc-900 */
+--sidebar-border: oklch(0.922 0 0);                /* zinc-200 */
+--sidebar-ring: oklch(0.270 0.055 162);            /* primary ring */
+```
 
 ### Badges de Status
 

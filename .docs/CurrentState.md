@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-03-02 | Fase: 9 (Refinamento — Home & Formulário) — CONCLUÍDA | Próxima: Fase 10 (Refinamento — Dashboard)
+> Atualizado: 2026-03-04 | Fase: 12 (Refinamento — Reservas) — EM ANDAMENTO
 
 ## O que funciona
 
@@ -232,14 +232,61 @@ Nada — todos os fluxos principais estão funcionando com integrações reais.
 - **Home** (`/`): redireciona para `/reserva`
 - **Footer**: mantido com dados reais do restaurante (Server Component)
 
+### Refinamento Visual — Admin Theme + Dashboard + Padronização (Fase 10 — CONCLUÍDA)
+
+**Admin Theme Reset:**
+- **Sidebar branca** (Notion/Figma-style): `--sidebar: #FFFFFF`, borda zinc-200, texto zinc-600, item ativo zinc-100+zinc-900; Logo "Domo" mantém `text-primary` (verde sobre branco)
+- **Admin background zinc-100** (`#F4F4F5`): `bg-zinc-100` no wrapper do layout autenticado — bege `--background` preservado para páginas públicas
+- **Topbar mobile-only**: `lg:hidden`; desktop sem topbar
+- **Sidebar footer**: avatar com iniciais, displayName, label de cargo, botão logout — layout autenticado extrai e passa `displayName` para sidebar e topbar
+
+**Dashboard Redesign:**
+- **5 cards de estatísticas**: Total, Confirmadas, Pendentes, Canceladas, Clientes Esperados — card pattern: `rounded-xl border bg-card p-5 shadow-sm`, label (muted) + valor (3xl bold) à esquerda, icon (h-10 w-10 rounded-lg) à direita
+- **Gráfico de barras** (`ReservationsChart`): hoje em verde-escuro `#1F3A34`, outros dias zinc-300, LabelList acima das barras, legenda abaixo — visível apenas para períodos >1 dia
+- **Microcopy contextual**: Cards "Confirmadas" e "Pendentes" com textos baseados no valor real (não fixo positivo)
+- **Pill ativo chumbo**: `bg-zinc-800 text-white`; container `bg-zinc-200 border-zinc-300`
+- **Empty state**: `CalendarX2` + texto contextual por período
+- **Responsividade**: colunas "Pessoas" ocultas em `<640px`, "Acomodação" em `<768px`
+- **Botão Nova Reserva**: no header do dashboard, ao lado do PeriodSelector
+
+**Padronização visual (Relatórios como referência):**
+
+Padrão adotado em todas as páginas admin:
+- **Cards**: `rounded-xl border bg-card p-5 shadow-sm` — label+value esquerda, icon h-10 w-10 direita
+- **Gráficos**: bare `div.rounded-xl border bg-card p-5 shadow-sm` + `div.mb-4 > h3 + p.muted`
+- **Tabelas**: `overflow-hidden rounded-xl border bg-card shadow-sm` wrapping `<Table>`
+
+Arquivos migrados para esse padrão: `dashboard-stats.tsx`, `reservations-chart.tsx`, `period-reservations.tsx`, `reservation-table.tsx`, `reservas-page-content.tsx` (loading), `waitlist-table.tsx`, `walkin-table.tsx`, `admin-users-table.tsx`, `capacity-table.tsx`, `accommodations-table.tsx`, `time-slots-table.tsx`, `exceptions-table.tsx`, `configuracoes/page.tsx`
+
+Correções de tokens quentes em componentes shared:
+- `table.tsx` TableHead: `bg-muted/50` → `bg-zinc-200`; row hover: `hover:bg-muted/30` → `hover:bg-zinc-50`
+
+### Refinamento Visual — Calendário (Fase 11 — CONCLUÍDA)
+
+- **Container unificado**: card `rounded-xl border bg-card shadow-sm overflow-hidden` com `CalendarHeader` em seção `border-b` e `CalendarLegend` em seção `border-t`; inner grid sem `rounded-lg border` próprios
+- **Células refinadas**: altura `min-h-[72px] md:min-h-[100px]`; dia atual com badge circular `bg-primary rounded-full w-7 h-7`; dados em "N reservas · X pax" (singular/plural) + "Y% ocupação" abaixo; dias fechados com célula inteira `bg-zinc-100`; dias vazios com ponto cinza que vira "Adicionar reserva" no hover
+- **Limiares de ocupação revisados**: Baixa `< 35%`, Média `35–70%`, Alta `> 70%`; cores `bg-emerald-50 / bg-amber-100 / bg-rose-100` (sem tom bege)
+- **Popover de preview**: `DayPopover` mostra até N reservas com dot de status (verde/âmbar/vermelho/cinza), nome completo, horário · pax, label de status; `max-h-60 overflow-y-auto`; footer com "Ver todas →"; days sem reservas navegam direto
+- **Dados enriquecidos**: `getCalendarioData()` retorna `ReservationFull[]` (join customers + accommodation_types + time_slots)
+- **Navegação**: `aria-label` nos botões; `useTransition` + `opacity-60` ao trocar mês
+- **Legenda sincronizada**: cores idênticas às células; limiares atualizados; item "Sem reservas" com ponto cinza
+- **Skeleton**: atualizado para estrutura card com header/grid/legenda
+
+### Refinamento Visual — Reservas (Fase 12 — EM ANDAMENTO)
+
+- **Paleta de cor neutralizada**: tokens `--background`, `--muted`, `--secondary`, `--border`, `--input` migrados de bege quente para zinc puro (chroma = 0). Nenhum tom beige em bordas ou backgrounds.
+- **Drawer de reserva redesenhado** (`reservation-detail-drawer.tsx`): eyebrow "RESERVA" + nome `text-[22px]` + badges (status + origem) em linha abaixo do nome; metadata 2×2 grid; data de criação "Reservado em…" no header; icon circles `h-6 w-6 bg-zinc-100` em campos de cliente; timeline flex-based (sem absolute, dots sempre centrados, conector `w-px bg-zinc-200`); timestamps com ano `dd/MM/yyyy 'às' HH:mm`; footer com hierarquia clara (ação primária full-width + secundárias outline em linha); fullscreen mobile `w-full sm:max-w-[460px]`.
+- **Tabela corrigida**: cabeçalhos com acentuação correta (Horário, Acomodação, Ações), `hover:bg-zinc-50 transition-colors` nas linhas, coluna DATA oculta quando filtro de data está ativo (`hideDate` prop).
+- **Filtros corrigidos**: "Todas as acomodações" (com acento), data exibida em formato compacto "Sex., 27/02/2026" via `formatDateShort()` em `availability.ts`.
+
 ## O que não existe ainda
 
-- Refinamento visual por página — Dashboard (10), Calendário (11), Reservas (12), Lista de Espera & Passantes (13), Configurações & Acessos (14)
+- Refinamento visual por página — Lista de Espera & Passantes (13), Configurações & Acessos (14)
 - Produção & Deploy (Fase 15)
 
 ## Próximos Passos
 
-Fase 10 — Refinamento Visual — Dashboard: cards de estatísticas, seletor de período, tabela e estados de loading/empty/error.
+Fase 12 (continuação) — concluir os critérios restantes ou avançar para Fase 13.
 
 ## Issues Conhecidas
 

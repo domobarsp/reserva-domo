@@ -19,7 +19,7 @@ import {
 import type { AccommodationType } from "@/types";
 import { ReservationStatus } from "@/types";
 import { getStatusLabel } from "@/lib/status-transitions";
-import { getTodayStr, dateToStr, formatDatePtBr } from "@/lib/availability";
+import { getTodayStr, dateToStr, formatDateShort } from "@/lib/availability";
 import { cn } from "@/lib/utils";
 
 interface ReservationFiltersProps {
@@ -112,7 +112,7 @@ export function ReservationFilters({
           >
             <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
             <span className="truncate">
-              {date ? formatDatePtBr(date) : "Selecionar data"}
+              {date ? formatDateShort(date) : "Selecionar data"}
             </span>
           </Button>
         </PopoverTrigger>
@@ -155,7 +155,7 @@ export function ReservationFilters({
           <SelectValue placeholder="Acomodacao" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">Todas acomodacoes</SelectItem>
+          <SelectItem value="all">Todas as acomodações</SelectItem>
           {accommodationTypes
             .filter((at) => at.is_active)
             .map((at) => (

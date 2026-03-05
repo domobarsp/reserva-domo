@@ -37,6 +37,7 @@ interface ReservationTableProps {
   onChargeNoShow: (reservation: ReservationFull) => void;
   onRowClick: (reservation: ReservationFull) => void;
   loadingStatusId: string | null;
+  hideDate?: boolean;
 }
 
 function formatDateDdMmYyyy(dateStr: string): string {
@@ -51,6 +52,7 @@ export function ReservationTable({
   onChargeNoShow,
   onRowClick,
   loadingStatusId,
+  hideDate = false,
 }: ReservationTableProps) {
   const sorted = useMemo(() => {
     return [...reservations].sort((a, b) => {
@@ -71,19 +73,19 @@ export function ReservationTable({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="overflow-hidden rounded-xl border border-border/60">
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Horario</TableHead>
+              {!hideDate && <TableHead>Data</TableHead>}
+              <TableHead>Horário</TableHead>
               <TableHead>Cliente</TableHead>
-              <TableHead>Acomodacao</TableHead>
+              <TableHead>Acomodação</TableHead>
               <TableHead>Pessoas</TableHead>
               <TableHead>Status</TableHead>
               {/* Coluna de indicador de cartão/cobrança — sem título */}
               <TableHead className="w-8" />
-              <TableHead>Acoes</TableHead>
+              <TableHead>Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -96,10 +98,10 @@ export function ReservationTable({
               return (
                 <TableRow
                   key={reservation.id}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-zinc-50 transition-colors"
                   onClick={() => onRowClick(reservation)}
                 >
-                  <TableCell>{formatDateDdMmYyyy(reservation.date)}</TableCell>
+                  {!hideDate && <TableCell>{formatDateDdMmYyyy(reservation.date)}</TableCell>}
                   <TableCell>
                     {formatTime(reservation.reservation_time)}
                   </TableCell>

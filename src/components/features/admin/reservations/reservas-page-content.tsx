@@ -45,7 +45,7 @@ function buildFiltersQuery(filters: {
 function ReservationTableLoading() {
   return (
     <div
-      className="space-y-2 overflow-hidden rounded-xl border border-border/60 p-3"
+      className="space-y-2 overflow-hidden rounded-xl border bg-card shadow-sm p-3"
       aria-busy="true"
       aria-live="polite"
     >
@@ -258,6 +258,7 @@ export function ReservasPageContent({
             onChargeNoShow={handleChargeNoShow}
             onRowClick={handleRowClick}
             loadingStatusId={loadingStatusId}
+            hideDate={!!filterDate}
           />
         )}
       </div>

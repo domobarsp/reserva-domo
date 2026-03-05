@@ -17,12 +17,9 @@ import {
   Armchair,
   MessageSquare,
   AlertTriangle,
+  X,
 } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ReservationStatusBadge } from "@/components/shared/status-badge";
 import {
@@ -59,40 +56,75 @@ function formatCurrency(cents: number) {
   });
 }
 
-/** Estilo do botão de ação por próximo status */
-const nextStatusConfig: Record<
-  ReservationStatus,
-  { label: string; className: string }
+// ─── configuração de ações ────────────────────────────────────────────────────
+
+/** Ações primárias (positivas): botão cheio, full-width */
+const PRIMARY_ACTIONS = new Set([
+  ReservationStatus.CONFIRMED,
+  ReservationStatus.SEATED,
+  ReservationStatus.COMPLETE,
+]);
+
+const primaryActionConfig: Partial<
+  Record<ReservationStatus, { label: string; className: string }>
 > = {
   [ReservationStatus.CONFIRMED]: {
-    label: "Confirmar",
+    label: "Confirmar reserva",
     className: "bg-primary text-primary-foreground hover:bg-primary/90",
   },
   [ReservationStatus.SEATED]: {
-    label: "Sentar",
+    label: "Marcar como sentado",
     className: "bg-emerald-600 text-white hover:bg-emerald-700",
   },
   [ReservationStatus.COMPLETE]: {
-    label: "Concluir",
+    label: "Concluir atendimento",
     className: "bg-emerald-600 text-white hover:bg-emerald-700",
-  },
-  [ReservationStatus.NO_SHOW]: {
-    label: "No-Show",
-    className:
-      "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100",
-  },
-  [ReservationStatus.CANCELLED]: {
-    label: "Cancelar",
-    className:
-      "border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100",
-  },
-  [ReservationStatus.PENDING]: {
-    label: "Pendente",
-    className: "border bg-muted text-muted-foreground",
   },
 };
 
-// ─── componente ───────────────────────────────────────────────────────────────
+/** Ações secundárias (destrutivas/neutras): outline, linha de baixo */
+const secondaryActionConfig: Partial<
+  Record<ReservationStatus, { label: string }>
+> = {
+  [ReservationStatus.NO_SHOW]: { label: "Não compareceu" },
+  [ReservationStatus.CANCELLED]: { label: "Cancelar reserva" },
+};
+
+// ─── subcomponentes ────────────────────────────────────────────────────────────
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-3.5">
+      {children}
+    </h3>
+  );
+}
+
+function IconRow({
+  icon: Icon,
+  children,
+  iconClassName,
+}: {
+  icon: React.ElementType;
+  children: React.ReactNode;
+  iconClassName?: string;
+}) {
+  return (
+    <li className="flex items-center gap-3 text-sm">
+      <div
+        className={cn(
+          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100",
+          iconClassName
+        )}
+      >
+        <Icon className="h-3 w-3 text-zinc-500" />
+      </div>
+      {children}
+    </li>
+  );
+}
+
+// ─── componente principal ─────────────────────────────────────────────────────
 
 interface ReservationDetailDrawerProps {
   reservationId: string | null;
@@ -154,10 +186,20 @@ export function ReservationDetailDrawer({
   }
 
   const nextStatuses = details ? getValidNextStatuses(details.status) : [];
+  const primaryStatuses = nextStatuses.filter((s) => PRIMARY_ACTIONS.has(s));
+  const secondaryStatuses = nextStatuses.filter(
+    (s) => !PRIMARY_ACTIONS.has(s)
+  );
   const canChargeNoShow =
     details?.status === ReservationStatus.NO_SHOW &&
     !!details.stripe_payment_method_id &&
     !details.no_show_charged;
+
+  const hasFooter =
+    details && !loading && (nextStatuses.length > 0 || canChargeNoShow);
+
+  // Data de criação (primeiro evento do histórico, sem from_status)
+  const creationEntry = details?.statusHistory.find((e) => !e.from_status);
 
   return (
     <Sheet
@@ -166,90 +208,111 @@ export function ReservationDetailDrawer({
         if (!open) onClose();
       }}
     >
-      <SheetContent className="flex flex-col overflow-hidden p-0 sm:max-w-lg">
+      <SheetContent className="flex flex-col overflow-hidden p-0 w-full sm:max-w-[460px] bg-white">
         <SheetTitle className="sr-only">Detalhes da Reserva</SheetTitle>
 
-        {/* ── Cabeçalho ────────────────────────────────────────────── */}
-        {details && !loading && (
-          <div className="border-b bg-muted/30 px-6 pb-4 pt-5 pr-14">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Reserva
-            </p>
-            <h2 className="mt-1 text-xl font-semibold text-foreground">
-              {details.customer.first_name} {details.customer.last_name}
-            </h2>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <ReservationStatusBadge status={details.status} />
-              <span className="rounded-full border border-border/60 bg-background px-2.5 py-0.5 text-xs text-muted-foreground">
-                {sourceLabels[details.source as ReservationSource]}
-              </span>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <CalendarDays className="h-3.5 w-3.5" />
-                {format(parseISO(details.date), "dd/MM/yyyy (EEE)", {
-                  locale: ptBR,
-                })}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                {formatTime(details.reservation_time)}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Armchair className="h-3.5 w-3.5" />
-                {details.accommodation_type.name}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
-                {details.party_size}{" "}
-                {details.party_size === 1 ? "pessoa" : "pessoas"}
-              </span>
-            </div>
+        {/* ── Loading ──────────────────────────────────────────────── */}
+        {loading && (
+          <div className="flex flex-1 items-center justify-center">
+            <Loader2 className="h-5 w-5 animate-spin text-zinc-400" />
           </div>
         )}
 
-        {loading && (
-          <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        {/* ── Cabeçalho ────────────────────────────────────────────── */}
+        {details && !loading && (
+          <div className="flex-shrink-0 border-b border-zinc-100 bg-zinc-50/60 px-6 pt-6 pb-5 pr-14">
+            {/* Eyebrow */}
+            <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-2">
+              Reserva
+            </p>
+
+            {/* Nome */}
+            <h2 className="text-[22px] font-semibold tracking-tight text-zinc-900 leading-snug">
+              {details.customer.first_name} {details.customer.last_name}
+            </h2>
+
+            {/* Badges: status + origem abaixo do nome */}
+            <div className="mt-2 flex items-center gap-2">
+              <ReservationStatusBadge status={details.status} />
+              <span className="rounded-full border border-zinc-200 bg-white px-2.5 py-0.5 text-[11px] text-zinc-500">
+                {sourceLabels[details.source as ReservationSource]}
+              </span>
+            </div>
+
+            {/* Metadata 2×2 */}
+            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <CalendarDays className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                {format(parseISO(details.date), "dd/MM/yyyy (EEE)", {
+                  locale: ptBR,
+                })}
+              </div>
+              <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                {formatTime(details.reservation_time)}
+              </div>
+              <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <Armchair className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                {details.accommodation_type.name}
+              </div>
+              <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <Users className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                {details.party_size}{" "}
+                {details.party_size === 1 ? "pessoa" : "pessoas"}
+              </div>
+            </div>
+
+            {/* Data de criação da reserva */}
+            {creationEntry && (
+              <p className="mt-3 text-xs text-zinc-400 border-t border-zinc-100 pt-3">
+                Reservado em{" "}
+                {format(
+                  parseISO(creationEntry.created_at),
+                  "dd 'de' MMMM 'de' yyyy 'às' HH:mm",
+                  { locale: ptBR }
+                )}
+              </p>
+            )}
           </div>
         )}
 
         {/* ── Corpo (scrollável) ───────────────────────────────────── */}
         {details && !loading && (
-          <div className="flex-1 space-y-0 overflow-y-auto divide-y divide-border/60">
+          <div className="flex-1 overflow-y-auto">
             {/* Cliente */}
-            <section className="px-6 py-4 space-y-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Cliente
-              </h3>
-              <ul className="space-y-2">
-                <li className="flex items-center gap-2.5 text-sm">
-                  <Mail className="h-4 w-4 shrink-0 text-muted-foreground/60" />
-                  <span>{details.customer.email}</span>
-                </li>
+            <section className="px-6 py-4 border-b border-zinc-100">
+              <SectionLabel>Cliente</SectionLabel>
+              <ul className="space-y-2.5">
+                <IconRow icon={Mail}>
+                  <span className="font-medium text-zinc-800 break-all">
+                    {details.customer.email}
+                  </span>
+                </IconRow>
                 {details.customer.phone && (
-                  <li className="flex items-center gap-2.5 text-sm">
-                    <Phone className="h-4 w-4 shrink-0 text-muted-foreground/60" />
-                    <span>{details.customer.phone}</span>
-                  </li>
+                  <IconRow icon={Phone}>
+                    <span className="text-zinc-700">
+                      {details.customer.phone}
+                    </span>
+                  </IconRow>
                 )}
-                <li className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                  <Globe className="h-4 w-4 shrink-0 text-muted-foreground/60" />
-                  <span>{localeLabels[details.locale as Locale]}</span>
-                </li>
+                <IconRow icon={Globe}>
+                  <span className="text-zinc-500">
+                    {localeLabels[details.locale as Locale]}
+                  </span>
+                </IconRow>
               </ul>
             </section>
 
             {/* Solicitações especiais */}
             {details.special_requests && (
-              <section className="px-6 py-4 space-y-2">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Solicitações Especiais
-                </h3>
-                <div className="flex gap-2.5">
-                  <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
-                  <p className="text-sm italic text-foreground/80">
-                    {details.special_requests}
+              <section className="px-6 py-4 border-b border-zinc-100">
+                <SectionLabel>Solicitações Especiais</SectionLabel>
+                <div className="flex gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 mt-0.5">
+                    <MessageSquare className="h-3 w-3 text-zinc-500" />
+                  </div>
+                  <p className="text-sm italic text-zinc-600 leading-relaxed">
+                    &ldquo;{details.special_requests}&rdquo;
                   </p>
                 </div>
               </section>
@@ -257,82 +320,112 @@ export function ReservationDetailDrawer({
 
             {/* Garantia & Cobrança */}
             {details.stripe_payment_method_id && (
-              <section className="px-6 py-4 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Garantia & Cobrança
-                </h3>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
-                    <CreditCard className="h-4 w-4 shrink-0 text-muted-foreground/60" />
-                    <span>Cartão registrado como garantia</span>
-                  </div>
+              <section className="px-6 py-4 border-b border-zinc-100">
+                <SectionLabel>Garantia & Cobrança</SectionLabel>
+                <ul className="space-y-2.5">
+                  <IconRow icon={CreditCard}>
+                    <span className="text-zinc-500">
+                      Cartão registrado como garantia
+                    </span>
+                  </IconRow>
+
                   {details.no_show_charged && details.no_show_charge_amount ? (
-                    <div className="flex items-center gap-2.5 text-sm text-emerald-700">
-                      <CheckCircle2 className="h-4 w-4 shrink-0" />
-                      <span>
+                    <li className="flex items-center gap-3 text-sm">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                      </div>
+                      <span className="text-emerald-700">
                         No-show cobrado:{" "}
                         <strong>
                           {formatCurrency(details.no_show_charge_amount)}
                         </strong>
                       </span>
-                    </div>
+                    </li>
                   ) : details.status === ReservationStatus.NO_SHOW ? (
-                    <div className="flex items-center gap-2.5 text-sm text-amber-700">
-                      <AlertTriangle className="h-4 w-4 shrink-0" />
-                      <span>No-show pendente de cobrança</span>
-                    </div>
+                    <li className="flex items-center gap-3 text-sm">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-50">
+                        <AlertTriangle className="h-3 w-3 text-amber-500" />
+                      </div>
+                      <span className="text-amber-700">
+                        No-show pendente de cobrança
+                      </span>
+                    </li>
                   ) : null}
-                </div>
+                </ul>
               </section>
             )}
 
             {/* Histórico */}
             {details.statusHistory.length > 0 && (
-              <section className="px-6 py-4 space-y-3">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Histórico
-                </h3>
-                <ol className="space-y-2.5">
-                  {details.statusHistory.map((entry) => (
-                    <li key={entry.id} className="flex items-start gap-3">
-                      <span className="mt-0.5 shrink-0 rounded-full border border-border/60 bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {format(parseISO(entry.created_at), "dd/MM HH:mm")}
-                      </span>
-                      {entry.from_status ? (
-                        <span className="flex flex-wrap items-center gap-1.5 text-sm">
-                          <span
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-xs font-medium",
-                              getStatusColor(entry.from_status)
+              <section className="px-6 py-4">
+                <SectionLabel>Histórico</SectionLabel>
+                {/* Timeline flex — sem absolute, dots sempre centralizados */}
+                <ol className="space-y-0">
+                  {details.statusHistory.map((entry, index) => {
+                    const isLast =
+                      index === details.statusHistory.length - 1;
+                    return (
+                      <li key={entry.id} className="flex gap-4">
+                        {/* Coluna esquerda: dot + conector */}
+                        <div className="flex flex-col items-center pt-[3px]">
+                          <div className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-zinc-300 bg-white" />
+                          {!isLast && (
+                            <div className="w-px flex-1 bg-zinc-200 my-1" />
+                          )}
+                        </div>
+
+                        {/* Coluna direita: conteúdo */}
+                        <div
+                          className={cn(
+                            "flex-1 min-w-0",
+                            !isLast ? "pb-4" : "pb-0"
+                          )}
+                        >
+                          <p className="text-[11px] text-zinc-400 mb-1.5 leading-none">
+                            {format(
+                              parseISO(entry.created_at),
+                              "dd/MM/yyyy 'às' HH:mm",
+                              { locale: ptBR }
                             )}
-                          >
-                            {getStatusLabel(entry.from_status)}
-                          </span>
-                          <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                          <span
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-xs font-medium",
-                              getStatusColor(entry.to_status)
-                            )}
-                          >
-                            {getStatusLabel(entry.to_status)}
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">
-                          Criado como{" "}
-                          <span
-                            className={cn(
-                              "rounded-full px-2 py-0.5 text-xs font-medium",
-                              getStatusColor(entry.to_status)
-                            )}
-                          >
-                            {getStatusLabel(entry.to_status)}
-                          </span>
-                        </span>
-                      )}
-                    </li>
-                  ))}
+                          </p>
+
+                          {entry.from_status ? (
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-xs font-medium",
+                                  getStatusColor(entry.from_status)
+                                )}
+                              >
+                                {getStatusLabel(entry.from_status)}
+                              </span>
+                              <ArrowRight className="h-3 w-3 text-zinc-300" />
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-xs font-medium",
+                                  getStatusColor(entry.to_status)
+                                )}
+                              >
+                                {getStatusLabel(entry.to_status)}
+                              </span>
+                            </div>
+                          ) : (
+                            <p className="text-sm text-zinc-500">
+                              Criado como{" "}
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-xs font-medium",
+                                  getStatusColor(entry.to_status)
+                                )}
+                              >
+                                {getStatusLabel(entry.to_status)}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ol>
               </section>
             )}
@@ -340,30 +433,35 @@ export function ReservationDetailDrawer({
         )}
 
         {/* ── Rodapé de ações ─────────────────────────────────────── */}
-        {details && !loading && (nextStatuses.length > 0 || canChargeNoShow) && (
-          <div className="border-t bg-background px-6 py-4 space-y-3">
-            {/* Confirmação de cobrança */}
+        {hasFooter && (
+          <div className="flex-shrink-0 border-t border-zinc-200 bg-white px-5 py-4">
             {chargeConfirm ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 space-y-3">
-                <div className="flex items-start gap-2.5">
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
-                  <div className="text-sm">
-                    <p className="font-medium text-amber-800">
-                      Confirmar cobrança de no-show?
-                    </p>
-                    <p className="mt-0.5 text-amber-700">
-                      Esta ação é irreversível. O cartão de{" "}
-                      <strong>{details.customer.first_name}</strong> será
-                      cobrado.
-                    </p>
+              /* ── Confirmação de cobrança ── */
+              <div className="space-y-3">
+                <div className="rounded-xl border border-zinc-200 bg-zinc-50 p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-100">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-zinc-900">
+                        Confirmar cobrança de no-show?
+                      </p>
+                      <p className="mt-0.5 text-sm text-zinc-500 leading-snug">
+                        Esta ação é irreversível. O cartão registrado de{" "}
+                        <strong className="text-zinc-700">
+                          {details!.customer.first_name}
+                        </strong>{" "}
+                        será cobrado imediatamente.
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    size="sm"
                     onClick={handleChargeNoShow}
                     disabled={isCharging}
-                    className="flex-1 bg-amber-600 text-white hover:bg-amber-700"
+                    className="flex-1 bg-zinc-900 text-white hover:bg-zinc-800"
                   >
                     {isCharging ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -372,60 +470,76 @@ export function ReservationDetailDrawer({
                     )}
                   </Button>
                   <Button
-                    size="sm"
                     variant="outline"
                     onClick={() => setChargeConfirm(false)}
                     disabled={isCharging}
+                    className="px-3 border-zinc-200"
+                    aria-label="Cancelar"
                   >
-                    Cancelar
+                    <X className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             ) : (
-              <>
-                {/* Transições de status */}
-                {nextStatuses.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-xs font-medium text-muted-foreground">
-                      Alterar status
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {nextStatuses.map((status) => {
-                        const cfg = nextStatusConfig[status];
-                        const isLoading = actionLoadingStatus === status;
-                        return (
-                          <Button
-                            key={status}
-                            size="sm"
-                            onClick={() => handleStatusChange(status)}
-                            disabled={!!actionLoadingStatus || isCharging}
-                            className={cn("gap-1.5", cfg.className)}
-                          >
-                            {isLoading && (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            )}
-                            {cfg.label}
-                          </Button>
-                        );
-                      })}
-                    </div>
+              /* ── Ações de status ── */
+              <div className="space-y-2">
+                {/* Ações primárias: botão cheio, full-width */}
+                {primaryStatuses.map((status) => {
+                  const cfg = primaryActionConfig[status];
+                  if (!cfg) return null;
+                  const isActing = actionLoadingStatus === status;
+                  return (
+                    <Button
+                      key={status}
+                      onClick={() => handleStatusChange(status)}
+                      disabled={!!actionLoadingStatus || isCharging}
+                      className={cn("w-full gap-2", cfg.className)}
+                    >
+                      {isActing && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      {cfg.label}
+                    </Button>
+                  );
+                })}
+
+                {/* Ações secundárias: outline, em linha */}
+                {secondaryStatuses.length > 0 && (
+                  <div className="flex gap-2">
+                    {secondaryStatuses.map((status) => {
+                      const cfg = secondaryActionConfig[status];
+                      if (!cfg) return null;
+                      const isActing = actionLoadingStatus === status;
+                      return (
+                        <Button
+                          key={status}
+                          variant="outline"
+                          onClick={() => handleStatusChange(status)}
+                          disabled={!!actionLoadingStatus || isCharging}
+                          className="flex-1 gap-2 border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800"
+                        >
+                          {isActing && (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          )}
+                          {cfg.label}
+                        </Button>
+                      );
+                    })}
                   </div>
                 )}
 
                 {/* Cobrar no-show */}
                 {canChargeNoShow && (
                   <Button
-                    size="sm"
-                    variant="outline"
                     onClick={() => setChargeConfirm(true)}
                     disabled={!!actionLoadingStatus}
-                    className="w-full gap-2 border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                    className="w-full gap-2 bg-amber-600 text-white hover:bg-amber-700"
                   >
                     <CreditCard className="h-4 w-4" />
-                    Cobrar No-Show
+                    Cobrar no-show
                   </Button>
                 )}
-              </>
+              </div>
             )}
           </div>
         )}

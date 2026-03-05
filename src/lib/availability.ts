@@ -47,7 +47,7 @@ export function getToday(): string {
 }
 
 /**
- * Formata data "YYYY-MM-DD" para exibição em PT-BR
+ * Formata data "YYYY-MM-DD" para exibição em PT-BR (formato longo)
  */
 export function formatDatePtBr(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
@@ -58,6 +58,18 @@ export function formatDatePtBr(dateStr: string): string {
     month: "long",
     year: "numeric",
   });
+}
+
+/**
+ * Formata data "YYYY-MM-DD" para formato compacto: "Sex., 27/02/2026"
+ */
+export function formatDateShort(dateStr: string): string {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const weekday = date.toLocaleDateString("pt-BR", { weekday: "short" });
+  const dd = String(day).padStart(2, "0");
+  const mm = String(month).padStart(2, "0");
+  return `${weekday.charAt(0).toUpperCase() + weekday.slice(1)}, ${dd}/${mm}/${year}`;
 }
 
 // ===========================
