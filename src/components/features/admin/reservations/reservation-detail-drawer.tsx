@@ -358,6 +358,9 @@ export function ReservationDetailDrawer({
                       </div>
                       <span className="text-amber-700">
                         No-show pendente de cobrança
+                        {details.effectiveNoShowFee ? (
+                          <> — <strong>{formatCurrency(details.effectiveNoShowFee)}</strong></>
+                        ) : null}
                       </span>
                     </li>
                   ) : details.effectiveNoShowFee === null || details.effectiveNoShowFee === 0 ? (
@@ -497,7 +500,14 @@ export function ReservationDetailDrawer({
                         <strong className="text-zinc-700">
                           {details!.customer.first_name}
                         </strong>{" "}
-                        será cobrado imediatamente.
+                        será cobrado{details!.effectiveNoShowFee ? (
+                          <> no valor de{" "}
+                            <strong className="text-zinc-700">
+                              {formatCurrency(details!.effectiveNoShowFee)}
+                            </strong>
+                          </>
+                        ) : null}{" "}
+                        imediatamente.
                       </p>
                     </div>
                   </div>
