@@ -487,6 +487,18 @@
 
 ---
 
+### 2026-03-04 — Admin Theme: sidebar branca (light) e fundo cinza neutro frio
+
+**Contexto**: O painel admin usava `--sidebar: oklch(0.270 0.055 162)` (verde escuro `#1F3A34`) como fundo da sidebar e herdava `--background: oklch(0.970 0.008 75)` (bege quente `#F6F3EE`) como fundo das páginas. O verde da sidebar é a cor primária do restaurante — adequada para a vitrine pública, mas no admin cria UI pesada e temática em vez de profissional. O bege, igualmente, é premium para o formulário mas parece "papel velho" num contexto de ferramenta.
+**Decisão**:
+- **Sidebar**: Mudar para branca (`#FFFFFF`) com borda direita zinc-200 (`#E4E4E7`). Texto: zinc-600. Item ativo: bg zinc-100 + texto zinc-900 bold. Item hover: zinc-100/60. Logo "Domo" mantém `text-primary` (verde no branco = excelente contraste + marca presente). Referência visual: Notion, Figma, Clerk.
+- **Admin background**: Adicionar `bg-[#F4F4F5]` diretamente no wrapper do layout autenticado admin. O `--background` global (bege quente) permanece inalterado para as páginas públicas.
+- **Separação**: A identidade visual do formulário público (premium, warm, elegante) e do painel admin (clean, neutral, profissional) são explicitamente separadas.
+**Razão**: Ferramentas admin devem se comportar como ferramentas — neutrais, escaneáveis, sem cor temática como superfície estrutural. A cor primária verde é reservada para ações (botões CTA, badges de status, active accents), não como background de navegação.
+**Impacto**: Afeta `globals.css` (vars `--sidebar-*`), `admin-sidebar.tsx` (classes nav items), `layout.tsx` do admin autenticado (bg do wrapper). Nenhum impacto nas páginas públicas.
+
+---
+
 ### 2026-03-02 — Cancelamento: header neutro, ícones semânticos e botão único
 
 **Contexto**: A página de "Reserva cancelada" usava `bg-accent` (verde claro) no header e `CheckCircle2` como ícone — visual de "sucesso" inadequado para uma ação de cancelamento. O header de confirmação de cancelamento usava `XCircle`. Havia dois links de navegação ("Fazer nova reserva" + "Voltar ao início").
@@ -496,3 +508,121 @@
 - Navegação pós-cancelamento: único link "Fazer nova reserva" — "Voltar ao início" removido
 **Razão**: Cancelamento não é uma ação positiva — o verde claro e o check transmitiam a mensagem errada. `XCircle` comunica encerramento/remoção; `AlertTriangle` comunica atenção antes de uma ação irreversível. Um único CTA pós-cancelamento é mais focado: o usuário ou refaz uma reserva ou fecha a aba.
 
+---
+
+### 2026-03-04 — Fase 10: topbar mobile-only; logout e info de usuário no footer da sidebar
+
+**Contexto**: O admin tinha um topbar persistente em desktop mostrando título da página + logout. Com o novo tema de sidebar branca, o topbar criava redundância visual (duas faixas horizontais) e o logout ficava isolado do contexto do usuário.
+**Decisão**: Adicionar `lg:hidden` ao topbar — ele passa a existir apenas em mobile (sheet drawer). Adicionar footer à sidebar com: avatar de iniciais, displayName, label de cargo (Proprietário/Gerente/Operador) e botão de logout inline. Cada página passa a gerenciar seu próprio header (título + ações).
+**Razão**: Em desktop, o topbar era redundante com o header de cada página. Mover o logout para a sidebar coloca a identidade do usuário sempre visível e a ação de saída próxima a esse contexto — padrão adotado por Notion, Linear, Figma e similares.
+**Impacto**: `admin-sidebar.tsx` (footer), `admin-topbar.tsx` (lg:hidden + sheet footer), `layout.tsx` (passa displayName), todas as páginas admin (header próprio).
+
+---
+
+### 2026-03-04 — Fase 10: 5 cards no dashboard (adicionado "Canceladas")
+
+**Contexto**: O dashboard tinha 4 cards: Total, Confirmadas, Pendentes, Clientes Esperados. A taxa de cancelamento é uma métrica operacional relevante que estava ausente.
+**Decisão**: Adicionar 5º card "Canceladas" com `bg-zinc-100 text-zinc-400` (neutro, não alarme) e description mostrando `X% do total` ou "nenhum cancelamento". Grid atualizado para `lg:grid-cols-5`.
+**Razão**: Cancelamentos frequentes indicam problema operacional (reservas demoram para ser confirmadas, horários mal calibrados, etc). A taxa de cancelamento ao lado da taxa de confirmação dá contexto imediato para o operador.
+
+---
+
+### 2026-03-04 — Fase 10: dashboard card pattern alinhado com Relatórios (KpiCard)
+
+**Contexto**: Os cards do dashboard usavam layout próprio: icon pequeno no topo-esquerda, valor abaixo, label abaixo do valor. Os cards de Relatórios (KpiCard) usavam layout diferente: label muted em cima, valor 3xl bold, icon h-10 w-10 na direita.
+**Decisão**: Adotar o padrão KpiCard do Relatórios em todos os cards do sistema admin. Wrapper: `rounded-xl border bg-card p-5 shadow-sm`. Layout: `flex items-start justify-between` com `div.flex-1` (label + value + description) e icon container `h-10 w-10 rounded-lg` à direita.
+**Razão**: Consistência visual entre Dashboard e Relatórios. O padrão KpiCard é mais escaneável (label explica o número antes de o usuário lê-lo) e o icon grande à direita cria um ponto focal visual sem competir com o número.
+
+---
+
+### 2026-03-04 — Fase 10: Relatórios como fonte da verdade para padrões de card/tabela/gráfico
+
+**Contexto**: Diferentes páginas admin usavam wrappers inconsistentes para tabelas (`rounded-md border`, `rounded border border-border/60`, `overflow-hidden rounded-xl border border-border/60`) e cards sem padrão unificado. A página de Relatórios tinha o padrão mais refinado.
+**Decisão**: Usar a página de Relatórios como fonte da verdade para três padrões:
+- **Card**: `rounded-xl border bg-card p-5 shadow-sm`
+- **Gráfico**: bare `div.rounded-xl border bg-card p-5 shadow-sm` + `div.mb-4 > h3 + p.muted` header
+- **Tabela**: `overflow-hidden rounded-xl border bg-card shadow-sm` wrapping `<Table>`
+
+Todos os arquivos de tabela do admin foram migrados para esse padrão (ver lista completa em `plans/completed/fase-10.md`).
+**Razão**: Consistência visual reduz carga cognitiva do operador e simplifica manutenção. Um único padrão para cada tipo de container elimina variações acidentais. Usar Relatórios como referência (em vez de criar padrão novo) mantém o trabalho já feito como âncora.
+
+---
+
+### 2026-03-04 — Fase 11: CalendarHeader dentro do card como seção border-b
+
+**Contexto**: O plano original deixava o `CalendarHeader` (navegação de mês) fora do card, flutuando entre o título e o grid. Isso criava dois blocos visuais separados onde deveria haver um único bloco coeso.
+**Decisão**: Renderizar `CalendarHeader` como a seção `border-b px-4 py-4` do card, acima do grid. A estrutura final é: card > (border-b header) + (grid overflow-x-auto) + (border-t legenda).
+**Razão**: O padrão tabela do admin tem sempre um header `border-b` como parte do card (ver Relatórios, top-accommodations-table). Aplicar o mesmo padrão ao calendário cria consistência e faz o header de navegação "pertencer" visualmente ao calendário.
+
+---
+
+### 2026-03-04 — Fase 11: limiares de ocupação do calendário revisados (35%/70%)
+
+**Contexto**: Os limiares originais eram ≤ 50% = Baixa, 51–80% = Média, > 80% = Alta. Na prática, `getTotalCapacityForDate` soma capacidade de TODOS os horários × TODAS as acomodações do dia — o denominador é alto. Um dia com 1 reserva de 25 pessoas num restaurante com 2 turnos × 2 tipos × 50 covers = capacidade 200 → 12,5% = Baixa, mesmo sendo operacionalmente relevante.
+**Decisão**: Ajustar limiares para < 35% = Baixa, 35–70% = Média, > 70% = Alta. Adicionar percentual explícito na célula ("X% ocupação") para que o admin sempre veja o valor real, independente da classificação de cor.
+**Razão**: Limiares mais baixos tornam o calendário mais útil como ferramenta operacional — dias parcialmente ocupados ficam visíveis antes de atingir metade da capacidade. O percentual explícito elimina ambiguidade e compensa variações de configuração (restaurantes com capacidade muito alta ou muito baixa).
+
+---
+
+### 2026-03-04 — Fase 11: ocupação usa bg-amber-100 (não bg-amber-50) para evitar confusão com bege
+
+**Contexto**: `bg-amber-50` (#fffbeb) é visualmente indistinguível do bege `--background` (#F6F3EE) das páginas públicas. Células de média ocupação apareciam com a mesma tonalidade do fundo aquecido, tornando a indicação inútil.
+**Decisão**: Usar `bg-amber-100` (#fef3c7) para Média e `bg-rose-100` (#ffe4e6) para Alta — tints de nível 100 são perceptivelmente coloridos sem serem agressivos. Baixa continua em `bg-emerald-50` (verde claro é naturalmente distinto do bege). Legenda atualizada para usar as mesmas classes exatas.
+**Razão**: A legenda e as células precisam usar exatamente os mesmos tokens — qualquer divergência quebra a confiança do usuário na legenda. Tints -100 resolvem a confusão com bege sem precisar de cores mais saturadas.
+
+---
+
+### 2026-03-04 — Fase 11: popover de preview de reservas no calendário
+
+**Contexto**: Clicar em um dia navegava diretamente para `/admin/reservas?date=X`, forçando uma troca de página para ver quais reservas existem. Para dias com poucas reservas, o admin precisava de um preview rápido sem sair do calendário.
+**Decisão**: Dias com reservas abrem um `Popover` (side=right, align=start) com: header (contagem + total pax), lista de reservas com dot de status, nome do cliente, horário · pax, label de status, `max-h-60 overflow-y-auto`. Footer com link "Ver todas →". Dias sem reservas ou fechados ainda navegam direto ao clicar.
+**Razão**: O popover preserva o contexto do calendário para consulta rápida. O link "Ver todas" preserva o caminho de navegação profunda para dias movimentados. A distinção de comportamento (popover com reservas / navegar sem reservas) é intuitiva — clicar num dia vazio = intenção de criar reserva.
+
+---
+
+### 2026-03-04 — Fase 11: getCalendarioData retorna ReservationFull[]
+
+**Contexto**: O calendário buscava `reservations` com `select("*")` — tipo base sem joins. O novo popover precisa do nome do cliente (`customer.first_name/last_name`).
+**Decisão**: Mudar query para `select("*, customer:customers(*), accommodation_type:accommodation_types(*), time_slot:time_slots(*)")`, retornando `ReservationFull[]`. Propagar o tipo em `CalendarioData`, `CalendarioContent` e `MonthGrid`.
+**Razão**: Join necessário para o popover. A sobrecarga de dados é aceitável — o calendário carrega reservas do mês inteiro de uma vez; adicionar joins de cliente e acomodação não muda a estrutura de queries, apenas enriquece o payload com dados já existentes no banco.
+
+
+---
+
+### 2026-03-04 — Fase 12: paleta admin migrada de bege quente para zinc puro
+
+**Contexto**: Tokens `--background`, `--muted`, `--secondary`, `--border`, `--input` usavam oklch com chroma/hue aquecido (`0.008–0.015 75`), resultando em um tom bege perceptível em fundos e bordas do admin — conflitando com o design system neutro zinc desejado para o painel.
+**Decisão**: Migrar todos esses tokens para oklch com chroma = 0 (zinc puro), preservando a luminosidade. Tokens das páginas públicas (`--background` bege, `--muted` quente, `--accent` verde-claro) permanecem inalterados.
+**Razão**: Admin deve usar escala de cinza fria e neutra; o bege é identidade das páginas públicas do restaurante. Separação clara evita contaminação visual entre os dois contextos.
+
+---
+
+### 2026-03-04 — Fase 12: timeline do drawer usa flex-col (não position absolute)
+
+**Contexto**: A implementação original da timeline do histórico usava `absolute -left-[22px]` para posicionar os dots, causando desalinhamento de ~6px em relação à linha conectora.
+**Decisão**: Cada item da timeline é `flex gap-4`; coluna esquerda é `flex flex-col items-center` com dot `h-2.5 w-2.5` e conector `w-px flex-1 bg-zinc-200 my-1` — tudo em fluxo normal sem absolute.
+**Razão**: Flex-col garante alinhamento perfeito independente do tamanho do conteúdo. Solução mais simples e robusta que calcular offsets manuais.
+
+---
+
+### 2026-03-04 — Fase 12: histórico de edições em tabela separada (reservation_edit_history)
+
+**Contexto**: O usuário pediu que edições de campos (data, horário, acomodação, pessoas, etc.) aparecessem no histórico do drawer, junto às mudanças de status. A opção era reutilizar `reservation_status_history` com notas especiais ou criar tabela dedicada.
+**Decisão**: Criar migration `005_reservation_edit_history` com tabela `reservation_edit_history(id, reservation_id, changes JSONB, changed_by, created_at)`. O campo `changes` armazena array de `{field, label, from, to}` com valores já formatados para exibição.
+**Razão**: `reservation_status_history` tem schema acoplado a status (`from_status`, `to_status` como enums). Misturar edições quebraria o tipo e a semântica. Tabela dedicada mantém separação de responsabilidades e permite consultas independentes. Valores pré-formatados no insert evitam resolver nomes de acomodação no client.
+
+---
+
+### 2026-03-04 — Fase 12: resolução de taxa de no-show por prioridade
+
+**Contexto**: A taxa de no-show pode ser configurada em três lugares: `reservations.no_show_fee_override` (por reserva), `exception_dates.no_show_fee_override` (por data), e `settings.no_show_fee.amount` (global). O drawer precisa mostrar o valor efetivo que será cobrado.
+**Decisão**: Prioridade explícita: reserva > data > global. Resolvido em `getReservationDetails()` — retorna `effectiveNoShowFee: number | null` e `noShowFeeSource: "reservation_override" | "date_override" | "default" | "none"`. Drawer exibe o valor com label de origem quando não é o padrão.
+**Razão**: A resolução deve acontecer no server (Server Action), não no client — evita múltiplas queries separadas e garante consistência com a lógica usada em `charge-no-show`.
+
+---
+
+### 2026-03-04 — Fase 12: seção Avançado do modal de edição oculta sem cartão
+
+**Contexto**: O campo de override de taxa de no-show no modal de edição é irrelevante para reservas sem cartão cadastrado — não há como cobrar no-show sem `stripe_payment_method_id`.
+**Decisão**: Seção "Avançado" (que contém apenas o campo de taxa) renderiza condicionalmente: `{reservation?.stripe_payment_method_id && (...)}`. Separador também oculto junto.
+**Razão**: Reduz ruído cognitivo para o operador. Um campo desabilitado ainda levanta dúvidas; ocultá-lo é mais limpo e evita edições inúteis.

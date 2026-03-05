@@ -16,8 +16,8 @@ Fase 0 (Docs) ✅
                                      └─ Fase 7 (Admin Features & UX) ✅
                                           └─ Fase 8 (Relatórios) ✅
                                                └─ Fase 9 (Refinamento — Home & Formulário) ✅
-                                                    └─ Fase 10 (Refinamento — Dashboard)
-                                                         └─ Fase 11 (Refinamento — Calendário)
+                                                    └─ Fase 10 (Refinamento — Admin Theme + Dashboard + Padronização) ✅
+                                                         └─ Fase 11 (Refinamento — Calendário) ✅
                                                               └─ Fase 12 (Refinamento — Reservas)
                                                                    └─ Fase 13 (Refinamento — Lista de Espera & Passantes)
                                                                         └─ Fase 14 (Refinamento — Configurações & Acessos)
@@ -360,12 +360,18 @@ Revisão completa da experiência pública: landing page, formulário multi-step
 ---
 
 ## Fase 10 — Refinamento Visual — Dashboard
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
-Revisão profunda do dashboard admin: cards de estatísticas, seletor de período, tabela de reservas do dia e estados de loading/empty/error.
+Duas frentes: (1) Admin Theme Reset cross-cutting — sidebar branca e fundo cinza neutro frio para todas as páginas admin, base para fases 10–14; (2) Refinamento específico do dashboard: cards, seletor de período, tabela, estados empty/loading.
 
 **Itens**:
+
+### Admin Theme Reset (cross-cutting — executar primeiro)
+
+- Sidebar: mudar de verde escuro para branca (light), estilo Notion/Figma — `bg-sidebar` → `#FFFFFF`, borda zinc-200, texto zinc-600, item ativo zinc-100 + zinc-900
+- Admin background: `bg-[#F4F4F5]` no wrapper do layout autenticado — o bege `--background` permanece para páginas públicas
+- Validar todas as páginas admin visualmente após as mudanças
 
 ### Cards de Estatísticas
 - 4 cards (Reservas Hoje, Confirmadas, Pendentes, Ocupação) com badge colorido no topo e microcopy descritivo — estrutura boa, mas cards com `0` ficam sem contexto visual de urgência vs. normalidade
@@ -388,6 +394,9 @@ Revisão profunda do dashboard admin: cards de estatísticas, seletor de períod
 - Tabela precisa de colunas colapsáveis ou scroll horizontal em mobile
 
 **Critérios de aceitação**:
+- [ ] Sidebar branca com borda zinc, texto zinc, item ativo zinc-100
+- [ ] Admin background zinc-100 (`#F4F4F5`) — bege preservado para páginas públicas
+- [ ] Todas as páginas admin visualmente validadas pós-theme-reset
 - [ ] Cards com microcopy contextual ao valor atual (não texto fixo positivo quando há pendências)
 - [ ] Pill ativo com visual sólido/preenchido
 - [ ] Empty state da tabela com ícone e texto adequado
@@ -397,7 +406,7 @@ Revisão profunda do dashboard admin: cards de estatísticas, seletor de períod
 ---
 
 ## Fase 11 — Refinamento Visual — Calendário
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Revisão do calendário visual mensal: grid, células, legenda, navegação e estados de ocupação.
@@ -436,7 +445,7 @@ Revisão do calendário visual mensal: grid, células, legenda, navegação e es
 ---
 
 ## Fase 12 — Refinamento Visual — Reservas (Lista + Drawer)
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Revisão da página de gestão de reservas: filtros, tabela e drawer de detalhes.

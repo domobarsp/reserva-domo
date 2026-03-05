@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-03-04 | Fase: 12 (Refinamento — Reservas) — EM ANDAMENTO
+> Atualizado: 2026-03-04 | Fase: 12 (Refinamento — Reservas) — CONCLUÍDA
 
 ## O que funciona
 
@@ -272,12 +272,17 @@ Correções de tokens quentes em componentes shared:
 - **Legenda sincronizada**: cores idênticas às células; limiares atualizados; item "Sem reservas" com ponto cinza
 - **Skeleton**: atualizado para estrutura card com header/grid/legenda
 
-### Refinamento Visual — Reservas (Fase 12 — EM ANDAMENTO)
+### Refinamento Visual — Reservas (Fase 12 — CONCLUÍDA)
 
 - **Paleta de cor neutralizada**: tokens `--background`, `--muted`, `--secondary`, `--border`, `--input` migrados de bege quente para zinc puro (chroma = 0). Nenhum tom beige em bordas ou backgrounds.
 - **Drawer de reserva redesenhado** (`reservation-detail-drawer.tsx`): eyebrow "RESERVA" + nome `text-[22px]` + badges (status + origem) em linha abaixo do nome; metadata 2×2 grid; data de criação "Reservado em…" no header; icon circles `h-6 w-6 bg-zinc-100` em campos de cliente; timeline flex-based (sem absolute, dots sempre centrados, conector `w-px bg-zinc-200`); timestamps com ano `dd/MM/yyyy 'às' HH:mm`; footer com hierarquia clara (ação primária full-width + secundárias outline em linha); fullscreen mobile `w-full sm:max-w-[460px]`.
 - **Tabela corrigida**: cabeçalhos com acentuação correta (Horário, Acomodação, Ações), `hover:bg-zinc-50 transition-colors` nas linhas, coluna DATA oculta quando filtro de data está ativo (`hideDate` prop).
 - **Filtros corrigidos**: "Todas as acomodações" (com acento), data exibida em formato compacto "Sex., 27/02/2026" via `formatDateShort()` em `availability.ts`.
+- **Modais de criação e edição redesenhados**: `p-0 gap-0` com header/body/footer separados; seções com `SectionLabel` (11px uppercase zinc-400) e separadores `border-t border-zinc-100`; footer `bg-zinc-50`; loading state com `Loader2` no botão de submit.
+- **Taxa de no-show no drawer**: resolução por prioridade (`reservations.no_show_fee_override` → `exception_dates.no_show_fee_override` → `settings.no_show_fee`); exibida com label de origem quando não é padrão; valor visível no aviso "pendente de cobrança" e no painel de confirmação de cobrança.
+- **Seção Avançado (modal de edição)**: oculta quando reserva não possui `stripe_payment_method_id` — evita confusão sobre taxa em reservas sem cartão.
+- **Histórico de edições no drawer**: migration `005_reservation_edit_history` — tabela `reservation_edit_history(id, reservation_id, changes JSONB, changed_by, created_at)`; `updateReservation()` detecta diff nos campos rastreados (data, horário, acomodação, pessoas, solicitações, taxa) e insere registro; `getReservationDetails()` busca histórico de edições junto ao de status; drawer exibe ambos intercalados e ordenados por data, com dot de cor diferente para edições e lista de campos `antes → depois`.
+- **Tipo `ReservationEditHistory`** adicionado a `src/types/index.ts`; `ReservationDetails` extendido com `editHistory`, `effectiveNoShowFee` e `noShowFeeSource`.
 
 ## O que não existe ainda
 
@@ -286,7 +291,7 @@ Correções de tokens quentes em componentes shared:
 
 ## Próximos Passos
 
-Fase 12 (continuação) — concluir os critérios restantes ou avançar para Fase 13.
+Fase 13 — Refinamento Visual — Lista de Espera & Passantes.
 
 ## Issues Conhecidas
 
