@@ -33,7 +33,9 @@ import {
   getReservationDetails,
   updateReservationStatus,
   type ReservationDetails,
+  type NoShowFeeSource,
 } from "@/app/admin/(authenticated)/reservas/actions";
+import type { ReservationEditHistory } from "@/types";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -55,6 +57,13 @@ function formatCurrency(cents: number) {
     currency: "BRL",
   });
 }
+
+const noShowFeeSourceLabel: Record<NoShowFeeSource, string> = {
+  reservation_override: "valor personalizado",
+  date_override: "override desta data",
+  default: "valor padrão",
+  none: "",
+};
 
 // ─── configuração de ações ────────────────────────────────────────────────────
 
@@ -329,6 +338,7 @@ export function ReservationDetailDrawer({
                     </span>
                   </IconRow>
 
+                  {/* Effective no-show fee */}
                   {details.no_show_charged && details.no_show_charge_amount ? (
                     <li className="flex items-center gap-3 text-sm">
                       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-50">
@@ -350,83 +360,118 @@ export function ReservationDetailDrawer({
                         No-show pendente de cobrança
                       </span>
                     </li>
-                  ) : null}
+                  ) : details.effectiveNoShowFee === null || details.effectiveNoShowFee === 0 ? (
+                    <li className="flex items-center gap-3 text-sm">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100">
+                        <X className="h-3 w-3 text-zinc-400" />
+                      </div>
+                      <span className="text-zinc-500">
+                        {details.effectiveNoShowFee === 0
+                          ? "Isento de taxa de no-show"
+                          : "Sem taxa de no-show configurada"}
+                      </span>
+                    </li>
+                  ) : (
+                    <li className="flex items-center gap-3 text-sm">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100">
+                        <AlertTriangle className="h-3 w-3 text-zinc-500" />
+                      </div>
+                      <div>
+                        <span className="text-zinc-700">
+                          Taxa de no-show:{" "}
+                          <strong>{formatCurrency(details.effectiveNoShowFee)}</strong>
+                        </span>
+                        {details.noShowFeeSource !== "default" && (
+                          <span className="ml-1.5 text-zinc-400 text-xs">
+                            ({noShowFeeSourceLabel[details.noShowFeeSource]})
+                          </span>
+                        )}
+                      </div>
+                    </li>
+                  )}
                 </ul>
               </section>
             )}
 
             {/* Histórico */}
-            {details.statusHistory.length > 0 && (
+            {(details.statusHistory.length > 0 || details.editHistory.length > 0) && (
               <section className="px-6 py-4">
                 <SectionLabel>Histórico</SectionLabel>
-                {/* Timeline flex — sem absolute, dots sempre centralizados */}
-                <ol className="space-y-0">
-                  {details.statusHistory.map((entry, index) => {
-                    const isLast =
-                      index === details.statusHistory.length - 1;
-                    return (
-                      <li key={entry.id} className="flex gap-4">
-                        {/* Coluna esquerda: dot + conector */}
-                        <div className="flex flex-col items-center pt-[3px]">
-                          <div className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-zinc-300 bg-white" />
-                          {!isLast && (
-                            <div className="w-px flex-1 bg-zinc-200 my-1" />
-                          )}
-                        </div>
+                {/* Merge and sort status + edit events by date */}
+                {(() => {
+                  type TimelineItem =
+                    | { kind: "status"; event: (typeof details.statusHistory)[0]; created_at: string }
+                    | { kind: "edit"; event: ReservationEditHistory; created_at: string };
 
-                        {/* Coluna direita: conteúdo */}
-                        <div
-                          className={cn(
-                            "flex-1 min-w-0",
-                            !isLast ? "pb-4" : "pb-0"
-                          )}
-                        >
-                          <p className="text-[11px] text-zinc-400 mb-1.5 leading-none">
-                            {format(
-                              parseISO(entry.created_at),
-                              "dd/MM/yyyy 'às' HH:mm",
-                              { locale: ptBR }
-                            )}
-                          </p>
+                  const items: TimelineItem[] = [
+                    ...details.statusHistory.map((e) => ({ kind: "status" as const, event: e, created_at: e.created_at })),
+                    ...details.editHistory.map((e) => ({ kind: "edit" as const, event: e, created_at: e.created_at })),
+                  ].sort((a, b) => a.created_at.localeCompare(b.created_at));
 
-                          {entry.from_status ? (
-                            <div className="flex flex-wrap items-center gap-1.5">
-                              <span
-                                className={cn(
-                                  "rounded-full px-2 py-0.5 text-xs font-medium",
-                                  getStatusColor(entry.from_status)
-                                )}
-                              >
-                                {getStatusLabel(entry.from_status)}
-                              </span>
-                              <ArrowRight className="h-3 w-3 text-zinc-300" />
-                              <span
-                                className={cn(
-                                  "rounded-full px-2 py-0.5 text-xs font-medium",
-                                  getStatusColor(entry.to_status)
-                                )}
-                              >
-                                {getStatusLabel(entry.to_status)}
-                              </span>
+                  return (
+                    <ol className="space-y-0">
+                      {items.map((item, index) => {
+                        const isLast = index === items.length - 1;
+                        return (
+                          <li key={item.event.id} className="flex gap-4">
+                            {/* Coluna esquerda: dot + conector */}
+                            <div className="flex flex-col items-center pt-[3px]">
+                              <div className={cn(
+                                "h-2.5 w-2.5 shrink-0 rounded-full border-2 bg-white",
+                                item.kind === "edit" ? "border-zinc-400" : "border-zinc-300"
+                              )} />
+                              {!isLast && (
+                                <div className="w-px flex-1 bg-zinc-200 my-1" />
+                              )}
                             </div>
-                          ) : (
-                            <p className="text-sm text-zinc-500">
-                              Criado como{" "}
-                              <span
-                                className={cn(
-                                  "rounded-full px-2 py-0.5 text-xs font-medium",
-                                  getStatusColor(entry.to_status)
-                                )}
-                              >
-                                {getStatusLabel(entry.to_status)}
-                              </span>
-                            </p>
-                          )}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ol>
+
+                            {/* Coluna direita: conteúdo */}
+                            <div className={cn("flex-1 min-w-0", !isLast ? "pb-4" : "pb-0")}>
+                              <p className="text-[11px] text-zinc-400 mb-1.5 leading-none">
+                                {format(parseISO(item.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                              </p>
+
+                              {item.kind === "status" ? (
+                                item.event.from_status ? (
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", getStatusColor(item.event.from_status))}>
+                                      {getStatusLabel(item.event.from_status)}
+                                    </span>
+                                    <ArrowRight className="h-3 w-3 text-zinc-300" />
+                                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", getStatusColor(item.event.to_status))}>
+                                      {getStatusLabel(item.event.to_status)}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-zinc-500">
+                                    Criado como{" "}
+                                    <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", getStatusColor(item.event.to_status))}>
+                                      {getStatusLabel(item.event.to_status)}
+                                    </span>
+                                  </p>
+                                )
+                              ) : (
+                                <div>
+                                  <p className="text-sm text-zinc-600 font-medium mb-1">Reserva editada</p>
+                                  <ul className="space-y-0.5">
+                                    {item.event.changes.map((c, ci) => (
+                                      <li key={ci} className="text-xs text-zinc-500 flex items-center gap-1.5">
+                                        <span className="text-zinc-400">{c.label}:</span>
+                                        <span className="line-through text-zinc-400">{c.from}</span>
+                                        <ArrowRight className="h-2.5 w-2.5 text-zinc-300 shrink-0" />
+                                        <span className="text-zinc-600">{c.to}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  );
+                })()}
               </section>
             )}
           </div>

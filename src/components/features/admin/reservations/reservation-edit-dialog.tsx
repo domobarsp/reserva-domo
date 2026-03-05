@@ -320,36 +320,38 @@ export function ReservationEditDialog({
                 />
               </div>
 
-              {/* ── Separador ────────────────────────────────────── */}
-              <div className="border-t border-zinc-100" />
-
-              {/* ── Seção: Avançado ──────────────────────────────── */}
-              <div className="space-y-4">
-                <SectionLabel>Avançado</SectionLabel>
-                <FormField
-                  control={form.control}
-                  name="no_show_fee_override"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Taxa de no-show (R$)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          min={0}
-                          step="0.01"
-                          placeholder="Vazio = usar valor padrão configurado"
-                          value={field.value ?? ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            field.onChange(val === "" ? null : Number(val));
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {/* ── Seção: Avançado — só exibir se há cartão cadastrado ── */}
+              {reservation?.stripe_payment_method_id && (
+                <>
+                  <div className="border-t border-zinc-100" />
+                  <div className="space-y-4">
+                    <SectionLabel>Avançado</SectionLabel>
+                    <FormField
+                      control={form.control}
+                      name="no_show_fee_override"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Taxa de no-show (R$)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min={0}
+                              step="0.01"
+                              placeholder="Vazio = usar valor padrão configurado"
+                              value={field.value ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                field.onChange(val === "" ? null : Number(val));
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Footer */}

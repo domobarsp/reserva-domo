@@ -8,6 +8,8 @@ import type { ActionResult } from "@/lib/actions/types";
 import type {
   ReservationFull,
   Reservation,
+  ReservationEditHistory,
+  NoShowFeeSettings,
   CreateReservationInput,
   CreateCustomerInput,
   Customer,
@@ -64,16 +66,26 @@ export async function getReservationsFull(
   return (data ?? []) as unknown as ReservationFull[];
 }
 
+export type NoShowFeeSource =
+  | "reservation_override"
+  | "date_override"
+  | "default"
+  | "none";
+
 export interface ReservationDetails extends ReservationFull {
   statusHistory: import("@/types").ReservationStatusHistory[];
+  editHistory: ReservationEditHistory[];
+  effectiveNoShowFee: number | null;
+  noShowFeeSource: NoShowFeeSource;
 }
 
 export async function getReservationDetails(
   id: string
 ): Promise<ReservationDetails | null> {
   const supabase = await createClient();
+  const restaurantId = await getRestaurantId();
 
-  const [reservationRes, historyRes] = await Promise.all([
+  const [reservationRes, statusHistoryRes, editHistoryRes] = await Promise.all([
     supabase
       .from("reservations")
       .select(
@@ -91,13 +103,59 @@ export async function getReservationDetails(
       .select("*")
       .eq("reservation_id", id)
       .order("created_at", { ascending: true }),
+    supabase
+      .from("reservation_edit_history")
+      .select("*")
+      .eq("reservation_id", id)
+      .order("created_at", { ascending: true }),
   ]);
 
   if (reservationRes.error || !reservationRes.data) return null;
 
+  const reservation = reservationRes.data as unknown as ReservationFull;
+
+  // Resolve effective no-show fee
+  let effectiveNoShowFee: number | null = null;
+  let noShowFeeSource: NoShowFeeSource = "none";
+
+  if (reservation.no_show_fee_override !== null) {
+    effectiveNoShowFee = reservation.no_show_fee_override;
+    noShowFeeSource = "reservation_override";
+  } else {
+    // Check exception date
+    const { data: exceptionDate } = await supabase
+      .from("exception_dates")
+      .select("no_show_fee_override")
+      .eq("restaurant_id", restaurantId)
+      .eq("date", reservation.date)
+      .maybeSingle();
+
+    if (exceptionDate?.no_show_fee_override !== null && exceptionDate?.no_show_fee_override !== undefined) {
+      effectiveNoShowFee = exceptionDate.no_show_fee_override;
+      noShowFeeSource = "date_override";
+    } else {
+      // Check global settings
+      const { data: setting } = await supabase
+        .from("settings")
+        .select("value")
+        .eq("restaurant_id", restaurantId)
+        .eq("key", "no_show_fee")
+        .maybeSingle();
+
+      if (setting?.value) {
+        const feeSettings = setting.value as NoShowFeeSettings;
+        effectiveNoShowFee = feeSettings.amount ?? null;
+        noShowFeeSource = effectiveNoShowFee !== null ? "default" : "none";
+      }
+    }
+  }
+
   return {
-    ...(reservationRes.data as unknown as ReservationFull),
-    statusHistory: (historyRes.data ?? []) as import("@/types").ReservationStatusHistory[],
+    ...reservation,
+    statusHistory: (statusHistoryRes.data ?? []) as import("@/types").ReservationStatusHistory[],
+    editHistory: (editHistoryRes.data ?? []) as ReservationEditHistory[],
+    effectiveNoShowFee,
+    noShowFeeSource,
   };
 }
 
@@ -216,6 +274,13 @@ export async function updateReservation(
     ...safeUpdates
   } = updates;
 
+  // Fetch current reservation (with joins) to detect changes
+  const { data: current } = await supabase
+    .from("reservations")
+    .select("*, accommodation_type:accommodation_types(id, name)")
+    .eq("id", id)
+    .single();
+
   const { error } = await supabase
     .from("reservations")
     .update(safeUpdates)
@@ -226,6 +291,60 @@ export async function updateReservation(
       success: false,
       error: "Erro ao atualizar reserva: " + error.message,
     };
+  }
+
+  // Log edit history when relevant fields change
+  if (current) {
+    type ChangeEntry = { field: string; label: string; from: string; to: string };
+    const changes: ChangeEntry[] = [];
+
+    if (safeUpdates.date && safeUpdates.date !== current.date) {
+      changes.push({ field: "date", label: "Data", from: current.date, to: safeUpdates.date });
+    }
+    if (safeUpdates.reservation_time && safeUpdates.reservation_time !== current.reservation_time) {
+      changes.push({ field: "reservation_time", label: "Horário", from: current.reservation_time, to: safeUpdates.reservation_time });
+    }
+    if (safeUpdates.accommodation_type_id && safeUpdates.accommodation_type_id !== current.accommodation_type_id) {
+      // Fetch new accommodation name
+      const { data: newAccom } = await supabase
+        .from("accommodation_types")
+        .select("name")
+        .eq("id", safeUpdates.accommodation_type_id)
+        .single();
+      const currentAccom = (current as unknown as { accommodation_type?: { name?: string } }).accommodation_type;
+      changes.push({
+        field: "accommodation_type_id",
+        label: "Acomodação",
+        from: currentAccom?.name ?? current.accommodation_type_id,
+        to: newAccom?.name ?? safeUpdates.accommodation_type_id,
+      });
+    }
+    if (safeUpdates.party_size !== undefined && safeUpdates.party_size !== current.party_size) {
+      changes.push({ field: "party_size", label: "Pessoas", from: String(current.party_size), to: String(safeUpdates.party_size) });
+    }
+    if ("special_requests" in safeUpdates && safeUpdates.special_requests !== current.special_requests) {
+      const oldVal = current.special_requests ?? "";
+      const newVal = (safeUpdates.special_requests as string | null) ?? "";
+      if (oldVal !== newVal) {
+        changes.push({ field: "special_requests", label: "Solicitações", from: oldVal || "(vazio)", to: newVal || "(vazio)" });
+      }
+    }
+    if ("no_show_fee_override" in safeUpdates) {
+      const oldFee = current.no_show_fee_override;
+      const newFee = safeUpdates.no_show_fee_override as number | null;
+      if (oldFee !== newFee) {
+        const fmtFee = (v: number | null) =>
+          v === null ? "padrão" : v === 0 ? "isento" : `R$ ${(v / 100).toFixed(2)}`;
+        changes.push({ field: "no_show_fee_override", label: "Taxa de no-show", from: fmtFee(oldFee), to: fmtFee(newFee) });
+      }
+    }
+
+    if (changes.length > 0) {
+      await supabase.from("reservation_edit_history").insert({
+        reservation_id: id,
+        changes,
+      });
+    }
   }
 
   revalidatePath("/admin/reservas");

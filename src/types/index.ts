@@ -199,6 +199,14 @@ export interface AdminUser {
   updated_at: string;
 }
 
+export interface ReservationEditHistory {
+  id: string;
+  reservation_id: string;
+  changes: Array<{ field: string; label: string; from: string; to: string }>;
+  changed_by: string | null;
+  created_at: string;
+}
+
 export interface NoShowCharge {
   id: string;
   reservation_id: string;
