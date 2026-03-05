@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -42,7 +42,11 @@ import {
   adminReservationSchema,
   type AdminReservationData,
 } from "@/lib/validations/admin";
-import { getTodayStr, dateToStr, formatDatePtBr } from "@/lib/availability";
+import {
+  getTodayStr,
+  dateToStr,
+  formatDateShort,
+} from "@/lib/availability";
 import { ReservationSource, Locale } from "@/types";
 import type { AccommodationType, TimeSlot } from "@/types";
 import { cn, formatTime } from "@/lib/utils";
@@ -54,6 +58,14 @@ interface ReservationCreateDialogProps {
   accommodationTypes: AccommodationType[];
   timeSlots: TimeSlot[];
   onSuccess: () => void;
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+      {children}
+    </p>
+  );
 }
 
 export function ReservationCreateDialog({
@@ -80,8 +92,9 @@ export function ReservationCreateDialog({
     },
   });
 
+  const { isSubmitting } = form.formState;
+
   const onSubmit = async (data: AdminReservationData) => {
-    // reservation_time contains "time_slot_id|start_time"
     const [selectedSlotId, selectedTime] = data.reservation_time.split("|");
 
     const result = await createReservation(
@@ -124,287 +137,335 @@ export function ReservationCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Nova Reserva</DialogTitle>
-          <DialogDescription>
-            Preencha os dados para criar uma nova reserva manualmente.
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg p-0 gap-0">
+        {/* Cabeçalho */}
+        <DialogHeader className="px-6 pt-6 pb-5 border-b border-zinc-100">
+          <DialogTitle className="text-lg font-semibold tracking-tight">
+            Nova Reserva
+          </DialogTitle>
+          <DialogDescription className="text-sm text-zinc-500 mt-0.5">
+            Preencha os dados para criar uma reserva manualmente.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Customer Info Row */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="first_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Nome" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="last_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Sobrenome</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Sobrenome" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="px-6 py-5 space-y-6">
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="email@exemplo.com"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telefone</FormLabel>
-                    <FormControl>
-                      <Input placeholder="+55 11 99999-9999" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+              {/* ── Seção: Cliente ───────────────────────────────── */}
+              <div className="space-y-4">
+                <SectionLabel>Cliente</SectionLabel>
 
-            {/* Reservation Info Row */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
+                {/* Nome + Sobrenome */}
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="first_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome</FormLabel>
                         <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full justify-start text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {field.value
-                              ? formatDatePtBr(field.value)
-                              : "Selecionar data"}
-                          </Button>
+                          <Input placeholder="Nome" {...field} />
                         </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={selectedDateObj}
-                          onSelect={(date) => {
-                            field.onChange(date ? dateToStr(date) : "");
-                          }}
-                          initialFocus
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="last_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sobrenome</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Sobrenome" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Email + Telefone */}
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>E-mail</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="email@exemplo.com"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Telefone</FormLabel>
+                        <FormControl>
+                          <Input placeholder="+55 11 99999-9999" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Idioma */}
+                <FormField
+                  control={form.control}
+                  name="preferred_locale"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Idioma para e-mails</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Idioma" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="pt">Português</SelectItem>
+                          <SelectItem value="en">Inglês</SelectItem>
+                          <SelectItem value="es">Espanhol</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* ── Separador ────────────────────────────────────── */}
+              <div className="border-t border-zinc-100" />
+
+              {/* ── Seção: Reserva ───────────────────────────────── */}
+              <div className="space-y-4">
+                <SectionLabel>Reserva</SectionLabel>
+
+                {/* Data + Horário */}
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Data</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
+                                <span className="truncate">
+                                  {field.value
+                                    ? formatDateShort(field.value)
+                                    : "Selecionar data"}
+                                </span>
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent
+                            className="w-auto p-0"
+                            align="start"
+                          >
+                            <Calendar
+                              mode="single"
+                              selected={selectedDateObj}
+                              onSelect={(date) => {
+                                field.onChange(date ? dateToStr(date) : "");
+                              }}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="reservation_time"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Horário</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Selecionar" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {timeSlots
+                              .filter((ts) => ts.is_active)
+                              .map((ts) => (
+                                <SelectItem
+                                  key={ts.id}
+                                  value={`${ts.id}|${ts.start_time}`}
+                                >
+                                  {ts.name} · {formatTime(ts.start_time)}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Acomodação + Pessoas */}
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="accommodation_type_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Acomodação</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full">
+                              <SelectValue placeholder="Selecionar" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {accommodationTypes
+                              .filter((at) => at.is_active)
+                              .map((at) => (
+                                <SelectItem key={at.id} value={at.id}>
+                                  {at.name}
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="party_size"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Pessoas</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min={1}
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value === ""
+                                  ? ""
+                                  : Number(e.target.value)
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Solicitações especiais */}
+                <FormField
+                  control={form.control}
+                  name="special_requests"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Solicitações especiais</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Alergias, aniversário, preferências de mesa…"
+                          className="resize-none"
+                          rows={3}
+                          {...field}
                         />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="reservation_time"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Horario</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecionar horário" />
-                        </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        {timeSlots
-                          .filter((ts) => ts.is_active)
-                          .map((ts) => (
-                            <SelectItem
-                              key={ts.id}
-                              value={`${ts.id}|${ts.start_time}`}
-                            >
-                              {ts.name} ({formatTime(ts.start_time)} — {formatTime(ts.end_time)})
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* ── Separador ────────────────────────────────────── */}
+              <div className="border-t border-zinc-100" />
+
+              {/* ── Seção: Configuração ──────────────────────────── */}
+              <div className="space-y-4">
+                <SectionLabel>Configuração</SectionLabel>
+                <FormField
+                  control={form.control}
+                  name="source"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Origem da reserva</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Origem" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="admin">
+                            Admin — criada internamente
+                          </SelectItem>
+                          <SelectItem value="phone">
+                            Telefone — cliente ligou
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="accommodation_type_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Acomodacao</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecionar acomodacao" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {accommodationTypes
-                          .filter((at) => at.is_active)
-                          .map((at) => (
-                            <SelectItem key={at.id} value={at.id}>
-                              {at.name}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="party_size"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Pessoas</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min={1}
-                        {...field}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === ""
-                              ? ""
-                              : Number(e.target.value)
-                          )
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="special_requests"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Solicitacoes especiais</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Alergias, aniversario, etc."
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="source"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Origem</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Origem" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="phone">Telefone</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="preferred_locale"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Idioma do cliente</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Idioma" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="pt">Portugues</SelectItem>
-                        <SelectItem value="en">Ingles</SelectItem>
-                        <SelectItem value="es">Espanhol</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <DialogFooter>
+            {/* Footer */}
+            <DialogFooter className="px-6 py-4 border-t border-zinc-100 bg-zinc-50">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+                className="border-zinc-200"
               >
                 Cancelar
               </Button>
-              <Button type="submit">Criar Reserva</Button>
+              <Button type="submit" disabled={isSubmitting} className="gap-2">
+                {isSubmitting && (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                )}
+                Criar Reserva
+              </Button>
             </DialogFooter>
           </form>
         </Form>
