@@ -210,13 +210,13 @@ export function ReservationForm({
       const params = new URLSearchParams({
         id: data.id,
         token: data.cancellation_token,
-        date: data.date,
-        time_slot_id: data.time_slot_id,
-        accommodation_type_id: data.accommodation_type_id,
-        party_size: String(data.party_size),
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
+        date: values.date,
+        time_slot_id: values.time_slot_id,
+        accommodation_type_id: values.accommodation_type_id,
+        party_size: String(values.party_size),
+        first_name: values.first_name,
+        last_name: values.last_name,
+        email: values.email,
       });
 
       router.push(`/reserva/sucesso?${params.toString()}`);
