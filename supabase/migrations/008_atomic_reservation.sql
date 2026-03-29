@@ -43,7 +43,7 @@ BEGIN
   -- Check exception_date capacity override
   SELECT (eco.value)::INTEGER INTO v_override
   FROM exception_dates ed,
-       jsonb_each_text(ed.capacity_overrides) eco(key, value)
+       jsonb_each_text(ed.capacity_override) eco(key, value)
   WHERE ed.restaurant_id = p_restaurant_id
     AND ed.date = p_date
     AND eco.key = p_accommodation_type_id::TEXT;

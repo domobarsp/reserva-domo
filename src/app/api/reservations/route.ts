@@ -149,6 +149,7 @@ export async function POST(request: NextRequest) {
     });
 
   if (rpcError) {
+    console.error("RPC create_reservation_atomic error:", rpcError);
     return NextResponse.json({ error: "Erro ao criar reserva" }, { status: 500 });
   }
 
