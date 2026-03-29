@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   CalendarDays,
@@ -45,9 +46,7 @@ interface CancelPageContentProps {
 function Logo() {
   return (
     <div className="mb-8 flex flex-col items-center gap-2">
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-        <span className="text-2xl font-bold tracking-tight">D</span>
-      </div>
+      <Image src="/logo_domo.jpeg" alt="Domo" width={56} height={56} className="rounded-2xl" />
       <p className="text-sm font-medium text-muted-foreground tracking-wide">
         Restaurante Domo
       </p>
