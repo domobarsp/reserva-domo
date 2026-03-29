@@ -4,8 +4,7 @@ import {
   Clock,
   Armchair,
   Users,
-  CreditCard,
-  AlertTriangle,
+  ShieldCheck,
   CalendarOff,
 } from "lucide-react";
 
@@ -29,16 +28,10 @@ const settingsPages = [
     icon: Users,
   },
   {
-    href: "/admin/configuracoes/garantia-cartao",
-    title: "Garantia com Cartão",
-    description: "Configure os dias que exigem cartão de crédito",
-    icon: CreditCard,
-  },
-  {
-    href: "/admin/configuracoes/no-show",
-    title: "Taxa de No-Show",
-    description: "Defina o valor cobrado em caso de não comparecimento",
-    icon: AlertTriangle,
+    href: "/admin/configuracoes/garantia-noshow",
+    title: "Garantia & No-Show",
+    description: "Garantia com cartão e taxa de não comparecimento",
+    icon: ShieldCheck,
   },
   {
     href: "/admin/configuracoes/excecoes",

@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Settings, NoShowFeeSettings } from "@/types";
 import { toast } from "sonner";
 import { updateSetting } from "@/app/admin/(authenticated)/configuracoes/actions";
@@ -49,23 +48,6 @@ export function NoShowFeeForm({ settings }: NoShowFeeFormProps) {
   }
 
   return (
-    <div>
-      {/* Header - same pattern as other settings pages */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/configuracoes">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold">Taxa de No-Show</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Defina o valor cobrado em caso de não comparecimento
-          </p>
-        </div>
-      </div>
-
-      {/* Card with form */}
       <div className="rounded-xl border bg-card shadow-sm p-6 space-y-4">
         <p className="text-muted-foreground text-sm">
           Define o valor padrão cobrado quando um cliente não comparece.
@@ -95,6 +77,5 @@ export function NoShowFeeForm({ settings }: NoShowFeeFormProps) {
           Salvar Alterações
         </Button>
       </div>
-    </div>
   );
 }

@@ -2,10 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Settings, CardGuaranteeDaysSettings } from "@/types";
 import { toast } from "sonner";
 import { updateSetting } from "@/app/admin/(authenticated)/configuracoes/actions";
@@ -57,23 +56,6 @@ export function CardGuaranteeForm({ settings }: CardGuaranteeFormProps) {
   }
 
   return (
-    <div>
-      {/* Header - same pattern as other settings pages */}
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/configuracoes">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-semibold">Garantia com Cartão</h1>
-          <p className="text-sm text-zinc-500 mt-1">
-            Configure os dias que exigem cartão de crédito
-          </p>
-        </div>
-      </div>
-
-      {/* Card with form */}
       <div className="rounded-xl border bg-card shadow-sm p-6 space-y-4">
         <p className="text-muted-foreground text-sm">
           Selecione os dias da semana em que reservas exigem garantia com
@@ -98,6 +80,5 @@ export function CardGuaranteeForm({ settings }: CardGuaranteeFormProps) {
           Salvar Alterações
         </Button>
       </div>
-    </div>
   );
 }
