@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -8,13 +8,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Loader2 } from "lucide-react";
+import { SectionLabel } from "@/components/shared/drawer-primitives";
 import { timeSlotSchema, type TimeSlotData } from "@/lib/validations/admin";
 import type { TimeSlot } from "@/types";
 
@@ -41,6 +43,8 @@ export function TimeSlotDialog({
   onSubmit,
   editingSlot,
 }: TimeSlotDialogProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -96,86 +100,101 @@ export function TimeSlotDialog({
   }
 
   function onFormSubmit(data: TimeSlotData) {
+    setIsSubmitting(true);
     onSubmit(data);
+    setIsSubmitting(false);
     onOpenChange(false);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="p-0 gap-0 sm:max-w-[425px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="px-6 pt-6 pb-5 border-b border-zinc-100">
           <DialogTitle>
             {editingSlot ? "Editar Horário" : "Novo Horário"}
           </DialogTitle>
+          <DialogDescription>
+            Configure um período de funcionamento para reservas.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome</Label>
-            <Input id="name" placeholder="Ex: Jantar 19h" {...register("name")} />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_time">Início</Label>
-              <Input
-                id="start_time"
-                type="time"
-                {...register("start_time")}
-              />
-              {errors.start_time && (
-                <p className="text-sm text-red-500">
-                  {errors.start_time.message}
-                </p>
-              )}
+        <form onSubmit={handleSubmit(onFormSubmit)}>
+          <div className="px-6 py-5 space-y-6">
+            <div>
+              <SectionLabel>Informações</SectionLabel>
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome</Label>
+                <Input id="name" placeholder="Ex: Jantar 19h" {...register("name")} />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
+                )}
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_time">Término</Label>
-              <Input id="end_time" type="time" {...register("end_time")} />
-              {errors.end_time && (
-                <p className="text-sm text-red-500">
-                  {errors.end_time.message}
-                </p>
-              )}
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label>Dias da Semana</Label>
-            <div className="flex flex-wrap gap-3">
-              {DAYS.map((day) => (
-                <label
-                  key={day.value}
-                  className="flex items-center gap-1.5 text-sm"
-                >
-                  <Checkbox
-                    checked={selectedDays?.includes(day.value) ?? false}
-                    onCheckedChange={() => toggleDay(day.value)}
+            <div className="border-t border-zinc-100 pt-5">
+              <SectionLabel>Horário</SectionLabel>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="start_time">Início</Label>
+                  <Input
+                    id="start_time"
+                    type="time"
+                    {...register("start_time")}
                   />
-                  {day.label}
-                </label>
-              ))}
+                  {errors.start_time && (
+                    <p className="text-sm text-red-500">
+                      {errors.start_time.message}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="end_time">Término</Label>
+                  <Input id="end_time" type="time" {...register("end_time")} />
+                  {errors.end_time && (
+                    <p className="text-sm text-red-500">
+                      {errors.end_time.message}
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
-            {errors.days_of_week && (
-              <p className="text-sm text-red-500">
-                {errors.days_of_week.message}
-              </p>
-            )}
+
+            <div className="border-t border-zinc-100 pt-5">
+              <SectionLabel>Dias da Semana</SectionLabel>
+              <div className="flex flex-wrap gap-3">
+                {DAYS.map((day) => (
+                  <label
+                    key={day.value}
+                    className="flex items-center gap-1.5 text-sm"
+                  >
+                    <Checkbox
+                      checked={selectedDays?.includes(day.value) ?? false}
+                      onCheckedChange={() => toggleDay(day.value)}
+                    />
+                    {day.label}
+                  </label>
+                ))}
+              </div>
+              {errors.days_of_week && (
+                <p className="text-sm text-red-500 mt-2">
+                  {errors.days_of_week.message}
+                </p>
+              )}
+            </div>
+
+            <div className="border-t border-zinc-100 pt-5">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={isActive}
+                  onCheckedChange={(checked) =>
+                    setValue("is_active", checked)
+                  }
+                />
+                <Label>Ativo</Label>
+              </div>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={isActive}
-              onCheckedChange={(checked) =>
-                setValue("is_active", checked)
-              }
-            />
-            <Label>Ativo</Label>
-          </div>
-
-          <DialogFooter>
+          <div className="flex justify-end gap-2 border-t border-zinc-100 bg-zinc-50 px-6 py-4">
             <Button
               type="button"
               variant="outline"
@@ -183,10 +202,11 @@ export function TimeSlotDialog({
             >
               Cancelar
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {editingSlot ? "Salvar" : "Criar"}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

@@ -195,6 +195,7 @@ export interface AdminUser {
   role: AdminRole;
   display_name: string;
   is_active: boolean;
+  must_change_password: boolean;
   created_at: string;
   updated_at: string;
 }

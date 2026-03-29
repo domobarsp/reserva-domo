@@ -13,37 +13,37 @@ const settingsPages = [
   {
     href: "/admin/configuracoes/horarios",
     title: "Horários",
-    description: "Horários de reserva disponíveis por turno",
+    description: "Gerencie os períodos de funcionamento do restaurante",
     icon: Clock,
   },
   {
     href: "/admin/configuracoes/acomodacoes",
     title: "Acomodações",
-    description: "Tipos de acomodação e tamanhos min/max",
+    description: "Configure os tipos de acomodação disponíveis",
     icon: Armchair,
   },
   {
     href: "/admin/configuracoes/capacidade",
     title: "Capacidade",
-    description: "Máximo de pessoas por acomodação e turno",
+    description: "Defina a capacidade máxima por acomodação e horário",
     icon: Users,
   },
   {
     href: "/admin/configuracoes/garantia-cartao",
     title: "Garantia com Cartão",
-    description: "Dias da semana que exigem cartão de crédito",
+    description: "Configure os dias que exigem cartão de crédito",
     icon: CreditCard,
   },
   {
     href: "/admin/configuracoes/no-show",
     title: "Taxa de No-Show",
-    description: "Valor da taxa de não comparecimento",
+    description: "Defina o valor cobrado em caso de não comparecimento",
     icon: AlertTriangle,
   },
   {
     href: "/admin/configuracoes/excecoes",
     title: "Exceções",
-    description: "Fechamentos e ajustes de capacidade por data",
+    description: "Crie regras especiais para datas específicas",
     icon: CalendarOff,
   },
 ];
@@ -52,19 +52,21 @@ export default function ConfiguracoesPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold">Configurações</h1>
-      <p className="mt-2 text-muted-foreground">
+      <p className="mt-1 text-sm text-zinc-500">
         Gerencie as configurações do restaurante.
       </p>
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {settingsPages.map((page) => (
           <Link key={page.href} href={page.href}>
-            <Card className="transition-colors hover:bg-muted/50">
+            <Card className="transition-colors hover:border-zinc-300">
               <CardHeader className="flex flex-row items-center gap-3 space-y-0 pb-2">
-                <page.icon className="h-5 w-5 text-muted-foreground" />
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-100">
+                  <page.icon className="h-5 w-5 text-zinc-600" />
+                </div>
                 <CardTitle className="text-base">{page.title}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-zinc-500">
                   {page.description}
                 </p>
               </CardContent>

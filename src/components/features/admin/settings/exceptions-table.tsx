@@ -11,7 +11,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Pencil, Trash2, CalendarOff } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Pencil, Trash2, CalendarOff, Plus } from "lucide-react";
 import type { ExceptionDate, AccommodationType } from "@/types";
 
 interface ExceptionsTableProps {
@@ -19,6 +25,7 @@ interface ExceptionsTableProps {
   accommodationTypes: AccommodationType[];
   onEdit: (ed: ExceptionDate) => void;
   onDelete: (id: string) => void;
+  onAdd?: () => void;
 }
 
 function formatDate(dateStr: string): string {
@@ -31,6 +38,7 @@ export function ExceptionsTable({
   accommodationTypes,
   onEdit,
   onDelete,
+  onAdd,
 }: ExceptionsTableProps) {
   if (exceptionDates.length === 0) {
     return (
@@ -38,6 +46,14 @@ export function ExceptionsTable({
         icon={<CalendarOff className="h-12 w-12" />}
         title="Nenhuma exceção cadastrada"
         description="Adicione exceções para datas específicas."
+        action={
+          onAdd ? (
+            <Button variant="outline" size="sm" onClick={onAdd} className="gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              Criar exceção
+            </Button>
+          ) : undefined
+        }
       />
     );
   }
@@ -72,7 +88,7 @@ export function ExceptionsTable({
   }
 
   return (
-    <div className="overflow-x-auto rounded-md border">
+    <div className="overflow-x-auto overflow-hidden rounded-xl border bg-card shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
@@ -89,7 +105,7 @@ export function ExceptionsTable({
           {exceptionDates
             .sort((a, b) => a.date.localeCompare(b.date))
             .map((ed) => (
-              <TableRow key={ed.id}>
+              <TableRow key={ed.id} className="hover:bg-zinc-50 transition-colors">
                 <TableCell className="font-medium">
                   {formatDate(ed.date)}
                 </TableCell>
@@ -111,22 +127,34 @@ export function ExceptionsTable({
                 <TableCell>{renderCardGuarantee(ed.card_guarantee_override)}</TableCell>
                 <TableCell>{renderNoShowFee(ed.no_show_fee_override)}</TableCell>
                 <TableCell>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onEdit(ed)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => onDelete(ed.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <TooltipProvider>
+                    <div className="flex gap-1">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onEdit(ed)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Editar</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => onDelete(ed.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Excluir</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TooltipProvider>
                 </TableCell>
               </TableRow>
             ))}

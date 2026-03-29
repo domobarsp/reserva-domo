@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Pencil, KeyRound, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -43,13 +43,16 @@ const roleBadgeClasses: Record<AdminRole, string> = {
 interface AdminUsersTableProps {
   users: AdminUserWithEmail[];
   currentUserId: string;
+  onEdit?: (user: AdminUserWithEmail) => void;
+  onResetPassword?: (user: AdminUserWithEmail) => void;
+  onDelete?: (user: AdminUserWithEmail) => void;
 }
 
 type PendingAction =
   | { type: "deactivate"; userId: string; displayName: string }
   | null;
 
-export function AdminUsersTable({ users, currentUserId }: AdminUsersTableProps) {
+export function AdminUsersTable({ users, currentUserId, onEdit, onResetPassword, onDelete }: AdminUsersTableProps) {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
 
@@ -88,7 +91,7 @@ export function AdminUsersTable({ users, currentUserId }: AdminUsersTableProps) 
 
   return (
     <>
-      <div className="rounded border border-border/60">
+      <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
@@ -101,7 +104,7 @@ export function AdminUsersTable({ users, currentUserId }: AdminUsersTableProps) 
           </TableHeader>
           <TableBody>
             {users.map((user) => (
-              <TableRow key={user.id} className={!user.is_active ? "opacity-60" : undefined}>
+              <TableRow key={user.id} className={`hover:bg-zinc-50 transition-colors ${!user.is_active ? "opacity-60" : ""}`}>
                 <TableCell className="font-medium">
                   {user.display_name}
                   {user.id === currentUserId && (
@@ -146,7 +149,23 @@ export function AdminUsersTable({ users, currentUserId }: AdminUsersTableProps) 
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      {/* Alterar cargo */}
+                      {/* Editar */}
+                      <DropdownMenuItem onClick={() => onEdit?.(user)}>
+                        <Pencil className="mr-2 h-3.5 w-3.5" />
+                        Editar
+                      </DropdownMenuItem>
+
+                      {/* Resetar senha - not for self */}
+                      {user.id !== currentUserId && (
+                        <DropdownMenuItem onClick={() => onResetPassword?.(user)}>
+                          <KeyRound className="mr-2 h-3.5 w-3.5" />
+                          Resetar senha
+                        </DropdownMenuItem>
+                      )}
+
+                      <DropdownMenuSeparator />
+
+                      {/* Role changes */}
                       {Object.values(AdminRole)
                         .filter((r) => r !== user.role)
                         .map((role) => (
@@ -158,7 +177,9 @@ export function AdminUsersTable({ users, currentUserId }: AdminUsersTableProps) 
                             Mudar para {roleLabels[role]}
                           </DropdownMenuItem>
                         ))}
+
                       <DropdownMenuSeparator />
+
                       {/* Ativar/desativar */}
                       <DropdownMenuItem
                         onClick={() => handleToggleStatus(user.id, user.is_active)}
@@ -167,6 +188,17 @@ export function AdminUsersTable({ users, currentUserId }: AdminUsersTableProps) 
                       >
                         {user.is_active ? "Desativar" : "Ativar"}
                       </DropdownMenuItem>
+
+                      {/* Delete - only for inactive users */}
+                      {!user.is_active && (
+                        <DropdownMenuItem
+                          onClick={() => onDelete?.(user)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" />
+                          Excluir permanentemente
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

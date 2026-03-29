@@ -5,14 +5,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { UserPlus } from "lucide-react";
+import { Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -33,6 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { AdminRole } from "@/types";
 import { createAdminUser } from "@/app/admin/(authenticated)/acessos/actions";
+import { SectionLabel } from "@/components/shared/drawer-primitives";
 
 const schema = z
   .object({
@@ -105,97 +106,122 @@ export function InviteAdminDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Adicionar Usuário</DialogTitle>
+      <DialogContent className="p-0 gap-0 sm:max-w-md">
+        <DialogHeader className="px-6 pt-6 pb-5 border-b border-zinc-100">
+          <DialogTitle className="text-lg font-semibold tracking-tight">
+            Adicionar Usuário
+          </DialogTitle>
+          <DialogDescription className="text-sm text-zinc-500 mt-0.5">
+            Crie um novo usuário para acessar o painel administrativo.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="login"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Login</FormLabel>
-                  <FormControl>
-                    <Input placeholder="joao.silva" {...field} />
-                  </FormControl>
-                  <FormDescription className="text-xs">
-                    Usado para entrar no painel. Sem espaços.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="displayName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome de exibição</FormLabel>
-                  <FormControl>
-                    <Input placeholder="João Silva" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Senha</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="confirmPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Confirmar</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="px-6 py-5 space-y-6">
+              {/* Credenciais */}
+              <div className="space-y-4">
+                <SectionLabel>Credenciais</SectionLabel>
+                <FormField
+                  control={form.control}
+                  name="login"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Login</FormLabel>
+                      <FormControl>
+                        <Input placeholder="joao.silva" {...field} />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Usado para entrar no painel. Sem espaços.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Senha</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirmar</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="password"
+                            placeholder="••••••••"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+
+              {/* Perfil */}
+              <div className="space-y-4 border-t border-zinc-100 pt-5">
+                <SectionLabel>Perfil</SectionLabel>
+                <FormField
+                  control={form.control}
+                  name="displayName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome de exibição</FormLabel>
+                      <FormControl>
+                        <Input placeholder="João Silva" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cargo</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.values(AdminRole).map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {roleLabels[role]}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cargo</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {Object.values(AdminRole).map((role) => (
-                        <SelectItem key={role} value={role}>
-                          {roleLabels[role]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
+
+            <div className="flex justify-end gap-2 border-t border-zinc-100 bg-zinc-50 px-6 py-4">
               <Button
                 type="button"
                 variant="outline"
@@ -204,10 +230,14 @@ export function InviteAdminDialog({
                 Cancelar
               </Button>
               <Button type="submit" disabled={isLoading} className="gap-2">
-                <UserPlus className="h-4 w-4" />
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <UserPlus className="h-4 w-4" />
+                )}
                 {isLoading ? "Criando..." : "Criar usuário"}
               </Button>
-            </DialogFooter>
+            </div>
           </form>
         </Form>
       </DialogContent>

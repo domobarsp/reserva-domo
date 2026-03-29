@@ -10,7 +10,13 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Pencil, Trash2, Users } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Pencil, Trash2, Users, Plus } from "lucide-react";
 import type { CapacityRule, AccommodationType, TimeSlot } from "@/types";
 
 interface CapacityTableProps {
@@ -19,6 +25,7 @@ interface CapacityTableProps {
   timeSlots: TimeSlot[];
   onEdit: (rule: CapacityRule) => void;
   onDelete: (id: string) => void;
+  onAdd?: () => void;
 }
 
 export function CapacityTable({
@@ -27,6 +34,7 @@ export function CapacityTable({
   timeSlots,
   onEdit,
   onDelete,
+  onAdd,
 }: CapacityTableProps) {
   if (capacityRules.length === 0) {
     return (
@@ -34,6 +42,14 @@ export function CapacityTable({
         icon={<Users className="h-12 w-12" />}
         title="Nenhuma regra de capacidade"
         description="Adicione regras de capacidade por acomodação e horário."
+        action={
+          onAdd ? (
+            <Button variant="outline" size="sm" onClick={onAdd} className="gap-1.5">
+              <Plus className="h-3.5 w-3.5" />
+              Criar regra
+            </Button>
+          ) : undefined
+        }
       />
     );
   }
@@ -47,7 +63,7 @@ export function CapacityTable({
   }
 
   return (
-    <div className="rounded-md border">
+    <div className="overflow-hidden rounded-xl border bg-card shadow-sm">
       <Table>
         <TableHeader>
           <TableRow>
@@ -59,7 +75,7 @@ export function CapacityTable({
         </TableHeader>
         <TableBody>
           {capacityRules.map((cr) => (
-            <TableRow key={cr.id}>
+            <TableRow key={cr.id} className="hover:bg-zinc-50 transition-colors">
               <TableCell className="font-medium">
                 {getAccommodationName(cr.accommodation_type_id)}
               </TableCell>
@@ -68,22 +84,34 @@ export function CapacityTable({
               </TableCell>
               <TableCell>{cr.max_covers} pessoas</TableCell>
               <TableCell>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit(cr)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onDelete(cr.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
+                <TooltipProvider>
+                  <div className="flex gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onEdit(cr)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Editar</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => onDelete(cr.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Excluir</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </TooltipProvider>
               </TableCell>
             </TableRow>
           ))}
