@@ -3,7 +3,7 @@
 import { createClient } from "@/utils/supabase/server";
 import { getRestaurantId } from "@/lib/queries/restaurant";
 import type {
-  Reservation,
+  ReservationFull,
   TimeSlot,
   AccommodationType,
   CapacityRule,
@@ -11,7 +11,7 @@ import type {
 } from "@/types";
 
 export interface CalendarioData {
-  reservations: Reservation[];
+  reservations: ReservationFull[];
   timeSlots: TimeSlot[];
   accommodationTypes: AccommodationType[];
   capacityRules: CapacityRule[];
@@ -26,7 +26,7 @@ export async function getCalendarioData(): Promise<CalendarioData> {
     await Promise.all([
       supabase
         .from("reservations")
-        .select("*")
+        .select(`*, customer:customers(*), accommodation_type:accommodation_types(*), time_slot:time_slots(*)`)
         .eq("restaurant_id", restaurantId),
       supabase
         .from("time_slots")
@@ -50,7 +50,7 @@ export async function getCalendarioData(): Promise<CalendarioData> {
     ]);
 
   return {
-    reservations: (reservationsRes.data ?? []) as Reservation[],
+    reservations: (reservationsRes.data ?? []) as ReservationFull[],
     timeSlots: (timeSlotsRes.data ?? []) as TimeSlot[],
     accommodationTypes: (accommodationsRes.data ?? []) as AccommodationType[],
     capacityRules: (capacityRes.data ?? []) as CapacityRule[],

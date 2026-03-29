@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import type {
-  Reservation,
+  ReservationFull,
   TimeSlot,
   AccommodationType,
   CapacityRule,
@@ -15,15 +15,17 @@ import {
   dateToStr,
 } from "@/lib/availability";
 import { cn } from "@/lib/utils";
+import { DayPopover } from "./day-popover";
 
 interface MonthGridProps {
   currentMonth: Date;
   onDayClick: (dateStr: string) => void;
-  reservations: Reservation[];
+  reservations: ReservationFull[];
   timeSlots: TimeSlot[];
   accommodationTypes: AccommodationType[];
   capacityRules: CapacityRule[];
   exceptionDates: ExceptionDate[];
+  isPending?: boolean;
 }
 
 const WEEKDAY_HEADERS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -40,6 +42,22 @@ interface DayData {
   occupancyRatio: number;
 }
 
+// Limiares: < 35% = baixa, 35-70% = média, > 70% = alta
+function getOccupancyLevel(dayData: DayData): "none" | "low" | "medium" | "high" {
+  if (!dayData.isCurrentMonth || dayData.isClosed) return "none";
+  if (dayData.occupancyRatio === 0) return "none";
+  if (dayData.occupancyRatio < 0.35) return "low";
+  if (dayData.occupancyRatio < 0.70) return "medium";
+  return "high";
+}
+
+const OCCUPANCY_BG: Record<string, string> = {
+  none: "",
+  low: "bg-emerald-50",
+  medium: "bg-amber-100",
+  high: "bg-rose-100",
+};
+
 export function MonthGrid({
   currentMonth,
   onDayClick,
@@ -48,6 +66,7 @@ export function MonthGrid({
   accommodationTypes,
   capacityRules,
   exceptionDates,
+  isPending = false,
 }: MonthGridProps) {
   const todayStr = dateToStr(new Date());
 
@@ -55,17 +74,14 @@ export function MonthGrid({
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
 
-    // First day of month and how many days in the month
     const firstDay = new Date(year, month, 1);
-    const firstDayOfWeek = firstDay.getDay(); // 0=Sun
+    const firstDayOfWeek = firstDay.getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-    // Previous month padding days
     const daysInPrevMonth = new Date(year, month, 0).getDate();
 
     const result: DayData[] = [];
 
-    // Padding days from previous month
+    // Padding — mês anterior
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const day = daysInPrevMonth - i;
       const prevMonth = month === 0 ? 11 : month - 1;
@@ -84,13 +100,12 @@ export function MonthGrid({
       });
     }
 
-    // Current month days
+    // Dias do mês
     for (let day = 1; day <= daysInMonth; day++) {
       const dateStr = dateToStr(new Date(year, month, day));
       const isClosed = isDateClosedFrom(dateStr, exceptionDates);
       const isToday = dateStr === todayStr;
 
-      // Count active reservations (not cancelled)
       const activeReservations = reservations.filter(
         (r) => r.date === dateStr && r.status !== ReservationStatus.CANCELLED
       );
@@ -124,7 +139,7 @@ export function MonthGrid({
       });
     }
 
-    // Padding days for next month (fill remaining cells to complete the grid)
+    // Padding — próximo mês
     const remainder = result.length % 7;
     if (remainder > 0) {
       const paddingCount = 7 - remainder;
@@ -157,79 +172,126 @@ export function MonthGrid({
     todayStr,
   ]);
 
-  function getOccupancyBg(dayData: DayData): string {
-    if (!dayData.isCurrentMonth) return "";
-    if (dayData.isClosed) return "bg-muted";
-    if (dayData.occupancyRatio === 0) return "";
-    if (dayData.occupancyRatio <= 0.5) return "bg-emerald-50";
-    if (dayData.occupancyRatio <= 0.8) return "bg-amber-50";
-    return "bg-rose-50";
-  }
-
   return (
-    <div className="overflow-x-auto">
-      <div className="grid min-w-[600px] grid-cols-7 gap-px rounded-lg border bg-border">
-        {/* Weekday headers */}
+    <div
+      className={cn(
+        "overflow-x-auto transition-opacity",
+        isPending && "opacity-60"
+      )}
+    >
+      <div className="grid min-w-[600px] grid-cols-7 gap-px bg-border">
+        {/* Headers de dia da semana */}
         {WEEKDAY_HEADERS.map((header) => (
           <div
             key={header}
-            className="bg-muted px-2 py-2 text-center text-xs font-medium text-muted-foreground"
+            className="bg-zinc-50 px-2 py-2 text-center text-[10px] font-medium text-zinc-500 sm:text-xs"
           >
             {header}
           </div>
         ))}
 
-        {/* Day cells */}
-        {days.map((dayData, index) => (
-          <button
-            key={`${dayData.dateStr}-${index}`}
-            type="button"
-            disabled={!dayData.isCurrentMonth}
-            onClick={() => {
-              if (dayData.isCurrentMonth) {
-                onDayClick(dayData.dateStr);
-              }
-            }}
-            className={cn(
-              "flex min-h-[80px] flex-col items-start p-3 rounded-lg text-left transition-colors",
-              dayData.isCurrentMonth
-                ? "cursor-pointer bg-white hover:ring-2 hover:ring-primary/50"
-                : "cursor-default bg-white",
-              getOccupancyBg(dayData),
-              dayData.isToday && "ring-2 ring-primary/30 ring-inset",
-              !dayData.isCurrentMonth && "text-muted-foreground/30"
-            )}
-          >
-            <span
+        {/* Células */}
+        {days.map((dayData, index) => {
+          const level = getOccupancyLevel(dayData);
+          const occupancyPct =
+            dayData.totalCapacity > 0
+              ? Math.round(dayData.occupancyRatio * 100)
+              : null;
+
+          const cellContent = (
+            <button
+              type="button"
+              disabled={!dayData.isCurrentMonth}
+              onClick={() => {
+                if (
+                  dayData.isCurrentMonth &&
+                  (dayData.reservationCount === 0 || dayData.isClosed)
+                ) {
+                  onDayClick(dayData.dateStr);
+                }
+              }}
               className={cn(
-                "text-sm font-medium",
-                dayData.isToday && "text-primary",
-                !dayData.isCurrentMonth && "text-muted-foreground/30"
+                "group flex min-h-[72px] w-full flex-col items-start p-2 text-left transition-colors md:min-h-[100px] md:p-3",
+                dayData.isCurrentMonth
+                  ? "cursor-pointer bg-white hover:bg-zinc-50"
+                  : "cursor-default bg-white",
+                dayData.isClosed && "bg-zinc-100 hover:bg-zinc-100",
+                !dayData.isClosed && OCCUPANCY_BG[level],
+                !dayData.isCurrentMonth && "opacity-30"
               )}
             >
-              {dayData.day}
-            </span>
+              {/* Número do dia */}
+              {dayData.isToday ? (
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                  {dayData.day}
+                </span>
+              ) : (
+                <span
+                  className={cn(
+                    "text-sm font-semibold text-zinc-700",
+                    dayData.isClosed && "text-zinc-400",
+                    !dayData.isCurrentMonth && "text-zinc-300"
+                  )}
+                >
+                  {dayData.day}
+                </span>
+              )}
 
-            {dayData.isCurrentMonth && dayData.isClosed && (
-              <span className="mt-1 text-[10px] font-medium text-muted-foreground">
-                Fechado
-              </span>
-            )}
+              {/* Fechado */}
+              {dayData.isCurrentMonth && dayData.isClosed && (
+                <span className="mt-1 text-[10px] font-medium text-zinc-400">
+                  Fechado
+                </span>
+              )}
 
-            {dayData.isCurrentMonth &&
-              !dayData.isClosed &&
-              dayData.reservationCount > 0 && (
-                <div className="mt-auto space-y-0.5">
-                  <span className="block text-[10px] text-muted-foreground/80">
-                    {dayData.reservationCount} res.
-                  </span>
-                  <span className="block text-[10px] text-muted-foreground/80">
+              {/* Dados de reserva */}
+              {dayData.isCurrentMonth && !dayData.isClosed && dayData.reservationCount > 0 && (
+                <div className="mt-auto w-full space-y-0.5">
+                  <span className="block text-[10px] font-semibold text-zinc-700">
+                    {dayData.reservationCount}{" "}
+                    {dayData.reservationCount === 1 ? "reserva" : "reservas"}
+                    {" · "}
                     {dayData.totalCovers} pax
+                  </span>
+                  {occupancyPct !== null && (
+                    <span className="block text-[10px] text-zinc-400">
+                      {occupancyPct}% ocupação
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Dia vazio — ponto + hint no hover */}
+              {dayData.isCurrentMonth && !dayData.isClosed && dayData.reservationCount === 0 && (
+                <div className="mt-auto">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-zinc-200 group-hover:hidden" />
+                  <span className="hidden text-[10px] text-zinc-400 group-hover:inline">
+                    Adicionar reserva
                   </span>
                 </div>
               )}
-          </button>
-        ))}
+            </button>
+          );
+
+          // Dias com reservas abrem popover; outros navegam direto
+          if (dayData.isCurrentMonth && !dayData.isClosed && dayData.reservationCount > 0) {
+            return (
+              <DayPopover
+                key={`${dayData.dateStr}-${index}`}
+                dateStr={dayData.dateStr}
+                reservations={reservations}
+              >
+                {cellContent}
+              </DayPopover>
+            );
+          }
+
+          return (
+            <div key={`${dayData.dateStr}-${index}`}>
+              {cellContent}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

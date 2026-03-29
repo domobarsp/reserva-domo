@@ -19,12 +19,14 @@ export default async function AuthenticatedAdminLayout({
 
   const userRole = adminUser?.role ?? AdminRole.STAFF;
 
+  const displayName = adminUser?.display_name ?? "Admin";
+
   return (
     <AdminProviders>
-      <div className="flex min-h-svh">
-        <AdminSidebar userRole={userRole} />
+      <div className="flex min-h-svh bg-zinc-100">
+        <AdminSidebar userRole={userRole} displayName={displayName} />
         <div className="flex flex-1 flex-col">
-          <AdminTopbar userRole={userRole} />
+          <AdminTopbar userRole={userRole} displayName={displayName} />
           <main className="flex-1 p-6 lg:p-8">{children}</main>
         </div>
       </div>

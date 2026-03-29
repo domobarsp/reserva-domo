@@ -36,7 +36,7 @@ export function PeriodSelector({ currentPeriod }: PeriodSelectorProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-1 transition-opacity",
+        "flex items-center gap-1 rounded-lg border border-zinc-300 bg-zinc-200 p-1 transition-opacity",
         isPending && "opacity-60"
       )}
     >
@@ -48,8 +48,8 @@ export function PeriodSelector({ currentPeriod }: PeriodSelectorProps) {
           className={cn(
             "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
             currentPeriod === value
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
+              ? "bg-zinc-800 text-white shadow-sm"
+              : "text-zinc-500 hover:text-zinc-800"
           )}
         >
           {label}
