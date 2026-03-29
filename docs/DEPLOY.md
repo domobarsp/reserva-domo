@@ -30,7 +30,15 @@ Antes de iniciar, certifique-se de ter contas criadas nos seguintes serviços:
 ### 1.2 Instalar e configurar Supabase CLI
 
 ```bash
-npm install -g supabase
+# macOS (Homebrew)
+brew install supabase/tap/supabase
+
+# Windows (Scoop)
+scoop bucket add supabase https://github.com/supabase/scoop-bucket.git
+scoop install supabase
+
+# Linux (via npm como dependência local do projeto)
+npx supabase --version
 ```
 
 ### 1.3 Linkar o projeto local
