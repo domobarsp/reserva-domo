@@ -88,6 +88,7 @@ export function ListaEsperaContent({ initialEntries }: ListaEsperaContentProps) 
           onSeat={handleSeat}
           onRemove={handleRemove}
           onRowClick={setSelectedEntry}
+          onAdd={() => setDialogOpen(true)}
         />
       )}
 

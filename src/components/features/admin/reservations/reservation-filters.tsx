@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { CalendarIcon, XIcon } from "lucide-react";
+import { CalendarIcon, X, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -98,87 +98,111 @@ export function ReservationFilters({
     : undefined;
 
   return (
-    <div className="flex flex-wrap items-center gap-3" aria-busy={isPending}>
-      {/* Date Picker */}
-      <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            disabled={isPending}
-            className={cn(
-              "w-[220px] justify-start text-left font-normal",
-              !date && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4 shrink-0" />
-            <span className="truncate">
-              {date ? formatDateShort(date) : "Selecionar data"}
-            </span>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={selectedDateObj}
-            onSelect={handleDateSelect}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
-
-      {/* Status Select */}
-      <Select
-        value={status || "all"}
-        onValueChange={handleStatusChange}
-        disabled={isPending}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os status</SelectItem>
-          {Object.values(ReservationStatus).map((s) => (
-            <SelectItem key={s} value={s}>
-              {getStatusLabel(s)}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      {/* Accommodation Type Select */}
-      <Select
-        value={accommodationType || "all"}
-        onValueChange={handleAccommodationChange}
-        disabled={isPending}
-      >
-        <SelectTrigger className="w-[180px]">
-          <SelectValue placeholder="Acomodacao" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todas as acomodações</SelectItem>
-          {accommodationTypes
-            .filter((at) => at.is_active)
-            .map((at) => (
-              <SelectItem key={at.id} value={at.id}>
-                {at.name}
-              </SelectItem>
-            ))}
-        </SelectContent>
-      </Select>
-
-      {/* Clear Filters */}
-      {hasNonDefaultFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleClearFilters}
-          disabled={isPending}
-          className="text-muted-foreground"
-        >
-          <XIcon className="mr-1 h-4 w-4" />
-          Limpar filtros
-        </Button>
+    <div
+      className={cn(
+        "rounded-xl border bg-card p-4 shadow-sm transition-opacity",
+        isPending && "opacity-60 pointer-events-none"
       )}
+      aria-busy={isPending}
+    >
+      {/* Title row */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-700">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filtros
+        </div>
+        {hasNonDefaultFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearFilters}
+            disabled={isPending}
+            className="h-7 gap-1.5 text-xs text-zinc-500 hover:text-zinc-700"
+          >
+            <X className="h-3.5 w-3.5" />
+            Limpar
+          </Button>
+        )}
+      </div>
+
+      {/* Fields grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Data */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-zinc-500">Data</label>
+          <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                disabled={isPending}
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">
+                  {date ? formatDateShort(date) : "Selecionar data"}
+                </span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDateObj}
+                onSelect={handleDateSelect}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+
+        {/* Status */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-zinc-500">Status</label>
+          <Select
+            value={status || "all"}
+            onValueChange={handleStatusChange}
+            disabled={isPending}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              {Object.values(ReservationStatus).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {getStatusLabel(s)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Acomodação */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-zinc-500">Acomodação</label>
+          <Select
+            value={accommodationType || "all"}
+            onValueChange={handleAccommodationChange}
+            disabled={isPending}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Acomodação" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as acomodações</SelectItem>
+              {accommodationTypes
+                .filter((at) => at.is_active)
+                .map((at) => (
+                  <SelectItem key={at.id} value={at.id}>
+                    {at.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
     </div>
   );
 }

@@ -51,6 +51,7 @@ import { ReservationSource, Locale } from "@/types";
 import type { AccommodationType, TimeSlot } from "@/types";
 import { cn, formatTime } from "@/lib/utils";
 import { createReservation } from "@/app/admin/(authenticated)/reservas/actions";
+import { SectionLabel } from "@/components/shared/drawer-primitives";
 
 interface ReservationCreateDialogProps {
   open: boolean;
@@ -58,14 +59,6 @@ interface ReservationCreateDialogProps {
   accommodationTypes: AccommodationType[];
   timeSlots: TimeSlot[];
   onSuccess: () => void;
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
-      {children}
-    </p>
-  );
 }
 
 export function ReservationCreateDialog({

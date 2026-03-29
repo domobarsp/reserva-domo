@@ -22,6 +22,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ReservationStatusBadge } from "@/components/shared/status-badge";
+import { SectionLabel, IconRow } from "@/components/shared/drawer-primitives";
 import {
   getStatusLabel,
   getStatusColor,
@@ -98,40 +99,6 @@ const secondaryActionConfig: Partial<
   [ReservationStatus.NO_SHOW]: { label: "Não compareceu" },
   [ReservationStatus.CANCELLED]: { label: "Cancelar reserva" },
 };
-
-// ─── subcomponentes ────────────────────────────────────────────────────────────
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 mb-3.5">
-      {children}
-    </h3>
-  );
-}
-
-function IconRow({
-  icon: Icon,
-  children,
-  iconClassName,
-}: {
-  icon: React.ElementType;
-  children: React.ReactNode;
-  iconClassName?: string;
-}) {
-  return (
-    <li className="flex items-center gap-3 text-sm">
-      <div
-        className={cn(
-          "flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100",
-          iconClassName
-        )}
-      >
-        <Icon className="h-3 w-3 text-zinc-500" />
-      </div>
-      {children}
-    </li>
-  );
-}
 
 // ─── componente principal ─────────────────────────────────────────────────────
 

@@ -48,9 +48,10 @@ export function PassantesContent({ initialWalkIns }: PassantesContentProps) {
         </div>
       ) : (
         <WalkinTable
-            walkIns={initialWalkIns}
-            onRowClick={setSelectedWalkIn}
-          />
+          walkIns={initialWalkIns}
+          onRowClick={setSelectedWalkIn}
+          onAdd={() => setDialogOpen(true)}
+        />
       )}
 
       <WalkinCreateDialog

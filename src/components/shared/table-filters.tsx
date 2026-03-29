@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransition, useState } from "react";
-import { Search, CalendarIcon, X } from "lucide-react";
+import { Search, CalendarIcon, X, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -21,7 +21,7 @@ interface TableFiltersProps {
 }
 
 export function TableFilters({
-  nameLabel = "Buscar por nome",
+  nameLabel = "Nome",
   phonePlaceholder = "Telefone",
 }: TableFiltersProps) {
   const router = useRouter();
@@ -69,78 +69,94 @@ export function TableFilters({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-2 transition-opacity",
+        "rounded-xl border bg-card p-4 shadow-sm transition-opacity",
         isPending && "opacity-60 pointer-events-none"
       )}
     >
-      {/* Nome */}
-      <div className="relative min-w-48 flex-1">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          placeholder={nameLabel}
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") applyFilters();
-          }}
-          onBlur={() => applyFilters()}
-          className="pl-9"
-        />
-      </div>
-
-      {/* Telefone */}
-      <div className="relative min-w-36">
-        <Input
-          placeholder={phonePlaceholder}
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") applyFilters();
-          }}
-          onBlur={() => applyFilters()}
-        />
-      </div>
-
-      {/* Data */}
-      <Popover>
-        <PopoverTrigger asChild>
+      {/* Title row */}
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-1.5 text-sm font-medium text-zinc-700">
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          Filtros
+        </div>
+        {hasFilters && (
           <Button
-            variant="outline"
-            className={cn(
-              "min-w-36 justify-start gap-2 font-normal",
-              !date && "text-muted-foreground"
-            )}
+            variant="ghost"
+            size="sm"
+            onClick={handleClear}
+            className="h-7 gap-1.5 text-xs text-zinc-500 hover:text-zinc-700"
           >
-            <CalendarIcon className="h-4 w-4" />
-            {date ? format(date, "dd/MM/yyyy") : "Data"}
+            <X className="h-3.5 w-3.5" />
+            Limpar
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={date}
-            onSelect={(d) => {
-              setDate(d);
-              applyFilters({ date: d });
-            }}
-            locale={ptBR}
-            initialFocus
-          />
-        </PopoverContent>
-      </Popover>
+        )}
+      </div>
 
-      {/* Limpar */}
-      {hasFilters && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleClear}
-          className="gap-1.5 text-muted-foreground"
-        >
-          <X className="h-4 w-4" />
-          Limpar
-        </Button>
-      )}
+      {/* Fields grid */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Nome */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-zinc-500">Nome</label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+            <Input
+              placeholder={nameLabel}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") applyFilters();
+              }}
+              onBlur={() => applyFilters()}
+              className="pl-9"
+            />
+          </div>
+        </div>
+
+        {/* Telefone */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-zinc-500">Telefone</label>
+          <Input
+            placeholder={phonePlaceholder}
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") applyFilters();
+            }}
+            onBlur={() => applyFilters()}
+          />
+        </div>
+
+        {/* Data */}
+        <div className="space-y-1">
+          <label className="text-xs font-medium text-zinc-500">Data</label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start gap-2 font-normal",
+                  !date && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="h-3.5 w-3.5" />
+                {date ? format(date, "dd/MM/yyyy") : "Selecionar"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(d) => {
+                  setDate(d);
+                  applyFilters({ date: d });
+                }}
+                locale={ptBR}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
     </div>
   );
 }
