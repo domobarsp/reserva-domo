@@ -59,6 +59,7 @@ export function TimeSlotDialog({
       start_time: "",
       end_time: "",
       days_of_week: [0, 1, 2, 3, 4, 5, 6],
+      cutoff_minutes: 60,
       is_active: true,
     },
   });
@@ -70,6 +71,7 @@ export function TimeSlotDialog({
         start_time: editingSlot.start_time,
         end_time: editingSlot.end_time,
         days_of_week: editingSlot.days_of_week,
+        cutoff_minutes: editingSlot.cutoff_minutes ?? 60,
         is_active: editingSlot.is_active,
       });
     } else {
@@ -78,6 +80,7 @@ export function TimeSlotDialog({
         start_time: "",
         end_time: "",
         days_of_week: [0, 1, 2, 3, 4, 5, 6],
+        cutoff_minutes: 60,
         is_active: true,
       });
     }
@@ -155,6 +158,22 @@ export function TimeSlotDialog({
                     </p>
                   )}
                 </div>
+              </div>
+              <div className="mt-4 space-y-2">
+                <Label htmlFor="cutoff_minutes">Antecedência mínima para reserva (minutos)</Label>
+                <Input
+                  id="cutoff_minutes"
+                  type="number"
+                  min={0}
+                  max={1440}
+                  {...register("cutoff_minutes", { valueAsNumber: true })}
+                />
+                <p className="text-xs text-zinc-400">
+                  Ex: 60 = aceita reservas até 1h antes do início
+                </p>
+                {errors.cutoff_minutes && (
+                  <p className="text-sm text-red-500">{errors.cutoff_minutes.message}</p>
+                )}
               </div>
             </div>
 

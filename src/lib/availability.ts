@@ -95,6 +95,8 @@ export function isDateClosedFrom(
 
 /**
  * Retorna time_slots ativos para o dia da semana da data.
+ * Filtra horários que já passaram do cutoff (para o dia de hoje)
+ * e horários cujo término já passou.
  */
 export function getAvailableTimeSlotsFrom(
   dateStr: string,
@@ -103,9 +105,35 @@ export function getAvailableTimeSlotsFrom(
 ): TimeSlot[] {
   if (isDateClosedFrom(dateStr, exceptionDates)) return [];
   const dayOfWeek = getDayOfWeek(dateStr);
-  return allTimeSlots.filter(
-    (ts) => ts.is_active && ts.days_of_week.includes(dayOfWeek)
-  );
+
+  const [year, month, day] = dateStr.split("-").map(Number);
+  const requestedDate = new Date(year, month - 1, day);
+  const now = new Date();
+  const isToday =
+    requestedDate.getFullYear() === now.getFullYear() &&
+    requestedDate.getMonth() === now.getMonth() &&
+    requestedDate.getDate() === now.getDate();
+
+  return allTimeSlots.filter((ts) => {
+    if (!ts.is_active || !ts.days_of_week.includes(dayOfWeek)) return false;
+
+    if (isToday) {
+      // Parse start_time (HH:MM or HH:MM:SS)
+      const [startH, startM] = ts.start_time.split(":").map(Number);
+      const slotStart = new Date(year, month - 1, day, startH, startM);
+
+      // Cutoff: reject if now > slotStart - cutoff_minutes
+      const cutoffMs = (ts.cutoff_minutes ?? 60) * 60_000;
+      if (now.getTime() > slotStart.getTime() - cutoffMs) return false;
+
+      // Also reject if slot end_time already passed
+      const [endH, endM] = ts.end_time.split(":").map(Number);
+      const slotEnd = new Date(year, month - 1, day, endH, endM);
+      if (now.getTime() > slotEnd.getTime()) return false;
+    }
+
+    return true;
+  });
 }
 
 /**

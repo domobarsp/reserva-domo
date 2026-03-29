@@ -77,6 +77,7 @@ export interface TimeSlot {
   start_time: string;
   end_time: string;
   days_of_week: number[];
+  cutoff_minutes: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;

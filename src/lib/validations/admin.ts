@@ -118,6 +118,7 @@ export const timeSlotSchema = z.object({
   days_of_week: z
     .array(z.number().int().min(0).max(6))
     .min(1, "Selecione pelo menos um dia"),
+  cutoff_minutes: z.number().int().min(0, "Mínimo 0 minutos").max(1440, "Máximo 24 horas"),
   is_active: z.boolean(),
 });
 
