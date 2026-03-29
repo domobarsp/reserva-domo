@@ -11,13 +11,13 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Domo — Reservas",
-    template: "%s | Domo",
+    default: "Dōmo — Reservas",
+    template: "%s | Dōmo",
   },
-  description: "Faça sua reserva online no Domo. Escolha data, horário e acomodação em poucos passos.",
+  description: "Faça sua reserva online no Dōmo. Bar & restaurante na Rua Major Sertório, 452, São Paulo. Terça a sábado, 19h–24h.",
   openGraph: {
-    title: "Domo — Reservas Online",
-    description: "Faça sua reserva online no Domo. Escolha data, horário e acomodação em poucos passos.",
+    title: "Dōmo — Reservas Online",
+    description: "Faça sua reserva online no Dōmo. Bar & restaurante na Rua Major Sertório, 452, São Paulo. Terça a sábado, 19h–24h.",
     type: "website",
     locale: "pt_BR",
   },

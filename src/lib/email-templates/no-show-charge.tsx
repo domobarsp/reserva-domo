@@ -43,7 +43,7 @@ export function NoShowChargeEmail({
       <Head />
       <Body style={body}>
         <Container style={container}>
-          <Heading style={heading}>Domo</Heading>
+          <Heading style={heading}>Dōmo</Heading>
           <Text style={paragraph}>{t.greeting(firstName)}</Text>
           <Text style={paragraph}>{t.message}</Text>
 

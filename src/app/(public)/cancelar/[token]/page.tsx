@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { AlertCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -27,13 +28,8 @@ export default async function CancelarPage({
     return (
       <div className="bg-background min-h-full px-4 py-12">
         {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-2">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <span className="text-2xl font-bold tracking-tight">D</span>
-          </div>
-          <p className="text-sm font-medium text-muted-foreground tracking-wide">
-            Restaurante Domo
-          </p>
+        <div className="mb-10 mt-2 flex justify-center">
+          <Image src="/logo_domo.png" alt="Dōmo" width={160} height={160} className="rounded-2xl" priority />
         </div>
         <div className="mx-auto max-w-xl space-y-4">
           <Card className="overflow-hidden rounded-2xl shadow-md py-0 gap-0">

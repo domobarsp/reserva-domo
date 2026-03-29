@@ -43,7 +43,7 @@ export function AdminNotificationEmail({
       <Head />
       <Body style={body}>
         <Container style={container}>
-          <Heading style={heading}>Domo — {t.title}</Heading>
+          <Heading style={heading}>Dōmo — {t.title}</Heading>
           <Text style={idText}>#{reservationId.slice(0, 8).toUpperCase()}</Text>
 
           <Hr style={hr} />

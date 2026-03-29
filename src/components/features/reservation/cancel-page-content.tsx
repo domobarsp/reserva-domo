@@ -45,11 +45,8 @@ interface CancelPageContentProps {
 
 function Logo() {
   return (
-    <div className="mb-8 flex flex-col items-center gap-2">
-      <Image src="/logo_domo.jpeg" alt="Domo" width={56} height={56} className="rounded-2xl" />
-      <p className="text-sm font-medium text-muted-foreground tracking-wide">
-        Restaurante Domo
-      </p>
+    <div className="mb-10 mt-2 flex justify-center">
+      <Image src="/logo_domo.png" alt="Dōmo" width={160} height={160} className="rounded-2xl" priority />
     </div>
   );
 }

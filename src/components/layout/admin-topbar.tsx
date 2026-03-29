@@ -38,13 +38,15 @@ const navItems = [
 
 interface AdminTopbarProps {
   userRole: AdminRole;
+  displayName: string;
 }
 
-export function AdminTopbar({ userRole }: AdminTopbarProps) {
+export function AdminTopbar({ userRole, displayName }: AdminTopbarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const isStaff = userRole === AdminRole.STAFF;
   const isOwner = userRole === AdminRole.OWNER;
+
   const visibleItems = navItems.filter((item) => {
     if (item.staffHidden && isStaff) return false;
     if (item.ownerOnly && !isOwner) return false;
@@ -58,63 +60,70 @@ export function AdminTopbar({ userRole }: AdminTopbarProps) {
     router.refresh();
   }
 
+  // Mobile-only bar — hidden on desktop (lg+)
   return (
-    <header className="flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-6">
-      {/* Mobile menu */}
+    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-zinc-200 bg-white px-4 lg:hidden">
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="lg:hidden">
+          <Button variant="ghost" size="icon" className="-ml-1">
             <Menu className="h-5 w-5" />
             <span className="sr-only">Menu</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0">
+        <SheetContent side="left" className="flex w-64 flex-col p-0">
           <SheetTitle className="sr-only">Menu de navegação</SheetTitle>
-          <div className="flex h-16 items-center border-b px-6">
-            <span className="text-xl font-bold tracking-tight">Domo</span>
+
+          {/* Logo */}
+          <div className="flex h-14 shrink-0 items-center border-b px-6">
+            <span className="text-xl font-bold tracking-tight text-primary">Dōmo</span>
             <span className="ml-2 rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
               Admin
             </span>
           </div>
-          <nav className="flex flex-col gap-1 p-4">
-            {visibleItems.map((item) => {
-              const isActive =
-                pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-accent text-accent-foreground"
-                      : "text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground"
-                  )}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                </Link>
-              );
-            })}
+
+          {/* Nav */}
+          <nav className="flex-1 overflow-y-auto p-3">
+            <div className="flex flex-col gap-0.5">
+              {visibleItems.map((item) => {
+                const isActive =
+                  pathname === item.href || pathname.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                      isActive
+                        ? "bg-zinc-100 text-zinc-900 font-medium"
+                        : "text-zinc-500 hover:bg-zinc-50 hover:text-zinc-700"
+                    )}
+                  >
+                    <item.icon className="h-[18px] w-[18px] shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
           </nav>
+
+          {/* Footer */}
+          <div className="shrink-0 border-t p-3">
+            <div className="flex items-center gap-3 px-3 py-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-zinc-800">{displayName}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="shrink-0 rounded p-1 text-zinc-400 hover:text-zinc-700"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </SheetContent>
       </Sheet>
 
-      {/* Page title area */}
-      <div className="flex-1" />
-
-      {/* Logout */}
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleLogout}
-          className="gap-2 text-muted-foreground"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Sair</span>
-        </Button>
-      </div>
+      <span className="text-base font-bold text-primary">Dōmo</span>
     </header>
   );
 }

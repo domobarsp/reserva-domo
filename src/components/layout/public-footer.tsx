@@ -40,10 +40,10 @@ export async function PublicFooter() {
           {/* Col 1 — Logo + tagline */}
           <div className="space-y-2">
             <p className="text-lg font-semibold tracking-tight text-primary">
-              {restaurant?.name ?? "Domo"}
+              {restaurant?.name ?? "Dōmo"}
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Experiências gastronômicas memoráveis, reservadas com facilidade.
+              Bar & restaurante. Terça a sábado, 19h–24h.
             </p>
           </div>
 
@@ -105,7 +105,7 @@ export async function PublicFooter() {
         {/* Bottom line */}
         <div className="mt-10 border-t border-border pt-6">
           <p className="text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} {restaurant?.name ?? "Domo"}. Todos os direitos reservados.
+            &copy; {new Date().getFullYear()} {restaurant?.name ?? "Dōmo"}. Todos os direitos reservados.
           </p>
         </div>
       </div>

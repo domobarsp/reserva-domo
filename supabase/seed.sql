@@ -9,10 +9,10 @@
 INSERT INTO public.restaurants (id, name, slug, address, phone, email, timezone)
 VALUES (
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-  'Domo',
+  'Dōmo',
   'domo',
-  'Rua Exemplo, 123 - São Paulo, SP',
-  '+55 11 99999-0000',
+  'Rua Major Sertório, 452, São Paulo, SP 01222-001',
+  '+55 11 97570-9056',
   'contato@domo.com.br',
   'America/Sao_Paulo'
 );
