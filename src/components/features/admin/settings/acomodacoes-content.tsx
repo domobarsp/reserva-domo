@@ -86,9 +86,9 @@ export function AcomodacoesContent({ initialAccommodationTypes }: AcomodacoesCon
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Acomodações</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Configure os tipos de acomodação disponíveis.
+          <h1 className="text-2xl font-semibold">Acomodações</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Configure os tipos de acomodação disponíveis
           </p>
         </div>
         <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
@@ -102,6 +102,7 @@ export function AcomodacoesContent({ initialAccommodationTypes }: AcomodacoesCon
         onEdit={(at) => { setEditing(at); setDialogOpen(true); }}
         onDelete={(id) => setDeleteId(id)}
         onToggleActive={handleToggleActive}
+        onAdd={() => { setEditing(null); setDialogOpen(true); }}
       />
 
       <AccommodationDialog

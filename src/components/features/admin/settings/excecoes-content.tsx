@@ -81,9 +81,9 @@ export function ExcecoesContent({
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Exceções</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Configure exceções para datas específicas (fechamentos, overrides).
+          <h1 className="text-2xl font-semibold">Exceções</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Crie regras especiais para datas específicas
           </p>
         </div>
         <Button onClick={() => { setEditing(null); setDialogKey(k => k + 1); setDialogOpen(true); }}>
@@ -97,6 +97,7 @@ export function ExcecoesContent({
         accommodationTypes={accommodationTypes}
         onEdit={(ed) => { setEditing(ed); setDialogKey(k => k + 1); setDialogOpen(true); }}
         onDelete={(id) => setDeleteId(id)}
+        onAdd={() => { setEditing(null); setDialogKey(k => k + 1); setDialogOpen(true); }}
       />
 
       <ExceptionDialog

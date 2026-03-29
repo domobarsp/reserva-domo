@@ -80,9 +80,9 @@ export function HorariosContent({ initialTimeSlots }: HorariosContentProps) {
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Horários</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Configure os horários disponíveis para reservas.
+          <h1 className="text-2xl font-semibold">Horários</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Gerencie os períodos de funcionamento do restaurante
           </p>
         </div>
         <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
@@ -96,6 +96,7 @@ export function HorariosContent({ initialTimeSlots }: HorariosContentProps) {
         onEdit={(ts) => { setEditing(ts); setDialogOpen(true); }}
         onDelete={(id) => setDeleteId(id)}
         onToggleActive={handleToggleActive}
+        onAdd={() => { setEditing(null); setDialogOpen(true); }}
       />
 
       <TimeSlotDialog

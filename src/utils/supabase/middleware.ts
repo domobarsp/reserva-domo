@@ -45,17 +45,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Com sessão + rota admin autenticada → verifica is_active
+  // Com sessão + rota admin autenticada → verifica is_active e must_change_password
   if (user && isAdminRoute && !isLoginRoute && !isLogoutRoute) {
+    const isChangePasswordRoute = pathname === "/admin/trocar-senha";
+
     const { data: adminUser } = await supabase
       .from("admin_users")
-      .select("is_active")
+      .select("is_active, must_change_password")
       .eq("id", user.id)
       .single();
 
     if (!adminUser?.is_active) {
       const url = request.nextUrl.clone();
       url.pathname = "/admin/logout";
+      return NextResponse.redirect(url);
+    }
+
+    if (adminUser?.must_change_password && !isChangePasswordRoute) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/admin/trocar-senha";
       return NextResponse.redirect(url);
     }
   }

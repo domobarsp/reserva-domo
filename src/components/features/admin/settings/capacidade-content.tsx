@@ -76,9 +76,9 @@ export function CapacidadeContent({
           </Link>
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Capacidade</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Configure a capacidade máxima por acomodação e horário.
+          <h1 className="text-2xl font-semibold">Capacidade</h1>
+          <p className="text-sm text-zinc-500 mt-1">
+            Defina a capacidade máxima por acomodação e horário
           </p>
         </div>
         <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
@@ -93,6 +93,7 @@ export function CapacidadeContent({
         timeSlots={timeSlots}
         onEdit={(cr) => { setEditing(cr); setDialogOpen(true); }}
         onDelete={(id) => setDeleteId(id)}
+        onAdd={() => { setEditing(null); setDialogOpen(true); }}
       />
 
       <CapacityDialog
