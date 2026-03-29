@@ -2,13 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import { getRestaurantId } from "@/lib/queries/restaurant";
-import type {
-  ReservationFull,
-  TimeSlot,
-  AccommodationType,
-  CapacityRule,
-  ExceptionDate,
-} from "@/types";
+import type { ReservationFull } from "@/types";
 
 export type DashboardPeriod = "today" | "week" | "15days";
 
@@ -26,10 +20,6 @@ export interface DashboardData {
   periodReservations: ReservationFull[];
   period: DashboardPeriod;
   dateRange: { start: string; end: string };
-  timeSlots: TimeSlot[];
-  accommodationTypes: AccommodationType[];
-  capacityRules: CapacityRule[];
-  exceptionDates: ExceptionDate[];
 }
 
 export async function getDashboardData(
@@ -39,36 +29,25 @@ export async function getDashboardData(
   const restaurantId = await getRestaurantId();
   const dateRange = getDateRange(period);
 
-  const [reservationsRes, timeSlotsRes, accommodationsRes, capacityRes, exceptionsRes] =
-    await Promise.all([
-      supabase
-        .from("reservations")
-        .select(
-          `
-          *,
-          customer:customers(*),
-          accommodation_type:accommodation_types(*),
-          time_slot:time_slots(*)
-        `
-        )
-        .eq("restaurant_id", restaurantId)
-        .gte("date", dateRange.start)
-        .lte("date", dateRange.end)
-        .order("date", { ascending: true })
-        .order("reservation_time", { ascending: true }),
-      supabase.from("time_slots").select("*").eq("restaurant_id", restaurantId),
-      supabase.from("accommodation_types").select("*").eq("restaurant_id", restaurantId),
-      supabase.from("capacity_rules").select("*").eq("restaurant_id", restaurantId),
-      supabase.from("exception_dates").select("*").eq("restaurant_id", restaurantId),
-    ]);
+  const reservationsRes = await supabase
+    .from("reservations")
+    .select(
+      `
+      *,
+      customer:customers(*),
+      accommodation_type:accommodation_types(*),
+      time_slot:time_slots(*)
+    `
+    )
+    .eq("restaurant_id", restaurantId)
+    .gte("date", dateRange.start)
+    .lte("date", dateRange.end)
+    .order("date", { ascending: true })
+    .order("reservation_time", { ascending: true });
 
   return {
     periodReservations: (reservationsRes.data ?? []) as unknown as ReservationFull[],
     period,
     dateRange,
-    timeSlots: (timeSlotsRes.data ?? []) as TimeSlot[],
-    accommodationTypes: (accommodationsRes.data ?? []) as AccommodationType[],
-    capacityRules: (capacityRes.data ?? []) as CapacityRule[],
-    exceptionDates: (exceptionsRes.data ?? []) as ExceptionDate[],
   };
 }

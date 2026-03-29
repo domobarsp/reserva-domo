@@ -3,24 +3,25 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { apiReservationSchema } from "@/lib/validations/reservation";
 import {
   getAvailableTimeSlotsFrom,
-  getRemainingCapacityFrom,
   isDateClosedFrom,
   getBookingWindowDatesFrom,
 } from "@/lib/availability";
 import type {
   TimeSlot,
-  CapacityRule,
-  Reservation,
   ExceptionDate,
   Settings,
 } from "@/types";
-import { ReservationStatus } from "@/types";
 import {
   sendConfirmationEmail,
   sendAdminNotificationEmail,
 } from "@/services/email-service";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { success: rateLimitOk } = checkRateLimit(`reservations:${ip}`, 5, 60_000);
+  if (!rateLimitOk) return rateLimitResponse();
+
   let body: unknown;
   try {
     body = await request.json();
@@ -59,11 +60,9 @@ export async function POST(request: NextRequest) {
 
   const restaurantId = restaurant.id;
 
-  // Buscar dados necessários para validação de capacidade
+  // Buscar dados necessários para validações de regras de negócio
   const [
     { data: timeSlots },
-    { data: capacityRules },
-    { data: reservations },
     { data: exceptionDates },
     { data: settings },
     { data: accommodationTypes },
@@ -73,15 +72,6 @@ export async function POST(request: NextRequest) {
       .select("*")
       .eq("restaurant_id", restaurantId)
       .eq("is_active", true),
-    supabase
-      .from("capacity_rules")
-      .select("*")
-      .eq("restaurant_id", restaurantId),
-    supabase
-      .from("reservations")
-      .select("*")
-      .eq("restaurant_id", restaurantId)
-      .eq("date", data.date),
     supabase
       .from("exception_dates")
       .select("*")
@@ -97,8 +87,6 @@ export async function POST(request: NextRequest) {
   ]);
 
   const allTimeSlots = (timeSlots ?? []) as TimeSlot[];
-  const allCapacityRules = (capacityRules ?? []) as CapacityRule[];
-  const allReservations = (reservations ?? []) as Reservation[];
   const allExceptionDates = (exceptionDates ?? []) as ExceptionDate[];
   const allSettings = (settings ?? []) as Settings[];
 
@@ -140,111 +128,46 @@ export async function POST(request: NextRequest) {
     (at) => at.id === data.accommodation_type_id
   );
 
-  // Validar: capacidade disponível
-  const remaining = getRemainingCapacityFrom(
-    data.date,
-    data.time_slot_id,
-    data.accommodation_type_id,
-    allCapacityRules,
-    allReservations,
-    allExceptionDates
-  );
+  // Atomic reservation creation (prevents double-booking)
+  const { data: rpcResult, error: rpcError } = await supabase
+    .rpc("create_reservation_atomic", {
+      p_restaurant_id: restaurantId,
+      p_first_name: data.first_name,
+      p_last_name: data.last_name,
+      p_email: data.email,
+      p_phone: data.phone ?? null,
+      p_preferred_locale: data.preferred_locale,
+      p_accommodation_type_id: data.accommodation_type_id,
+      p_time_slot_id: data.time_slot_id,
+      p_date: data.date,
+      p_reservation_time: timeSlot.start_time,
+      p_party_size: data.party_size,
+      p_special_requests: data.special_requests || null,
+      p_source: "online",
+      p_stripe_customer_id: data.stripe_customer_id ?? null,
+      p_stripe_payment_method_id: data.stripe_payment_method_id ?? null,
+    });
 
-  if (remaining < data.party_size) {
-    return NextResponse.json(
-      { error: "Capacidade insuficiente para o número de pessoas" },
-      { status: 400 }
-    );
+  if (rpcError) {
+    return NextResponse.json({ error: "Erro ao criar reserva" }, { status: 500 });
   }
 
-  // 1. Find or create customer
-  const { data: existingCustomer } = await supabase
-    .from("customers")
-    .select("*")
-    .ilike("email", data.email)
-    .single();
+  const result = rpcResult as { id?: string; cancellation_token?: string; customer_id?: string; error?: string };
 
-  let customerId: string;
-
-  if (existingCustomer) {
-    customerId = existingCustomer.id;
-  } else {
-    const { data: newCustomer, error: customerError } = await supabase
-      .from("customers")
-      .insert({
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
-        phone: data.phone,
-        preferred_locale: data.preferred_locale,
-      })
-      .select()
-      .single();
-
-    if (customerError || !newCustomer) {
-      return NextResponse.json(
-        { error: "Erro ao criar cliente" },
-        { status: 500 }
-      );
-    }
-
-    customerId = newCustomer.id;
+  if (result.error) {
+    return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  // 2. Create reservation
-  const cancellationToken = crypto.randomUUID();
+  // Fire-and-forget — don't block response
+  const cancellationLink = `${process.env.NEXT_PUBLIC_APP_URL}/cancelar/${result.cancellation_token}`;
 
-  const { data: reservation, error: reservationError } = await supabase
-    .from("reservations")
-    .insert({
-      restaurant_id: restaurantId,
-      customer_id: customerId,
-      accommodation_type_id: data.accommodation_type_id,
-      time_slot_id: data.time_slot_id,
-      date: data.date,
-      reservation_time: timeSlot.start_time,
-      party_size: data.party_size,
-      special_requests: data.special_requests || null,
-      source: "online",
-      locale: data.preferred_locale,
-      status: ReservationStatus.PENDING,
-      cancellation_token: cancellationToken,
-      ...(data.stripe_customer_id && {
-        stripe_customer_id: data.stripe_customer_id,
-      }),
-      ...(data.stripe_payment_method_id && {
-        stripe_payment_method_id: data.stripe_payment_method_id,
-      }),
-    })
-    .select()
-    .single();
-
-  if (reservationError || !reservation) {
-    return NextResponse.json(
-      { error: "Erro ao criar reserva" },
-      { status: 500 }
-    );
-  }
-
-  // 3. Insert status history
-  await supabase.from("reservation_status_history").insert({
-    reservation_id: reservation.id,
-    from_status: null,
-    to_status: ReservationStatus.PENDING,
-  });
-
-  // 4. Send emails (non-blocking)
-  const cancellationLink = `${process.env.NEXT_PUBLIC_APP_URL}/cancelar/${cancellationToken}`;
-  const timeLabel = timeSlot.name;
-  const accommodationLabel = accommodationType?.name ?? "";
-
-  await Promise.all([
+  Promise.all([
     sendConfirmationEmail({
       to: data.email,
       firstName: data.first_name,
       date: data.date,
-      timeLabel,
-      accommodationLabel,
+      timeLabel: timeSlot.name,
+      accommodationLabel: accommodationType?.name ?? "",
       partySize: data.party_size,
       specialRequests: data.special_requests ?? undefined,
       cancellationLink,
@@ -255,25 +178,17 @@ export async function POST(request: NextRequest) {
       email: data.email,
       phone: data.phone,
       date: data.date,
-      timeLabel,
-      accommodationLabel,
+      timeLabel: timeSlot.name,
+      accommodationLabel: accommodationType?.name ?? "",
       partySize: data.party_size,
       specialRequests: data.special_requests ?? undefined,
       hasCard: !!data.stripe_payment_method_id,
-      reservationId: reservation.id,
+      reservationId: result.id!,
     }),
-  ]);
+  ]).catch(console.error);
 
   return NextResponse.json({
-    id: reservation.id,
-    cancellation_token: cancellationToken,
-    date: data.date,
-    time_slot_id: data.time_slot_id,
-    accommodation_type_id: data.accommodation_type_id,
-    party_size: data.party_size,
-    first_name: data.first_name,
-    last_name: data.last_name,
-    email: data.email,
-    status: ReservationStatus.PENDING,
+    id: result.id,
+    cancellation_token: result.cancellation_token,
   });
 }

@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/utils/supabase/server";
 import { getCurrentAdminUser } from "@/lib/queries/admin-users";
 import { AdminRole } from "@/types";
 import { getAdminUsers } from "./actions";
@@ -12,16 +11,9 @@ export default async function AcessosPage() {
     redirect("/admin/dashboard");
   }
 
-  const [users, supabase] = await Promise.all([
-    getAdminUsers(),
-    createClient(),
-  ]);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const users = await getAdminUsers();
 
   return (
-    <AcessosContent users={users} currentUserId={user?.id ?? ""} />
+    <AcessosContent users={users} currentUserId={adminUser.id} />
   );
 }

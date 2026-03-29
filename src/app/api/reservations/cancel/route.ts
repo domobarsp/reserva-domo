@@ -4,8 +4,13 @@ import { isValidTransition } from "@/lib/status-transitions";
 import { ReservationStatus } from "@/types";
 import { sendCancellationEmail } from "@/services/email-service";
 import type { Locale } from "@/lib/email-translations";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { success: rateLimitOk } = checkRateLimit(`cancel:${ip}`, 10, 60_000);
+  if (!rateLimitOk) return rateLimitResponse();
+
   let body: { token?: string };
   try {
     body = await request.json();
@@ -92,7 +97,7 @@ export async function POST(request: NextRequest) {
     : reservation.accommodation_type;
 
   if (customer?.email) {
-    await sendCancellationEmail({
+    sendCancellationEmail({
       to: customer.email,
       firstName: customer.first_name,
       date: reservation.date,
@@ -100,7 +105,7 @@ export async function POST(request: NextRequest) {
       accommodationLabel: accommodationType?.name ?? "",
       partySize: reservation.party_size,
       locale: (reservation.locale as Locale) ?? "pt",
-    });
+    }).catch(console.error);
   }
 
   return NextResponse.json({ success: true });

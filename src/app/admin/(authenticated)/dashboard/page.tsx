@@ -1,7 +1,15 @@
+import Link from "next/link";
 import { Suspense } from "react";
+import { Plus, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DashboardStats } from "@/components/features/admin/dashboard/dashboard-stats";
 import { PeriodReservations } from "@/components/features/admin/dashboard/period-reservations";
 import { PeriodSelector } from "@/components/features/admin/dashboard/period-selector";
+import dynamic from "next/dynamic";
+const ReservationsChart = dynamic(
+  () => import("@/components/features/admin/dashboard/reservations-chart").then((m) => m.ReservationsChart),
+  { ssr: false }
+);
 import { getDashboardData, type DashboardPeriod } from "./actions";
 
 interface DashboardPageProps {
@@ -18,6 +26,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const period = parsePeriod(periodParam);
   const data = await getDashboardData(period);
 
+  const showChart = period !== "today";
+
   const sectionLabel =
     period === "today"
       ? "Reservas de Hoje"
@@ -27,32 +37,49 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Page header */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Dashboard</h1>
-          <p className="mt-1 text-muted-foreground">Visão geral das reservas</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">Visão geral das reservas</p>
         </div>
-        <Suspense>
-          <PeriodSelector currentPeriod={period} />
-        </Suspense>
+        <div className="flex items-center gap-3">
+          <Suspense>
+            <PeriodSelector currentPeriod={period} />
+          </Suspense>
+          <Button asChild size="sm" className="gap-1.5">
+            <Link href="/admin/reservas">
+              <Plus className="h-4 w-4" />
+              Nova Reserva
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <DashboardStats
-        className="mt-0"
-        periodReservations={data.periodReservations}
-        period={period}
-        timeSlots={data.timeSlots}
-        accommodationTypes={data.accommodationTypes}
-        capacityRules={data.capacityRules}
-        exceptionDates={data.exceptionDates}
-      />
+      {/* Metric cards */}
+      <DashboardStats periodReservations={data.periodReservations} />
 
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold">{sectionLabel}</h2>
-        <PeriodReservations
+      {/* Chart — multi-day periods only */}
+      {showChart && (
+        <ReservationsChart
           reservations={data.periodReservations}
-          period={period}
+          dateRange={data.dateRange}
         />
+      )}
+
+      {/* Reservations table */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-zinc-800">{sectionLabel}</h2>
+          <Link
+            href="/admin/reservas"
+            className="flex items-center gap-1 text-sm text-zinc-400 transition-colors hover:text-zinc-700"
+          >
+            Ver todas
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+        <PeriodReservations reservations={data.periodReservations} period={period} />
       </div>
     </div>
   );

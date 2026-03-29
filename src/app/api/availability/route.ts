@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 import {
   getAvailableTimeSlotsFrom,
   getAvailableAccommodationsFrom,
@@ -18,6 +19,10 @@ import type {
 } from "@/types";
 
 export async function GET(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { success: rateLimitOk } = checkRateLimit(`availability:${ip}`, 30, 60_000);
+  if (!rateLimitOk) return rateLimitResponse();
+
   const date = request.nextUrl.searchParams.get("date");
 
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/utils/stripe/client";
+import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  const ip = getClientIp(request);
+  const { success: rateLimitOk } = checkRateLimit(`stripe:${ip}`, 5, 60_000);
+  if (!rateLimitOk) return rateLimitResponse();
+
   let body: unknown;
   try {
     body = await request.json();
