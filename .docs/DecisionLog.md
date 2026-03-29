@@ -626,3 +626,27 @@ Todos os arquivos de tabela do admin foram migrados para esse padrão (ver lista
 **Contexto**: O campo de override de taxa de no-show no modal de edição é irrelevante para reservas sem cartão cadastrado — não há como cobrar no-show sem `stripe_payment_method_id`.
 **Decisão**: Seção "Avançado" (que contém apenas o campo de taxa) renderiza condicionalmente: `{reservation?.stripe_payment_method_id && (...)}`. Separador também oculto junto.
 **Razão**: Reduz ruído cognitivo para o operador. Um campo desabilitado ainda levanta dúvidas; ocultá-lo é mais limpo e evita edições inúteis.
+
+---
+
+### 2026-03-29 — Fase 14: must_change_password para troca obrigatória de senha
+
+**Contexto**: Ao resetar a senha de um admin, a nova senha temporária é gerada pelo owner. O usuário precisa trocar essa senha no próximo login para garantir que apenas ele conhece sua senha.
+**Decisão**: Campo `must_change_password` (boolean, default false) na tabela `admin_users`. Middleware redireciona para `/admin/trocar-senha` quando true. Após troca, flag é limpa.
+**Razão**: Segurança — impede que senhas temporárias permaneçam ativas indefinidamente. O fluxo é simples e não requer email (compatível com domínio fictício `@domo.local`).
+
+---
+
+### 2026-03-29 — Fase 14: exclusão apenas de usuários inativos
+
+**Contexto**: Precisamos permitir remoção de usuários admin criados por engano ou que não são mais necessários.
+**Decisão**: `deleteAdminUser()` só permite excluir usuários com `is_active = false`. Usuários ativos devem ser desativados antes. Último owner ativo nunca pode ser excluído.
+**Razão**: Camada extra de segurança — desativação como pre-step previne exclusão acidental. Preserva trilha de auditoria para usuários que foram ativos.
+
+---
+
+### 2026-03-29 — Fase 14: proteção do último owner ativo
+
+**Contexto**: Se o único owner ativo for desativado ou rebaixado, ninguém mais poderá acessar a página de Acessos.
+**Decisão**: `isLastActiveOwner()` helper verifica se existe outro owner ativo antes de permitir desativação ou mudança de role. Retorna erro descritivo.
+**Razão**: Previne lock-out completo do sistema. Sem owner ativo, não há como gerenciar acessos via UI.

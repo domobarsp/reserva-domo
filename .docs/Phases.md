@@ -529,7 +529,7 @@ Revisão das páginas de Lista de Espera e Passantes: filtros, tabelas e drawers
 ---
 
 ## Fase 14 — Refinamento Visual — Configurações & Acessos
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Revisão das páginas de Configurações (hub + 6 sub-páginas) e Acessos.

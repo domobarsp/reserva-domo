@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-03-29 | Fase: 13 (Refinamento — Lista de Espera & Passantes) — CONCLUÍDA
+> Atualizado: 2026-03-29 | Fase: 14 (Refinamento — Configurações & Acessos) — CONCLUÍDA
 
 ## O que funciona
 
@@ -295,14 +295,32 @@ Correções de tokens quentes em componentes shared:
 - **Empty states com CTA**: botão "Adicionar à lista" / "Registrar passante" (`variant="outline"` + ícone `Plus`) visível no estado vazio via prop `onAdd`.
 - **Loading skeletons atualizados**: skeleton do filter card (título + grid 3 colunas com labels) + skeleton de tabela em card `rounded-xl`.
 
+### Refinamento Visual — Configurações & Acessos (Fase 14 — CONCLUÍDA)
+
+**Visual:**
+- **Hub de Configurações**: cards com ícone em container `h-10 w-10 rounded-lg bg-zinc-100`, hover `border-zinc-300`, descrições atualizadas
+- **Sub-páginas header pattern**: voltar (`ArrowLeft`) + título `font-semibold` + descrição `text-zinc-500` + botão de ação
+- **Chips de dias (Horários)**: sempre 7 chips visíveis; ativo `bg-emerald-50 text-emerald-700 border-emerald-200`; inativo `bg-zinc-50 text-zinc-300 line-through`
+- **Tabelas settings**: `hover:bg-zinc-50 transition-colors`, tooltips nos botões (Editar/Excluir), empty state com CTA button
+- **Dialogs settings (4)**: Fase 12-13 pattern — `p-0 gap-0`, `SectionLabel`, `DialogDescription`, footer `bg-zinc-50`, `Loader2` no submit
+- **Card Guarantee + No-Show forms**: header pattern unificado, card `rounded-xl`, `Loader2` no botão Salvar
+- **Invite Admin Dialog**: Fase 12-13 pattern com seções "Credenciais" e "Perfil"
+- **Admin Users Table**: `hover:bg-zinc-50`, novos itens no menu dropdown (Editar, Resetar senha, Excluir)
+
+**Funcional (Acessos):**
+- **Editar usuário**: `EditAdminDialog` altera `display_name` via `updateAdminUserDisplayName()` action
+- **Resetar senha**: `ResetPasswordDialog` gera senha temporária de 12 chars via `resetAdminUserPassword()`, exibe em card copiável; seta `must_change_password = true`
+- **Troca de senha obrigatória**: migration `006_must_change_password` adiciona coluna boolean; middleware redireciona para `/admin/trocar-senha` quando `must_change_password = true`; página com form nova senha + confirmação; `changeOwnPassword()` action atualiza senha e limpa flag
+- **Excluir usuário**: `deleteAdminUser()` — só permite excluir inativos; remove de `admin_users` + `auth.users`
+- **Proteção último owner**: `isLastActiveOwner()` helper impede desativação e demoção do único owner ativo
+
 ## O que não existe ainda
 
-- Refinamento visual por página — Configurações & Acessos (14)
 - Produção & Deploy (Fase 15)
 
 ## Próximos Passos
 
-Fase 14 — Refinamento Visual — Configurações & Acessos.
+Fase 15 — Produção & Deploy.
 
 ## Issues Conhecidas
 
