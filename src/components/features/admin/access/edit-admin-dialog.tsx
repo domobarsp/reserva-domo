@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import {
@@ -34,9 +34,10 @@ export function EditAdminDialog({
   const [displayName, setDisplayName] = useState(currentDisplayName);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (open) setDisplayName(currentDisplayName);
-  }, [open, currentDisplayName]);
+  function handleOpenChange(nextOpen: boolean) {
+    if (nextOpen) setDisplayName(currentDisplayName);
+    onOpenChange(nextOpen);
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,7 +55,7 @@ export function EditAdminDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[425px] p-0 gap-0">
         <DialogHeader className="px-6 pt-6 pb-5 border-b border-zinc-100">
           <DialogTitle className="text-lg font-semibold tracking-tight">
