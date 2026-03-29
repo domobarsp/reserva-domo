@@ -108,11 +108,13 @@ export const timeSlotSchema = z.object({
   start_time: z
     .string()
     .min(1, "Informe o horário de início")
-    .regex(/^\d{2}:\d{2}$/, "Formato inválido (HH:MM)"),
+    .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Formato inválido (HH:MM)")
+    .transform((v) => v.slice(0, 5)),
   end_time: z
     .string()
     .min(1, "Informe o horário de término")
-    .regex(/^\d{2}:\d{2}$/, "Formato inválido (HH:MM)"),
+    .regex(/^\d{2}:\d{2}(:\d{2})?$/, "Formato inválido (HH:MM)")
+    .transform((v) => v.slice(0, 5)),
   days_of_week: z
     .array(z.number().int().min(0).max(6))
     .min(1, "Selecione pelo menos um dia"),
