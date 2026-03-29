@@ -1,0 +1,13 @@
+# Docs e planos (não necessários em produção)
+docs/
+AGENTS.md
+GEMINI.md
+CLAUDE.md
+
+# Agent configs locais
+.agents/
+.claude/
+.codex/
+
+# Migrations (aplicadas via CLI, não pelo deploy)
+supabase/
