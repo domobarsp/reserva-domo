@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-03-04 | Fase: 12 (Refinamento — Reservas) — CONCLUÍDA
+> Atualizado: 2026-03-29 | Fase: 13 (Refinamento — Lista de Espera & Passantes) — CONCLUÍDA
 
 ## O que funciona
 
@@ -284,14 +284,25 @@ Correções de tokens quentes em componentes shared:
 - **Histórico de edições no drawer**: migration `005_reservation_edit_history` — tabela `reservation_edit_history(id, reservation_id, changes JSONB, changed_by, created_at)`; `updateReservation()` detecta diff nos campos rastreados (data, horário, acomodação, pessoas, solicitações, taxa) e insere registro; `getReservationDetails()` busca histórico de edições junto ao de status; drawer exibe ambos intercalados e ordenados por data, com dot de cor diferente para edições e lista de campos `antes → depois`.
 - **Tipo `ReservationEditHistory`** adicionado a `src/types/index.ts`; `ReservationDetails` extendido com `editHistory`, `effectiveNoShowFee` e `noShowFeeSource`.
 
+### Refinamento Visual — Lista de Espera & Passantes (Fase 13 — CONCLUÍDA)
+
+- **Filtros padronizados cross-cutting**: `TableFilters` e `ReservationFilters` refatorados com container delimitado (`rounded-xl border bg-card p-4 shadow-sm`), título "Filtros" com ícone `SlidersHorizontal`, labels `text-xs font-medium text-zinc-500` acima de cada campo, grid responsivo `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`. Aplicado em Reservas, Lista de Espera e Passantes.
+- **Subcomponentes compartilhados**: `SectionLabel` e `IconRow` extraídos de `reservation-detail-drawer.tsx` para `src/components/shared/drawer-primitives.tsx`; importados por todos os drawers e dialogs de criação.
+- **Drawers waitlist/walk-in redesenhados**: padrão Fase 12 — `bg-zinc-50/60` header, eyebrow `text-[11px] tracking-widest text-zinc-400`, nome `text-[22px]`, metadata 2×2 grid com ícones `h-3.5 w-3.5 text-zinc-400`, "Registrado em…" com `border-t`, body com `SectionLabel`/`IconRow` (contato, solicitações), timeline flex-based (waitlist: chegada/acomodado/removido com dots coloridos), fullscreen mobile `w-full sm:max-w-[460px] bg-white`.
+- **Drawers — footer de ações**: waitlist (status=waiting) com "Acomodar" full-width emerald + "Remover da lista" outline stacked; walk-in sem footer (read-only).
+- **Dialogs de criação redesenhados**: `p-0 gap-0` com header/body/footer separados, `SectionLabel` para seções "Cliente" e "Detalhes", `border-t border-zinc-100` separadores, footer `bg-zinc-50`, `Loader2` no submit, `<Textarea>` em vez de `<textarea>` inline.
+- **Tabelas refinadas**: coluna "Chegada" → "Horário" (waitlist), hierarquia de tempo (`text-zinc-400 text-xs` data + `font-medium text-zinc-900` hora), `hover:bg-zinc-50 transition-colors` em todas as linhas, botão "Remover" com `text-rose-600 border-rose-200`, fallbacks `text-zinc-300` para campos vazios (walk-in).
+- **Empty states com CTA**: botão "Adicionar à lista" / "Registrar passante" (`variant="outline"` + ícone `Plus`) visível no estado vazio via prop `onAdd`.
+- **Loading skeletons atualizados**: skeleton do filter card (título + grid 3 colunas com labels) + skeleton de tabela em card `rounded-xl`.
+
 ## O que não existe ainda
 
-- Refinamento visual por página — Lista de Espera & Passantes (13), Configurações & Acessos (14)
+- Refinamento visual por página — Configurações & Acessos (14)
 - Produção & Deploy (Fase 15)
 
 ## Próximos Passos
 
-Fase 13 — Refinamento Visual — Lista de Espera & Passantes.
+Fase 14 — Refinamento Visual — Configurações & Acessos.
 
 ## Issues Conhecidas
 

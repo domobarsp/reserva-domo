@@ -488,7 +488,7 @@ Revisão da página de gestão de reservas: filtros, tabela e drawer de detalhes
 ---
 
 ## Fase 13 — Refinamento Visual — Lista de Espera & Passantes
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Revisão das páginas de Lista de Espera e Passantes: filtros, tabelas e drawers.
