@@ -4,16 +4,19 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { SectionLabel } from "@/components/shared/drawer-primitives";
 import {
   waitlistEntrySchema,
   type WaitlistEntryData,
@@ -35,7 +38,7 @@ export function WaitlistCreateDialog({
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<WaitlistEntryData>({
     resolver: zodResolver(waitlistEntrySchema),
     defaultValues: {
@@ -80,96 +83,121 @@ export function WaitlistCreateDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Adicionar à Lista de Espera</DialogTitle>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[425px] p-0 gap-0">
+        {/* Header */}
+        <DialogHeader className="px-6 pt-6 pb-5 border-b border-zinc-100">
+          <DialogTitle className="text-lg font-semibold tracking-tight">
+            Adicionar à Lista de Espera
+          </DialogTitle>
+          <DialogDescription className="text-sm text-zinc-500 mt-0.5">
+            Registre um cliente que está aguardando mesa.
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="wl-customer_name">Nome</Label>
-            <Input
-              id="wl-customer_name"
-              placeholder="Nome do cliente"
-              {...register("customer_name")}
-            />
-            {errors.customer_name && (
-              <p className="text-sm text-red-500">
-                {errors.customer_name.message}
-              </p>
-            )}
+
+        <form onSubmit={handleSubmit(onSubmit)}>
+          {/* Body */}
+          <div className="px-6 py-5 space-y-6">
+            {/* Cliente */}
+            <div className="space-y-4">
+              <SectionLabel>Cliente</SectionLabel>
+
+              <div className="space-y-2">
+                <Label htmlFor="wl-customer_name">Nome</Label>
+                <Input
+                  id="wl-customer_name"
+                  placeholder="Nome do cliente"
+                  {...register("customer_name")}
+                />
+                {errors.customer_name && (
+                  <p className="text-sm text-red-500">
+                    {errors.customer_name.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="wl-customer_phone">Telefone</Label>
+                <Input
+                  id="wl-customer_phone"
+                  placeholder="+55 (11) 99999-9999"
+                  {...register("customer_phone")}
+                />
+                {errors.customer_phone && (
+                  <p className="text-sm text-red-500">
+                    {errors.customer_phone.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="wl-customer_email">Email (opcional)</Label>
+                <Input
+                  id="wl-customer_email"
+                  type="email"
+                  placeholder="email@exemplo.com"
+                  {...register("customer_email")}
+                />
+                {errors.customer_email && (
+                  <p className="text-sm text-red-500">
+                    {errors.customer_email.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Detalhes */}
+            <div className="space-y-4 border-t border-zinc-100 pt-5">
+              <SectionLabel>Detalhes</SectionLabel>
+
+              <div className="space-y-2">
+                <Label htmlFor="wl-party_size">Pessoas</Label>
+                <Input
+                  id="wl-party_size"
+                  type="number"
+                  min={1}
+                  {...register("party_size", { valueAsNumber: true })}
+                />
+                {errors.party_size && (
+                  <p className="text-sm text-red-500">
+                    {errors.party_size.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="wl-special_requests">
+                  Solicitações Especiais (opcional)
+                </Label>
+                <Textarea
+                  id="wl-special_requests"
+                  className="min-h-[80px]"
+                  placeholder="Alguma solicitação especial..."
+                  {...register("special_requests")}
+                />
+                {errors.special_requests && (
+                  <p className="text-sm text-red-500">
+                    {errors.special_requests.message}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="wl-customer_phone">Telefone</Label>
-            <Input
-              id="wl-customer_phone"
-              placeholder="+55 (11) 99999-9999"
-              {...register("customer_phone")}
-            />
-            {errors.customer_phone && (
-              <p className="text-sm text-red-500">
-                {errors.customer_phone.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="wl-customer_email">Email (opcional)</Label>
-            <Input
-              id="wl-customer_email"
-              type="email"
-              placeholder="email@exemplo.com"
-              {...register("customer_email")}
-            />
-            {errors.customer_email && (
-              <p className="text-sm text-red-500">
-                {errors.customer_email.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="wl-party_size">Pessoas</Label>
-            <Input
-              id="wl-party_size"
-              type="number"
-              min={1}
-              {...register("party_size", { valueAsNumber: true })}
-            />
-            {errors.party_size && (
-              <p className="text-sm text-red-500">
-                {errors.party_size.message}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="wl-special_requests">
-              Solicitações Especiais (opcional)
-            </Label>
-            <textarea
-              id="wl-special_requests"
-              className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="Alguma solicitação especial..."
-              {...register("special_requests")}
-            />
-            {errors.special_requests && (
-              <p className="text-sm text-red-500">
-                {errors.special_requests.message}
-              </p>
-            )}
-          </div>
-
-          <DialogFooter>
+          {/* Footer */}
+          <div className="flex justify-end gap-2 border-t border-zinc-100 bg-zinc-50 px-6 py-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit">Adicionar</Button>
-          </DialogFooter>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Adicionar
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

@@ -17,6 +17,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { WaitlistStatusBadge } from "@/components/shared/status-badge";
+import { SectionLabel, IconRow } from "@/components/shared/drawer-primitives";
 import type { WaitlistEntry } from "@/types";
 import { WaitlistStatus } from "@/types";
 import { updateWaitlistStatus } from "@/app/admin/(authenticated)/lista-espera/actions";
@@ -64,139 +65,164 @@ export function WaitlistDetailDrawer({
         if (!open) onClose();
       }}
     >
-      <SheetContent className="flex flex-col overflow-hidden p-0 sm:max-w-lg">
+      <SheetContent className="flex flex-col overflow-hidden p-0 w-full sm:max-w-[460px] bg-white">
         <SheetTitle className="sr-only">Detalhes — Lista de Espera</SheetTitle>
 
         {/* ── Cabeçalho ────────────────────────────────────────────── */}
         {entry && (
-          <div className="border-b bg-muted/30 px-6 pb-4 pt-5 pr-14">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          <div className="flex-shrink-0 border-b border-zinc-100 bg-zinc-50/60 px-6 pt-6 pb-5 pr-14">
+            <p className="text-[11px] font-medium uppercase tracking-widest text-zinc-400 mb-2">
               Lista de Espera
             </p>
-            <h2 className="mt-1 text-xl font-semibold text-foreground">
+
+            <h2 className="text-[22px] font-semibold tracking-tight text-zinc-900 leading-snug">
               {entry.customer_name}
             </h2>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+
+            <div className="mt-2 flex items-center gap-2">
               <WaitlistStatusBadge status={entry.status} />
             </div>
-            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" />
-                Chegada:{" "}
-                {format(parseISO(entry.arrival_time), "HH:mm", {
-                  locale: ptBR,
-                })}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5" />
+
+            {/* Metadata 2×2 */}
+            <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <Clock className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
+                Chegada: {format(parseISO(entry.arrival_time), "HH:mm")}
+              </div>
+              <div className="flex items-center gap-1.5 text-sm text-zinc-600">
+                <Users className="h-3.5 w-3.5 text-zinc-400 shrink-0" />
                 {entry.party_size}{" "}
                 {entry.party_size === 1 ? "pessoa" : "pessoas"}
-              </span>
+              </div>
             </div>
+
+            {/* Data de registro */}
+            <p className="mt-3 text-xs text-zinc-400 border-t border-zinc-100 pt-3">
+              Registrado em{" "}
+              {format(
+                parseISO(entry.arrival_time),
+                "dd 'de' MMMM 'de' yyyy 'às' HH:mm",
+                { locale: ptBR }
+              )}
+            </p>
           </div>
         )}
 
         {/* ── Corpo (scrollável) ───────────────────────────────────── */}
         {entry && (
-          <div className="flex-1 divide-y divide-border/60 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto">
             {/* Contato */}
-            <section className="space-y-3 px-6 py-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Contato
-              </h3>
-              <ul className="space-y-2">
-                <li className="flex items-center gap-2.5 text-sm">
-                  <Phone className="h-4 w-4 shrink-0 text-muted-foreground/60" />
-                  <span>{entry.customer_phone}</span>
-                </li>
+            <section className="px-6 py-4 border-b border-zinc-100">
+              <SectionLabel>Contato</SectionLabel>
+              <ul className="space-y-2.5">
+                <IconRow icon={Phone}>
+                  <span className="text-zinc-700">{entry.customer_phone}</span>
+                </IconRow>
                 {entry.customer_email && (
-                  <li className="flex items-center gap-2.5 text-sm">
-                    <Mail className="h-4 w-4 shrink-0 text-muted-foreground/60" />
-                    <span>{entry.customer_email}</span>
-                  </li>
+                  <IconRow icon={Mail}>
+                    <span className="font-medium text-zinc-800 break-all">
+                      {entry.customer_email}
+                    </span>
+                  </IconRow>
                 )}
               </ul>
             </section>
 
             {/* Solicitações especiais */}
             {entry.special_requests && (
-              <section className="space-y-2 px-6 py-4">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Solicitações Especiais
-                </h3>
-                <div className="flex gap-2.5">
-                  <MessageSquare className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground/60" />
-                  <p className="text-sm italic text-foreground/80">
-                    {entry.special_requests}
+              <section className="px-6 py-4 border-b border-zinc-100">
+                <SectionLabel>Solicitações Especiais</SectionLabel>
+                <div className="flex gap-3">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-100 mt-0.5">
+                    <MessageSquare className="h-3 w-3 text-zinc-500" />
+                  </div>
+                  <p className="text-sm italic text-zinc-600 leading-relaxed">
+                    &ldquo;{entry.special_requests}&rdquo;
                   </p>
                 </div>
               </section>
             )}
 
             {/* Linha do tempo */}
-            <section className="space-y-3 px-6 py-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Linha do Tempo
-              </h3>
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Chegada registrada</dt>
-                  <dd>
-                    {format(parseISO(entry.arrival_time), "dd/MM/yyyy HH:mm", {
-                      locale: ptBR,
-                    })}
-                  </dd>
-                </div>
-                {entry.seated_at && (
-                  <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Acomodado em</dt>
-                    <dd>
-                      {format(
-                        parseISO(entry.seated_at),
-                        "dd/MM/yyyy HH:mm",
-                        { locale: ptBR }
-                      )}
-                    </dd>
+            <section className="px-6 py-4">
+              <SectionLabel>Linha do Tempo</SectionLabel>
+              <ol className="space-y-0">
+                {/* Chegada */}
+                <li className="flex gap-4">
+                  <div className="flex flex-col items-center pt-[3px]">
+                    <div className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-zinc-300 bg-white" />
+                    {(entry.seated_at || entry.status === WaitlistStatus.REMOVED) && <div className="w-px flex-1 bg-zinc-200 my-1" />}
                   </div>
+                  <div className={(entry.seated_at || entry.status === WaitlistStatus.REMOVED) ? "pb-4" : ""}>
+                    <p className="text-[11px] text-zinc-400 mb-1.5 leading-none">
+                      {format(parseISO(entry.arrival_time), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                    </p>
+                    <p className="text-sm text-zinc-600">Chegada registrada</p>
+                  </div>
+                </li>
+
+                {/* Acomodado */}
+                {entry.seated_at && (
+                  <li className="flex gap-4">
+                    <div className="flex flex-col items-center pt-[3px]">
+                      <div className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-emerald-400 bg-white" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-zinc-400 mb-1.5 leading-none">
+                        {format(parseISO(entry.seated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                      <p className="text-sm text-emerald-700">Cliente acomodado</p>
+                    </div>
+                  </li>
                 )}
-              </dl>
+
+                {/* Removido */}
+                {entry.status === WaitlistStatus.REMOVED && !entry.seated_at && (
+                  <li className="flex gap-4">
+                    <div className="flex flex-col items-center pt-[3px]">
+                      <div className="h-2.5 w-2.5 shrink-0 rounded-full border-2 border-rose-400 bg-white" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-zinc-400 mb-1.5 leading-none">
+                        {format(parseISO(entry.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      </p>
+                      <p className="text-sm text-rose-600">Removido da lista</p>
+                    </div>
+                  </li>
+                )}
+              </ol>
             </section>
           </div>
         )}
 
         {/* ── Rodapé de ações ─────────────────────────────────────── */}
         {entry && isWaiting && (
-          <div className="border-t bg-background px-6 py-4">
-            <p className="mb-2 text-xs font-medium text-muted-foreground">
-              Ações
-            </p>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => handleAction(WaitlistStatus.SEATED)}
-                disabled={!!loadingStatus}
-                className="flex-1 gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
-              >
-                {loadingStatus === WaitlistStatus.SEATED ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <CheckCheck className="h-4 w-4" />
-                )}
-                Acomodar
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleAction(WaitlistStatus.REMOVED)}
-                disabled={!!loadingStatus}
-                className="flex-1 gap-2 border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100"
-              >
-                {loadingStatus === WaitlistStatus.REMOVED ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <X className="h-4 w-4" />
-                )}
-                Remover
-              </Button>
-            </div>
+          <div className="flex-shrink-0 border-t border-zinc-200 bg-white px-5 py-4 space-y-2">
+            <Button
+              onClick={() => handleAction(WaitlistStatus.SEATED)}
+              disabled={!!loadingStatus}
+              className="w-full gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              {loadingStatus === WaitlistStatus.SEATED ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCheck className="h-4 w-4" />
+              )}
+              Acomodar
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleAction(WaitlistStatus.REMOVED)}
+              disabled={!!loadingStatus}
+              className="w-full gap-2 border-zinc-200 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-800"
+            >
+              {loadingStatus === WaitlistStatus.REMOVED ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
+              Remover da lista
+            </Button>
           </div>
         )}
       </SheetContent>
