@@ -10,4 +10,4 @@ CLAUDE.md
 .codex/
 
 # Migrations (aplicadas via CLI, não pelo deploy)
-supabase/
+/supabase/
