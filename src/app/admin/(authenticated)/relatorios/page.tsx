@@ -1,15 +1,8 @@
 import { getReportData, getDateRangeForPeriod, type ReportPeriod } from "./actions";
 import { PeriodSelector } from "./_components/period-selector";
 import { ReportKpiCards } from "./_components/report-kpi-cards";
-import dynamic from "next/dynamic";
-const ReservationsByDayChart = dynamic(
-  () => import("./_components/reservations-by-day-chart").then((m) => m.ReservationsByDayChart),
-  { ssr: false }
-);
-const ReservationsByStatusChart = dynamic(
-  () => import("./_components/reservations-by-status-chart").then((m) => m.ReservationsByStatusChart),
-  { ssr: false }
-);
+import { ReservationsByDayChart } from "./_components/reservations-by-day-chart";
+import { ReservationsByStatusChart } from "./_components/reservations-by-status-chart";
 import { TopAccommodationsTable } from "./_components/top-accommodations-table";
 import { ExportCsvButton } from "./_components/export-csv-button";
 import { Suspense } from "react";

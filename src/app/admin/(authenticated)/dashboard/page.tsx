@@ -5,11 +5,7 @@ import { Button } from "@/components/ui/button";
 import { DashboardStats } from "@/components/features/admin/dashboard/dashboard-stats";
 import { PeriodReservations } from "@/components/features/admin/dashboard/period-reservations";
 import { PeriodSelector } from "@/components/features/admin/dashboard/period-selector";
-import dynamic from "next/dynamic";
-const ReservationsChart = dynamic(
-  () => import("@/components/features/admin/dashboard/reservations-chart").then((m) => m.ReservationsChart),
-  { ssr: false }
-);
+import { ReservationsChart } from "@/components/features/admin/dashboard/reservations-chart";
 import { getDashboardData, type DashboardPeriod } from "./actions";
 
 interface DashboardPageProps {
