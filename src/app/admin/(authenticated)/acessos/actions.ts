@@ -212,10 +212,9 @@ export async function resetAdminUserPassword(
   }
 
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  let temporaryPassword = "";
-  for (let i = 0; i < 12; i++) {
-    temporaryPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+  const randomBytes = new Uint8Array(12);
+  crypto.getRandomValues(randomBytes);
+  const temporaryPassword = Array.from(randomBytes, (b) => chars[b % chars.length]).join("");
 
   const adminClient = createAdminClient();
 
