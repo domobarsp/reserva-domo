@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-03-29 | Fase: 14 (Refinamento — Configurações & Acessos) — CONCLUÍDA
+> Atualizado: 2026-03-29 | Fase: 15 (Produção & Deploy) — CONCLUÍDA
 
 ## O que funciona
 
@@ -314,13 +314,40 @@ Correções de tokens quentes em componentes shared:
 - **Excluir usuário**: `deleteAdminUser()` — só permite excluir inativos; remove de `admin_users` + `auth.users`
 - **Proteção último owner**: `isLastActiveOwner()` helper impede desativação e demoção do único owner ativo
 
+### Produção & Deploy (Fase 15 — CONCLUÍDA)
+
+**Segurança:**
+- **Crypto fix**: `crypto.getRandomValues()` para geração de senhas temporárias (substitui `Math.random()`)
+- **Double-booking prevention**: função SQL `create_reservation_atomic()` com `SELECT ... FOR UPDATE` — reservas criadas atomicamente com verificação de capacidade
+- **Rate limiting**: helper `src/lib/rate-limit.ts` com Map em memória; aplicado em `/api/reservations` (5/min), `/api/reservations/cancel` (10/min), `/api/availability` (30/min), `/api/stripe/setup-intent` (5/min); retorna 429
+- **Security headers**: CSP (permitindo Stripe + Supabase), X-Frame-Options DENY, HSTS, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy
+- **Supabase security**: RLS habilitado em `reservation_edit_history`, `search_path` fixo em `set_updated_at()` e `is_admin()`, `reservation_status_history` INSERT restrito a admins
+
+**Robustez:**
+- **Error boundaries**: `src/app/error.tsx` (app root), `src/app/global-error.tsx` (fallback crítico), `src/app/admin/(authenticated)/error.tsx` (admin)
+- **Env validation**: `src/lib/env.ts` valida 7 env vars obrigatórias na inicialização; importado em layout raiz
+
+**SEO:**
+- **Metadata**: title template, description, Open Graph (locale pt_BR)
+- **robots.ts**: Allow /, Disallow /admin/
+- **sitemap.ts**: / (priority 1) + /reserva (priority 0.9)
+
+**Performance:**
+- **Emails non-blocking**: `Promise.all([...]).catch(console.error)` sem await em `/api/reservations` e `/api/reservations/cancel`
+- **Recharts dynamic import**: `next/dynamic` com `ssr: false` em dashboard (ReservationsChart) e relatórios (2 charts) — ~200KB a menos no bundle
+- **Dashboard over-fetch removido**: 4 queries desnecessárias removidas de `getDashboardData()`
+- **Acessos waterfall**: chamada auth redundante eliminada, reutiliza `adminUser.id`
+
+**Documentação:**
+- **`docs/DEPLOY.md`**: guia completo de deploy com Supabase, Stripe, Resend, Vercel (3 opções de deploy), checklist pós-deploy, domínio customizado, troubleshooting
+
 ## O que não existe ainda
 
-- Produção & Deploy (Fase 15)
+Todas as fases estão completas. O sistema está pronto para deploy em produção.
 
 ## Próximos Passos
 
-Fase 15 — Produção & Deploy.
+Seguir o guia em `docs/DEPLOY.md` para fazer deploy na conta do cliente.
 
 ## Issues Conhecidas
 

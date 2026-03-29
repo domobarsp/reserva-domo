@@ -574,7 +574,7 @@ Revisão das páginas de Configurações (hub + 6 sub-páginas) e Acessos.
 ---
 
 ## Fase 15 — Produção & Deploy
-**Status**: `NOT STARTED`
+**Status**: `COMPLETE`
 
 **Escopo**:
 Preparação para produção: robustez técnica, segurança, SEO e deploy na Vercel.
