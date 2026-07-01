@@ -21,11 +21,6 @@ import {
   UPLOAD_ERROR_MESSAGE,
   validateImageFile,
 } from "@/lib/image-upload";
-import {
-  addGalleryPhoto,
-  updateGalleryPhotoCaption,
-  deleteGalleryPhoto,
-} from "@/app/admin/(authenticated)/configuracoes/estabelecimento/actions";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 type GalleryPhotoDialogMode = "add" | "edit";
@@ -35,7 +30,9 @@ interface GalleryPhotoDialogProps {
   onOpenChange: (open: boolean) => void;
   mode: GalleryPhotoDialogMode;
   photo?: RestaurantPhoto | null;
-  onSuccess: (updatedPhoto?: RestaurantPhoto, deletedId?: string) => void;
+  onAdd: (file: File, caption: string) => Promise<boolean>;
+  onUpdateCaption: (photoId: string, caption: string) => Promise<boolean>;
+  onDelete: (photoId: string) => Promise<boolean>;
 }
 
 export function GalleryPhotoDialog({
@@ -43,7 +40,9 @@ export function GalleryPhotoDialog({
   onOpenChange,
   mode,
   photo,
-  onSuccess,
+  onAdd,
+  onUpdateCaption,
+  onDelete,
 }: GalleryPhotoDialogProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [caption, setCaption] = useState("");
@@ -92,16 +91,9 @@ export function GalleryPhotoDialog({
 
     setIsSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.set("file", selectedFile);
-      formData.set("caption", caption);
-      const result = await addGalleryPhoto(formData);
-      if (result.success) {
-        toast.success("Foto adicionada à galeria");
-        onSuccess(result.data);
+      const ok = await onAdd(selectedFile, caption);
+      if (ok) {
         onOpenChange(false);
-      } else {
-        toast.error(result.error);
       }
     } catch {
       toast.error(UPLOAD_ERROR_MESSAGE);
@@ -115,13 +107,9 @@ export function GalleryPhotoDialog({
 
     setIsSubmitting(true);
     try {
-      const result = await updateGalleryPhotoCaption(photo.id, caption);
-      if (result.success) {
-        toast.success("Legenda atualizada");
-        onSuccess({ ...photo, caption: caption.trim() || null });
+      const ok = await onUpdateCaption(photo.id, caption);
+      if (ok) {
         onOpenChange(false);
-      } else {
-        toast.error(result.error);
       }
     } catch {
       toast.error("Não foi possível salvar a legenda.");
@@ -135,13 +123,9 @@ export function GalleryPhotoDialog({
 
     setIsSubmitting(true);
     try {
-      const result = await deleteGalleryPhoto(photo.id);
-      if (result.success) {
-        toast.success("Foto removida");
-        onSuccess(undefined, photo.id);
+      const ok = await onDelete(photo.id);
+      if (ok) {
         onOpenChange(false);
-      } else {
-        toast.error(result.error);
       }
     } catch {
       toast.error("Não foi possível excluir a foto.");
@@ -151,8 +135,7 @@ export function GalleryPhotoDialog({
     }
   }
 
-  const displayPreview =
-    mode === "edit" ? photo?.url : previewUrl;
+  const displayPreview = mode === "edit" ? photo?.url : previewUrl;
 
   return (
     <>
@@ -188,12 +171,11 @@ export function GalleryPhotoDialog({
                 >
                   {displayPreview ? (
                     <div className="relative aspect-[4/3] w-full max-w-xs overflow-hidden rounded-md">
-                      <Image
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
                         src={displayPreview}
                         alt="Preview"
-                        fill
-                        className="object-cover"
-                        sizes="300px"
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   ) : (

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +26,8 @@ import {
   updateEstablishmentProfile,
   uploadCoverImage,
   deleteCoverImage,
+  addGalleryPhoto,
+  updateGalleryPhotoCaption,
   deleteGalleryPhoto,
   reorderGalleryPhotos,
 } from "@/app/admin/(authenticated)/configuracoes/estabelecimento/actions";
@@ -42,7 +43,6 @@ export function EstablishmentSettingsContent({
   restaurant,
   photos: initialPhotos,
 }: EstablishmentSettingsContentProps) {
-  const router = useRouter();
   const coverInputRef = useRef<HTMLInputElement>(null);
 
   const [description, setDescription] = useState(restaurant.description ?? "");
@@ -82,7 +82,6 @@ export function EstablishmentSettingsContent({
       });
       if (result.success) {
         toast.success("Perfil atualizado");
-        router.refresh();
       } else {
         toast.error(result.error);
       }
@@ -106,7 +105,6 @@ export function EstablishmentSettingsContent({
       if (result.success) {
         setCoverUrl(result.data);
         toast.success("Foto de capa atualizada");
-        router.refresh();
       } else {
         toast.error(result.error);
       }
@@ -124,7 +122,6 @@ export function EstablishmentSettingsContent({
       if (result.success) {
         setCoverUrl(null);
         toast.success("Foto de capa removida");
-        router.refresh();
       } else {
         toast.error(result.error);
       }
@@ -136,18 +133,49 @@ export function EstablishmentSettingsContent({
     }
   }
 
+  async function handleAddGalleryPhoto(file: File, caption: string) {
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("caption", caption);
+    const result = await addGalleryPhoto(formData);
+    if (result.success) {
+      setPhotos((prev) => [...prev, result.data]);
+      toast.success("Foto adicionada à galeria");
+      return true;
+    }
+    toast.error(result.error);
+    return false;
+  }
+
+  async function handleUpdateGalleryCaption(photoId: string, caption: string) {
+    const result = await updateGalleryPhotoCaption(photoId, caption);
+    if (result.success) {
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.id === photoId ? { ...p, caption: caption.trim() || null } : p
+        )
+      );
+      toast.success("Legenda atualizada");
+      return true;
+    }
+    toast.error(result.error);
+    return false;
+  }
+
+  async function handleDeleteGalleryPhoto(photoId: string) {
+    const result = await deleteGalleryPhoto(photoId);
+    if (result.success) {
+      setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+      toast.success("Foto removida");
+      return true;
+    }
+    toast.error(result.error);
+    return false;
+  }
+
   async function handleDeletePhoto(photoId: string) {
     try {
-      const result = await deleteGalleryPhoto(photoId);
-      if (result.success) {
-        setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-        toast.success("Foto removida");
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
-    } catch {
-      toast.error("Não foi possível excluir a foto.");
+      await handleDeleteGalleryPhoto(photoId);
     } finally {
       setDeletePhotoId(null);
     }
@@ -156,16 +184,15 @@ export function EstablishmentSettingsContent({
   async function movePhoto(index: number, direction: -1 | 1) {
     const target = index + direction;
     if (target < 0 || target >= photos.length) return;
+    const previous = photos;
     const next = [...photos];
     const [item] = next.splice(index, 1);
     next.splice(target, 0, item);
     setPhotos(next);
     const result = await reorderGalleryPhotos(next.map((p) => p.id));
-    if (result.success) {
-      router.refresh();
-    } else {
+    if (!result.success) {
       toast.error(result.error);
-      setPhotos(initialPhotos);
+      setPhotos(previous);
     }
   }
 
@@ -179,22 +206,6 @@ export function EstablishmentSettingsContent({
     setGalleryDialogMode("edit");
     setEditingPhoto(photo);
     setGalleryDialogOpen(true);
-  }
-
-  function handleGalleryDialogSuccess(
-    updatedPhoto?: RestaurantPhoto,
-    deletedId?: string
-  ) {
-    if (deletedId) {
-      setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
-    } else if (galleryDialogMode === "add" && updatedPhoto) {
-      setPhotos((prev) => [...prev, updatedPhoto]);
-    } else if (galleryDialogMode === "edit" && updatedPhoto) {
-      setPhotos((prev) =>
-        prev.map((p) => (p.id === updatedPhoto.id ? updatedPhoto : p))
-      );
-    }
-    router.refresh();
   }
 
   return (
@@ -468,7 +479,9 @@ export function EstablishmentSettingsContent({
         onOpenChange={setGalleryDialogOpen}
         mode={galleryDialogMode}
         photo={editingPhoto}
-        onSuccess={handleGalleryDialogSuccess}
+        onAdd={handleAddGalleryPhoto}
+        onUpdateCaption={handleUpdateGalleryCaption}
+        onDelete={handleDeleteGalleryPhoto}
       />
     </div>
   );
