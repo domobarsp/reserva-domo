@@ -8,6 +8,8 @@ import { EstablishmentHours } from "@/components/features/establishment/establis
 import { EstablishmentMap } from "@/components/features/establishment/establishment-map";
 import { EstablishmentCta } from "@/components/features/establishment/establishment-cta";
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getEstablishmentPageData();
   if (!data) {
