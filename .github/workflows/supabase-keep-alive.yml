@@ -1,0 +1,26 @@
+# Ping diário ao endpoint keep-alive (alternativa gratuita ao Cron da Vercel).
+# Secrets necessários no GitHub: CRON_SECRET, APP_URL (ex. https://seu-app.vercel.app)
+name: Supabase keep-alive
+
+on:
+  schedule:
+    # Todo dia às 12:00 UTC (09:00 São Paulo, horário padrão)
+    - cron: "0 12 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping /api/cron/keep-alive
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          APP_URL: ${{ secrets.APP_URL }}
+        run: |
+          if [ -z "$CRON_SECRET" ] || [ -z "$APP_URL" ]; then
+            echo "Configure os secrets CRON_SECRET e APP_URL no repositório GitHub."
+            exit 1
+          fi
+          curl -fsS \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "${APP_URL%/}/api/cron/keep-alive"
