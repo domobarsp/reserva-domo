@@ -21,7 +21,16 @@ Fase 0 (Docs) ✅
                                                               └─ Fase 12 (Refinamento — Reservas)
                                                                    └─ Fase 13 (Refinamento — Lista de Espera & Passantes)
                                                                         └─ Fase 14 (Refinamento — Configurações & Acessos)
-                                                                             └─ Fase 15 (Produção & Deploy)
+                                                                             └─ Fase 15 (Produção & Deploy) ✅
+                                                                                  └─ Fase 16 (Home do Estabelecimento) ✅
+
+--- Adiado (pivot multi-estabelecimento mesaoubalcao.com) ---
+
+Fase MT-16 (Multi-tenant Foundation)
+  ├─ Fase MT-17 (Super Admin)
+  ├─ Fase MT-18 (Página por slug)
+  └─ Fase MT-19 (Stripe Connect Express)
+       └─ Fase MT-20 (Cobrança Flexível)
 ```
 
 > **Planejamento granular**: Antes de iniciar cada fase, o agente deve criar um plano
@@ -595,3 +604,197 @@ Preparação para produção: robustez técnica, segurança, SEO e deploy na Ver
 - [ ] SEO básico implementado
 - [ ] Sistema deployado e funcionando em produção
 - [ ] Verificação end-to-end completa
+
+---
+
+## Fase 16 — Home do Estabelecimento (single-tenant)
+**Status**: `COMPLETE`
+
+**Motivação**: Página pública informativa do Domo (estilo Resy/Getin) com conteúdo editável pelo admin, sem ativar multi-tenant.
+
+**Escopo**:
+- Migration: campos de perfil em `restaurants` + tabela `restaurant_photos` + bucket Storage `restaurant-media`
+- Home em `/` (hero, sobre, galeria, horários, mapa embed, CTA reserva)
+- Admin: `/admin/configuracoes/estabelecimento` (descrição, capa, galeria, endereço, lat/lng, redes)
+- SEO: metadata dinâmica na home
+- CSP: Storage + iframe Google Maps
+
+**Critérios de aceitação**:
+- [x] `/` exibe landing completa com dados reais
+- [x] Admin edita descrição, capa e galeria
+- [x] Mapa embed + link Google Maps
+- [x] Upload persiste no Storage
+- [x] Responsivo; tsc + lint OK
+
+---
+
+## Fase MT-16 — Multi-tenant Foundation (ADIADO)
+**Status**: `DEFERRED`
+
+**Motivação**: Ativar de fato a arquitetura multi-tenant que o schema já suporta via `restaurant_id`. É pré-requisito para todas as demais fases do pivot multi-estabelecimento.
+
+**Escopo**:
+- Adicionar `slug` (UNIQUE), `name`, `display_name` à tabela `restaurants` (criar tabela se ainda não existir como registro primário)
+- Migrar rotas públicas para prefixo `/[slug]`:
+  - `/reserva` → `/[slug]/reserva`
+  - `/cancelar/[token]` → `/[slug]/cancelar/[token]`
+  - Raiz `/` vira landing geral do portal (lista de estabelecimentos) ou redirect condicional
+- Middleware resolve slug → `restaurant_id` e injeta no contexto da request
+- API routes públicas passam a receber/validar `restaurant_id`:
+  - `GET /api/availability?restaurant_id=...&date=...`
+  - `POST /api/reservations` recebe `restaurant_id` no body
+  - `POST /api/reservations/cancel` derivado do token (token → reserva → restaurant_id)
+- Server Actions admin passam a filtrar explicitamente por `restaurant_id` do usuário autenticado
+- `admin_users.restaurant_id` torna-se obrigatório (exceto para super admin — ver Fase 17)
+- Seed inicial: `domobar` como primeiro registro de restaurant
+- Migration de dados: garantir `restaurant_id` populado em todas as linhas existentes
+- Atualizar queries realtime para respeitar `restaurant_id`
+
+**Critérios de aceitação**:
+- [ ] Acessar `/domobar/reserva` carrega formulário do Domo
+- [ ] Acessar `/slug-inexistente/*` retorna 404
+- [ ] Admin logado de um restaurante vê apenas dados do próprio
+- [ ] Nenhuma query admin "vaza" dados entre restaurantes
+- [ ] Cancelamento por token funciona com o slug correto
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+**Notas de implementação (a serem detalhadas no plano)**:
+- Rotas existentes sem slug devem redirecionar para `/domobar/*` durante transição, depois remover
+- Considerar reserved slugs: `admin`, `api`, `_next`, `cancelar` etc.
+
+---
+
+## Fase MT-17 — Super Admin (ADIADO)
+**Status**: `DEFERRED`
+
+**Motivação**: Cliente precisa de um papel global que administre todos os estabelecimentos do portal.
+
+**Escopo**:
+- Novo role `super_admin` na tabela `admin_users` (acima de `owner`)
+- Super admin: `restaurant_id` nullable (não é dono de restaurante específico)
+- Seletor de restaurante no topbar do admin (visível apenas para super admin)
+- Restaurante "ativo" persiste via cookie/sessão; super admin alterna sem relogar
+- Nova rota `/admin/portal` (exclusiva super admin): lista de estabelecimentos, CRUD de restaurants (criar, desativar, slug, nome)
+- Server Components admin resolvem `restaurant_id` ativo:
+  - Se super admin: do cookie/sessão (ou parâmetro)
+  - Se admin comum: de `admin_users.restaurant_id`
+- Middleware: super admin sem restaurante ativo selecionado é redirecionado para `/admin/portal`
+- Criação de novo estabelecimento pelo super admin inclui: slug, nome, convidar primeiro owner
+
+**Critérios de aceitação**:
+- [ ] Super admin vê todos os estabelecimentos em `/admin/portal`
+- [ ] Seletor no topbar alterna restaurante ativo sem relogar
+- [ ] Owner/manager/staff seguem escopados ao próprio restaurante
+- [ ] Criação de novo restaurante cria registro + primeiro owner
+- [ ] Super admin não pode ser criado via convite comum (apenas via outro super admin)
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase MT-18 — Página Pública do Estabelecimento por slug (ADIADO)
+**Status**: `DEFERRED`
+
+**Motivação**: Cliente quer landing page informativa por estabelecimento, estilo Resy/Getin, para agregar valor além do formulário de reserva.
+
+**Escopo**:
+- Nova rota `/[slug]` — landing page do estabelecimento
+- Campos novos em `restaurants`:
+  - `description` (TEXT) — descrição editável
+  - `address` (TEXT) — endereço completo
+  - `lat`, `lng` (NUMERIC) — para pin no mapa
+  - `cover_image_url` (TEXT) — foto de capa
+  - `phone`, `instagram_url`, `website_url` (opcionais)
+- Nova tabela `restaurant_photos`:
+  - `id`, `restaurant_id`, `url`, `caption`, `order`, `created_at`
+- Supabase Storage bucket `restaurant-media` com RLS por `restaurant_id`
+- Componentes da landing:
+  - Hero com foto de capa + nome + descrição curta
+  - Bloco "Sobre" com descrição completa
+  - Galeria de fotos (lightbox)
+  - Mapa Google Maps embed com pin
+  - Seção "Horários de funcionamento" (deriva de `time_slots`)
+  - CTA para `/[slug]/reserva`
+- Admin: nova sub-página `/admin/configuracoes/estabelecimento` para editar descrição, endereço, upload de capa e galeria
+- Integração Google Maps: `GOOGLE_MAPS_API_KEY` em env; escolher entre embed iframe (mais simples) ou `@react-google-maps/api`
+
+**Critérios de aceitação**:
+- [ ] `/domobar` exibe landing completa com dados reais
+- [ ] Admin do restaurante consegue editar descrição, trocar capa e gerenciar galeria
+- [ ] Upload de fotos vai para Storage e renderiza na página pública
+- [ ] Mapa exibe endereço corretamente
+- [ ] Página responsiva (mobile/tablet/desktop)
+- [ ] SEO: metadata por estabelecimento (title, description, OG image)
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase MT-19 — Stripe Connect Express (ADIADO)
+**Status**: `DEFERRED`
+
+**Motivação**: Com múltiplos estabelecimentos, cada restaurante precisa receber pagamentos na própria conta bancária. A plataforma não pode intermediar dinheiro (questões regulatórias/fiscais/chargebacks). Stripe Connect Express resolve com onboarding hospedado, split automático e compliance delegado ao Stripe.
+
+**Escopo**:
+- Habilitar Connect na conta Stripe principal (dashboard, one-time setup)
+- Configurar branding e webhooks de Connect na conta principal
+- Campos novos em `restaurants`:
+  - `stripe_account_id` (TEXT) — ID da conta conectada
+  - `stripe_charges_enabled` (BOOL) — pode receber cobranças
+  - `stripe_payouts_enabled` (BOOL) — pode receber payouts
+  - `stripe_onboarding_completed` (BOOL)
+- Nova página admin `/admin/configuracoes/pagamento`:
+  - Status da conexão Stripe
+  - Botão "Conectar Stripe" que chama `POST /api/stripe/connect/onboard`
+  - Botão "Atualizar informações" (pre-onboarded refresh)
+- API routes novas:
+  - `POST /api/stripe/connect/onboard` — cria Account + AccountLink, retorna URL de redirect
+  - `POST /api/stripe/connect/refresh` — regenera AccountLink se expirado
+  - `GET /api/stripe/connect/status` — status atualizado da conta
+- Modificar chamadas Stripe existentes para usar `{ stripeAccount: restaurant.stripe_account_id }`:
+  - `POST /api/stripe/setup-intent`
+  - `POST /api/stripe/charge-no-show`
+  - Customers passam a ser criados na conta conectada
+- `application_fee_amount` configurável (fixo ou %) via `settings.platform_fee_*`
+- Webhook handler `POST /api/stripe/webhook` estendido para eventos Connect:
+  - `account.updated` — atualizar flags de status
+  - `capability.updated`
+  - Mantém tratamento existente de `payment_intent.succeeded` / `.payment_failed`, agora por conta conectada
+- Bloquear formulário de reserva (quando exige cartão) se restaurante não concluiu onboarding
+- Email admin quando onboarding é concluído
+
+**Critérios de aceitação**:
+- [ ] Owner consegue conectar conta Stripe via fluxo completo
+- [ ] Status de onboarding reflete corretamente no admin
+- [ ] Cobrança de no-show usa conta conectada e taxa da plataforma é descontada
+- [ ] Chargebacks (testados via test mode) caem na conta conectada
+- [ ] Onboarding incompleto impede reservas que exigem cartão
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros
+
+---
+
+## Fase MT-20 — Cobrança Flexível (ADIADO)
+**Status**: `DEFERRED`
+
+**Motivação**: Cliente pediu regra do tipo "acima de 5 pessoas, cobrar R$ Y por pessoa". Hoje a taxa é valor fixo (com overrides por reserva e data).
+
+**Escopo**:
+- Campos novos em `settings`:
+  - `no_show_fee_type` (ENUM: `fixed` | `per_person`, default `fixed`)
+  - `no_show_fee_per_person_threshold` (INT, nullable) — número mínimo de pessoas para ativar modo per-person
+- Mesmos campos em `exception_dates` (overrides por data) e `reservations` (overrides por reserva)
+- Lógica de resolução em `/api/stripe/charge-no-show`:
+  - Prioridade existente (reserva > data > global) aplicada a `fee_type` + `fee_amount` + `threshold` como conjunto
+  - Se `fee_type = per_person` e `party_size >= threshold` → cobra `fee_amount × party_size`
+  - Caso contrário → cobra `fee_amount` fixo
+- Admin UI:
+  - `/admin/configuracoes/taxa-no-show` — toggle de tipo + input condicional de threshold
+  - Modal de edição de reserva — suporte a override de `fee_type`/threshold
+  - Drawer de detalhes mostra valor efetivo calculado e forma de cálculo
+- Compat: existing `no_show_fee` (valor fixo) continua válido como padrão
+
+**Critérios de aceitação**:
+- [ ] Admin configura modo per-person com threshold de 5
+- [ ] Reserva com 7 pessoas cobra `fee × 7` ao ser marcada no-show
+- [ ] Reserva com 3 pessoas cobra valor fixo (threshold não atingido)
+- [ ] Override por reserva/data funciona com o novo tipo
+- [ ] Drawer exibe cálculo transparente antes da confirmação de cobrança
+- [ ] `npx tsc --noEmit` e `npm run lint` sem novos erros

@@ -179,3 +179,43 @@ export const exceptionDateSchema = z.object({
 });
 
 export type ExceptionDateData = z.infer<typeof exceptionDateSchema>;
+
+// ===========================
+// Perfil do estabelecimento
+// ===========================
+
+export const establishmentProfileSchema = z.object({
+  description: z.string().max(5000, "Descrição muito longa"),
+  address: z.string().max(500, "Endereço muito longo"),
+  phone: z.string().max(30, "Telefone muito longo"),
+  email: z
+    .string()
+    .max(200, "Email muito longo")
+    .refine((v) => v === "" || z.string().email().safeParse(v).success, {
+      message: "Email inválido",
+    }),
+  instagram_url: z
+    .string()
+    .max(500)
+    .refine((v) => v === "" || /^https?:\/\/.+/.test(v), {
+      message: "URL inválida",
+    }),
+  website_url: z
+    .string()
+    .max(500)
+    .refine((v) => v === "" || /^https?:\/\/.+/.test(v), {
+      message: "URL inválida",
+    }),
+  lat: z
+    .string()
+    .refine((v) => v === "" || !Number.isNaN(Number(v)), {
+      message: "Latitude inválida",
+    }),
+  lng: z
+    .string()
+    .refine((v) => v === "" || !Number.isNaN(Number(v)), {
+      message: "Longitude inválida",
+    }),
+});
+
+export type EstablishmentProfileData = z.infer<typeof establishmentProfileSchema>;

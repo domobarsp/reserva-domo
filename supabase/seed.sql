@@ -6,7 +6,7 @@
 -- =============================================
 -- 1. Restaurante
 -- =============================================
-INSERT INTO public.restaurants (id, name, slug, address, phone, email, timezone)
+INSERT INTO public.restaurants (id, name, slug, address, phone, email, timezone, description, lat, lng, instagram_url, website_url)
 VALUES (
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
   'Dōmo',
@@ -14,7 +14,12 @@ VALUES (
   'Rua Major Sertório, 452, São Paulo, SP 01222-001',
   '+55 11 97570-9056',
   'contato@domo.com.br',
-  'America/Sao_Paulo'
+  'America/Sao_Paulo',
+  'Bar & restaurante no coração da Vila Buarque. Coquetéis autorais, pratos para compartilhar e uma atmosfera acolhedora para noites memoráveis. Terça a sábado, das 19h à meia-noite.',
+  -23.5447,
+  -46.6528,
+  NULL,
+  NULL
 );
 
 -- =============================================

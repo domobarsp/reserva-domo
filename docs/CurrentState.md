@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-03-29 | Fase: 15 (Produção & Deploy) — CONCLUÍDA
+> Atualizado: 2026-06-23 | Fase: 16 (Home do Estabelecimento) — CONCLUÍDA
 
 ## O que funciona
 
@@ -15,6 +15,7 @@
 - Layout admin (sidebar + topbar responsivo) para todas as rotas `/admin/*`
 - Navegação funcional entre todas as rotas
 - API health check em `/api/health`
+- Cron Vercel `/api/cron/keep-alive` (1×/dia) para evitar pausa do Supabase free por inatividade
 - Tipos TypeScript completos em `src/types/index.ts` (espelhando DatabaseSchema.md)
 - Componentes shadcn/ui instalados: button, card, separator, sheet, badge, input, label, select, calendar, popover, radio-group, textarea, form, progress, sonner, table, dialog, dropdown-menu, alert-dialog, switch, checkbox, tooltip, skeleton
 
@@ -343,11 +344,34 @@ Correções de tokens quentes em componentes shared:
 
 ## O que não existe ainda
 
-Todas as fases estão completas. O sistema está pronto para deploy em produção.
+- Portal multi-estabelecimento (Fases MT-16–20 adiadas — ver `DecisionLog.md` 2026-06-23)
+- Stripe Connect / cobrança flexível per-person
+
+## Fase 16 — Home do Estabelecimento (CONCLUÍDA)
+
+### Home pública (`/`)
+
+- Landing estilo Resy/Getin: hero com capa, sobre, galeria, horários, mapa embed, CTA reserva
+- [`PublicHeader`](src/components/layout/public-header.tsx) no layout público (nav + CTA)
+- Metadata dinâmica (`generateMetadata`) com OG image da capa
+- Componentes em `src/components/features/establishment/`
+- Query `getEstablishmentPageData()` em `src/lib/queries/establishment.ts`
+- Mapa: iframe Google Maps embed gratuito (lat/lng ou endereço)
+
+### Admin — Estabelecimento
+
+- `/admin/configuracoes/estabelecimento`: editar descrição, contato, lat/lng, capa, galeria
+- Upload via Supabase Storage bucket `restaurant-media` (5 MB, JPEG/PNG/WebP)
+- Server Actions em `estabelecimento/actions.ts`
+
+### Banco (migration 010)
+
+- Campos em `restaurants`: description, cover_image_url, lat, lng, instagram_url, website_url
+- Tabela `restaurant_photos` + RLS + policies Storage
 
 ## Próximos Passos
 
-Seguir o guia em `docs/DEPLOY.md` para fazer deploy na conta do cliente.
+Sistema single-tenant pronto para deploy. Opcional futuro: reativar pivot multi-estabelecimento (Fases MT-16+).
 
 ## Issues Conhecidas
 

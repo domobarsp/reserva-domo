@@ -14,6 +14,35 @@ O Domo é um sistema de gerenciamento de reservas para restaurante. Seu objetivo
 
 ---
 
+## Escopo Estendido — Portal Multi-Estabelecimento (Abr/2026)
+
+O sistema evoluiu de single-tenant (Domo apenas) para portal de reservas multi-estabelecimento sob o domínio `mesaoubalcao.com`. O Domo passa a ser um dos estabelecimentos: `mesaoubalcao.com/domobar`. Outros serão adicionados seguindo o mesmo padrão: `mesaoubalcao.com/{slug}`.
+
+### Novos requisitos
+
+1. **URL por estabelecimento**: slug na URL identifica o estabelecimento em todas as páginas públicas (`/[slug]`, `/[slug]/reserva`, `/[slug]/cancelar/[token]`).
+
+2. **Página pública do estabelecimento** (`/[slug]`):
+   - Descrição editável pelo admin do restaurante
+   - Foto de capa
+   - Galeria de pratos/coquetéis
+   - Mapa integrado (Google Maps) com endereço
+   - Referências visuais: getin.app, resy.com
+
+3. **Super Administrador**: novo papel global que gerencia todos os estabelecimentos do portal. Administradores individuais (`owner`, `manager`, `staff`) continuam escopados ao próprio restaurante.
+
+4. **Cobrança flexível de no-show**: além do valor fixo com overrides atuais (reserva > data > global), suporte a regra "acima de X pessoas, cobrar R$ Y por pessoa".
+
+5. **Pagamentos multi-estabelecimento**: cada restaurante tem sua conta Stripe própria, dinheiro vai direto para o banco do restaurante, plataforma não intermedia. Duas opções em avaliação (ver `DecisionLog.md` 2026-04-20):
+   - **Stripe Connect Express** — recomendado, com taxa de plataforma automática
+   - **Stripe por restaurante** — credenciais próprias, sem taxa automática
+
+### Relação com o escopo single-tenant
+
+Todo o conteúdo abaixo descreve funcionalidades por estabelecimento — continua válido, mas agora aplicado a N restaurantes em vez de um só. Os requisitos acima são aditivos.
+
+---
+
 ## Funcionalidades do Cliente (Público)
 
 ### Formulário de Reserva Online

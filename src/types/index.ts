@@ -53,8 +53,23 @@ export interface Restaurant {
   phone: string | null;
   email: string | null;
   timezone: string;
+  description: string | null;
+  cover_image_url: string | null;
+  lat: number | null;
+  lng: number | null;
+  instagram_url: string | null;
+  website_url: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface RestaurantPhoto {
+  id: string;
+  restaurant_id: string;
+  url: string;
+  caption: string | null;
+  display_order: number;
+  created_at: string;
 }
 
 export interface AccommodationType {

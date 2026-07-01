@@ -6,9 +6,16 @@ import {
   Users,
   ShieldCheck,
   CalendarOff,
+  Store,
 } from "lucide-react";
 
 const settingsPages = [
+  {
+    href: "/admin/configuracoes/estabelecimento",
+    title: "Estabelecimento",
+    description: "Página pública: descrição, fotos e localização",
+    icon: Store,
+  },
   {
     href: "/admin/configuracoes/horarios",
     title: "Horários",

@@ -28,7 +28,7 @@ Sistema de gerenciamento de reservas para restaurante com:
 
 - **Idioma do site**: Português fixo. Sem sistema i18n/multilíngue.
 - **Campo de idioma**: O formulário coleta preferência do cliente (PT/EN/ES) — usado APENAS para enviar emails no idioma escolhido.
-- **Single-tenant**: Um restaurante por instalação. Schema usa `restaurant_id` para futuro multi-tenant.
+- **Multi-tenant (portal)**: O sistema evoluiu (Abr/2026) para portal de reservas `mesaoubalcao.com` com múltiplos estabelecimentos via slug na URL (`/[slug]`). O Domo é o primeiro estabelecimento (`/domobar`). Schema já previa via `restaurant_id` em todas as tabelas desde a Fase 4. Ver Fases 16+ em `Phases.md` e entradas de 2026-04-20 em `DecisionLog.md`.
 - **Fases auto-contidas**: Ao final de cada fase, `npm run dev` deve funcionar com o sistema visível, mesmo com features mockadas.
 
 ## Navegação dos Documentos

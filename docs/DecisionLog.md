@@ -650,3 +650,83 @@ Todos os arquivos de tabela do admin foram migrados para esse padrão (ver lista
 **Contexto**: Se o único owner ativo for desativado ou rebaixado, ninguém mais poderá acessar a página de Acessos.
 **Decisão**: `isLastActiveOwner()` helper verifica se existe outro owner ativo antes de permitir desativação ou mudança de role. Retorna erro descritivo.
 **Razão**: Previne lock-out completo do sistema. Sem owner ativo, não há como gerenciar acessos via UI.
+
+---
+
+### 2026-04-20 — Pivot para portal multi-estabelecimento (mesaoubalcao.com)
+
+**Contexto**: Após entrega da Fase 15 (produção), o cliente revisou escopo e solicitou transformar o sistema em portal de reservas para múltiplos bares/restaurantes. A URL será `mesaoubalcao.com`, com o Domo sendo um dos estabelecimentos: `mesaoubalcao.com/domobar`. Outros estabelecimentos virão como `mesaoubalcao.com/cafe01`, etc.
+**Decisão**: Ativar de fato a arquitetura multi-tenant que o schema sempre suportou via `restaurant_id`. Páginas públicas passam a ter slug na URL (`/[slug]`, `/[slug]/reserva`, `/[slug]/cancelar/[token]`). Admin recebe nível de acesso `super_admin` que pode gerir todos os estabelecimentos e alternar entre eles. Admins individuais (`owner`, `manager`, `staff`) continuam escopados ao próprio restaurante via `admin_users.restaurant_id`.
+**Razão**: O `restaurant_id` já está em todas as 13 tabelas desde a Fase 4 — não é reescrita, é ativação. Middleware resolve o slug → restaurant_id e injeta no contexto; queries passam a filtrar explicitamente. Mantém compat com os dados atuais (seed: `domobar` como primeiro registro).
+**Impacto**: Afeta rotas públicas, middleware, todas as Server Actions admin, queries de dashboard/reservas/calendário/etc. Identidade visual do painel admin passa a ser genérica (portal), não "Domo".
+
+---
+
+### 2026-04-20 — Stripe Connect Express sobre conta única compartilhada
+
+**Contexto**: Com o pivot para multi-estabelecimento, surgiu a dúvida de como lidar com pagamentos (garantia de cartão e cobrança de no-show). O cliente propôs inicialmente usar uma única conta Stripe (da plataforma) e cobrar taxa de administração sobre cada transação. Avaliamos as implicações.
+**Decisão**: Rejeitar o modelo de conta Stripe única compartilhada. Adotar **Stripe Connect Express**: plataforma (mesaoubalcao) tem uma conta principal com Connect habilitado; cada restaurante se conecta como "conta conectada" via onboarding hospedado pelo Stripe. Cobranças usam `stripeAccount: acct_xxx` header, com `application_fee_amount` para a taxa da plataforma.
+**Razão**:
+- **Regulatório**: Conta única configura intermediação de pagamentos — regulamentada pelo BCB (subadquirência). Connect resolve: cada restaurante é titular direto da sua conta.
+- **Tributário**: Em conta única, NF sai no CNPJ da plataforma sobre volume de terceiros. Em Connect, cada restaurante emite sua própria NF.
+- **Chargebacks**: Em conta única caem na plataforma. Em Connect caem no restaurante (titular correto).
+- **KYC/AML**: Stripe exige validação por titular — Connect automatiza onboarding com tela hospedada em PT-BR.
+- **Padrão da indústria**: Resy, OpenTable, Getin usam Connect exatamente por esses motivos.
+**Alternativa aceita**: Se o modelo de taxa automática não for prioridade, cada restaurante pode cadastrar suas próprias credenciais Stripe no admin (sem Connect). Mais simples, evita as desvantagens do Connect (aprovação demorada, taxa adicional), mas perde split automático de receita. Decisão final fica com o cliente.
+**Contras aceitos do Connect**: (a) Aprovação de cada conta pode levar horas/dias; restaurante não opera cartão no mesmo dia do onboarding. (b) Taxa do Stripe em Connect é ~0,25% maior sobre volume.
+
+---
+
+### 2026-04-20 — Stripe Connect Express confirmado (Opção A escolhida)
+
+**Contexto**: Após apresentar as duas opções (Connect Express vs Stripe próprio por restaurante), o cliente escolheu seguir com Stripe Connect Express.
+**Decisão**: Fase 19 segue com escopo de Stripe Connect Express (Opção A). Opção B (credenciais próprias por restaurante) descartada.
+**Razão**: Taxa automática da plataforma é um requisito de negócio; compliance regulatório/tributário/chargebacks é resolvido pelo Stripe; padrão da indústria.
+
+---
+
+### 2026-04-20 — Cobrança flexível de no-show (por cabeça acima de threshold)
+
+**Contexto**: A taxa de no-show atual é valor fixo (com overrides por data e reserva). Cliente pediu flexibilidade para cobranças proporcionais ao tamanho do grupo: "acima de 5 pessoas, cobrar R$ Y por pessoa".
+**Decisão**: Estender o modelo de fee existente com `fee_type: 'fixed' | 'per_person'` + `fee_per_person_threshold` (mínimo de pessoas para ativar modo per-person). A prioridade de resolução existente (reserva > data > global) permanece. Cálculo no `charge-no-show`: se `fee_type = per_person` e `party_size >= threshold`, cobra `fee_amount × party_size`; caso contrário, cobra `fee_amount` fixo.
+**Razão**: Extensão natural da resolução por prioridade — não quebra contratos existentes. Campos novos são aditivos e opcionais. Cobre o caso de uso do cliente sem inventar um motor de regras complexo.
+
+---
+
+### 2026-06-23 — Adiar pivot multi-estabelecimento; priorizar home single-tenant
+
+**Contexto**: Após revisão com o cliente, decidiu-se focar em estabilizar e enriquecer o Domo como estabelecimento único antes de ativar o portal multi-tenant (Fases 16–20).
+**Decisão**: Adiar Fases 16–20 (multi-tenant, super admin, Stripe Connect, cobrança flexível). Implementar página pública do estabelecimento em `/` (single-tenant): descrição editável, foto capa, galeria de pratos/coquetéis, mapa Google Maps embed sem API key, admin em `/admin/configuracoes/estabelecimento`.
+**Razão**: Entrega valor imediato ao Domo sem reescrever rotas, middleware e queries. O schema multi-tenant via `restaurant_id` permanece para uso futuro.
+
+---
+
+### 2026-06-23 — Mapa na home: embed Google Maps sem API key
+
+**Contexto**: A home precisa exibir localização do restaurante. Opções: Maps Embed API (requer chave), embed iframe gratuito, ou apenas link externo.
+**Decisão**: Usar iframe embed gratuito (`maps.google.com/maps?q=...&output=embed`) com lat/lng ou endereço, mais link "Abrir no Google Maps". Sem variável de ambiente obrigatória.
+**Razão**: Simplicidade e zero configuração extra para dev/produção. Suficiente para o caso de uso (pin aproximado do endereço).
+
+---
+
+### 2026-06-23 — Limite de upload em Server Actions via `experimental.serverActions`
+
+**Contexto**: Upload de capa/galeria (> 1 MB) falhava com `Body exceeded 1 MB limit` mesmo com `serverActions.bodySizeLimit: "5mb"` no `next.config.ts`.
+**Decisão**: Configurar `experimental.serverActions.bodySizeLimit: "5mb"` (Next.js 16.1.6 ignora a chave top-level `serverActions`).
+**Razão**: Alinha com o runtime do Next 16; mantém validação server-side de 5 MB em `estabelecimento/actions.ts` e limite do bucket Supabase.
+
+---
+
+### 2026-06-23 — Preview de imagens Supabase local via `dangerouslyAllowLocalIP`
+
+**Contexto**: Após upload bem-sucedido, `next/image` falhava em dev com `resolved to privateip ["127.0.0.1"]` ao otimizar URLs do Supabase local (`127.0.0.1:54321`).
+**Decisão**: `images.dangerouslyAllowLocalIP: true` apenas quando `NODE_ENV === "development"`. Em produção permanece `false`; URLs `https://*.supabase.co` seguem via `remotePatterns` existente.
+**Razão**: Opção oficial do Next.js para dev com storage local; produção não expõe IPs privados.
+
+---
+
+### 2026-06-23 — Keep-alive Supabase via Vercel Cron
+
+**Contexto**: Plano free do Supabase pausa o projeto após ~7 dias sem chamadas à API.
+**Decisão**: Cron diário na Vercel (`vercel.json` → `GET /api/cron/keep-alive`) com query leve em `restaurants`, protegido por `CRON_SECRET`.
+**Razão**: Custo zero, integrado ao deploy existente; margem confortável abaixo do limite de 7 dias. Tráfego real do app também conta como atividade.

@@ -1,9 +1,6 @@
 import { createAdminClient } from "@/utils/supabase/admin";
+import { formatTimeShort, formatTimeSlotDays } from "@/lib/time-slots-display";
 import type { Restaurant, TimeSlot } from "@/types";
-
-function formatTime(time: string) {
-  return time.slice(0, 5);
-}
 
 export async function PublicFooter() {
   const supabase = createAdminClient();
@@ -31,8 +28,6 @@ export async function PublicFooter() {
     "id" | "name" | "start_time" | "end_time" | "days_of_week"
   >[];
 
-  const dayNames = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
   return (
     <footer className="border-t border-border bg-card">
       <div className="mx-auto max-w-5xl px-4 py-12">
@@ -57,10 +52,10 @@ export async function PublicFooter() {
                     <span className="font-medium text-foreground/80">
                       {slot.name}
                     </span>{" "}
-                    — {formatTime(slot.start_time)} às {formatTime(slot.end_time)}
+                    — {formatTimeShort(slot.start_time)} às {formatTimeShort(slot.end_time)}
                     {slot.days_of_week?.length > 0 && (
                       <span className="ml-1 text-xs">
-                        ({slot.days_of_week.map((d: number) => dayNames[d]).join(", ")})
+                        ({formatTimeSlotDays(slot.days_of_week)})
                       </span>
                     )}
                   </li>

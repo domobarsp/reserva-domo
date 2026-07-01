@@ -5,6 +5,7 @@
 ## Diagrama de Relacionamentos
 
 ```
+restaurants (1) ─── (N) restaurant_photos
 restaurants (1) ─── (N) accommodation_types
 restaurants (1) ─── (N) time_slots
 restaurants (1) ─── (N) capacity_rules
@@ -43,10 +44,35 @@ Dados do restaurante. Single-tenant, mas com `id` para futuro multi-tenant.
 | phone | TEXT | NULL | — | Telefone |
 | email | TEXT | NULL | — | Email de contato |
 | timezone | TEXT | NOT NULL | 'America/Sao_Paulo' | Timezone do restaurante |
+| description | TEXT | NULL | — | Descrição pública da casa |
+| cover_image_url | TEXT | NULL | — | URL da foto de capa (Storage) |
+| lat | NUMERIC | NULL | — | Latitude para mapa |
+| lng | NUMERIC | NULL | — | Longitude para mapa |
+| instagram_url | TEXT | NULL | — | URL do Instagram |
+| website_url | TEXT | NULL | — | URL do site |
 | created_at | TIMESTAMPTZ | NOT NULL | NOW() | — |
 | updated_at | TIMESTAMPTZ | NOT NULL | NOW() | — |
 
 **Índices**: UNIQUE(slug)
+
+---
+
+### restaurant_photos
+
+Galeria de fotos do estabelecimento (pratos, coquetéis, ambiente).
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|--------|------|----------|---------|-----------|
+| id | UUID | NOT NULL | gen_random_uuid() | PK |
+| restaurant_id | UUID | NOT NULL | — | FK → restaurants |
+| url | TEXT | NOT NULL | — | URL pública (Storage) |
+| caption | TEXT | NULL | — | Legenda opcional |
+| display_order | INT | NOT NULL | 0 | Ordem na galeria |
+| created_at | TIMESTAMPTZ | NOT NULL | NOW() | — |
+
+**Índices**: (restaurant_id, display_order)
+
+**Storage**: bucket `restaurant-media` (público leitura, upload admin)
 
 ---
 

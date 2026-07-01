@@ -95,13 +95,23 @@ VALUES (
 
 > **Atenção:** A `service_role key` tem acesso administrativo total. Nunca a exponha no lado do cliente.
 
-### 1.7 Habilitar proteção contra senhas vazadas
+### 1.7 Storage — bucket de mídia do estabelecimento
+
+A migration `010_establishment_profile.sql` cria o bucket `restaurant-media` (público leitura, upload admin).
+
+**Produção (Supabase Dashboard):**
+
+1. Vá em **Storage** e confirme que o bucket `restaurant-media` existe após `supabase db push`
+2. Se necessário, crie manualmente: **Public bucket**, limite 5 MB, MIME `image/jpeg`, `image/png`, `image/webp`
+3. As policies RLS da migration controlam upload apenas para admins autenticados
+
+### 1.8 Habilitar proteção contra senhas vazadas
 
 1. Vá em **Authentication > Providers > Email**
 2. Ative a opção **"Protect against leaked passwords"**
 3. Salve as alterações
 
-### 1.8 Verificar backups
+### 1.9 Verificar backups
 
 1. Vá em **Database > Backups**
 2. Verifique que o **Point-in-Time Recovery (PITR)** está ativo
@@ -188,6 +198,25 @@ Configure estas variáveis em **todas** as opções de deploy abaixo:
 | `RESEND_API_KEY` | API key do Resend | Resend > API Keys |
 | `ADMIN_NOTIFICATION_EMAIL` | Email para notificações de novas reservas | Definido pelo cliente |
 | `NEXT_PUBLIC_APP_URL` | URL pública do app (sem `/` no final) | URL do deploy Vercel |
+| `CRON_SECRET` | Protege o cron de keep-alive do Supabase | Gere com `openssl rand -base64 32` |
+
+### Keep-alive do Supabase (plano free)
+
+Projetos no plano gratuito do Supabase pausam após **~7 dias sem atividade** na API. O projeto inclui um cron da Vercel que consulta o banco uma vez por dia:
+
+- **Rota:** `GET /api/cron/keep-alive`
+- **Agenda:** todo dia às 12:00 UTC (`vercel.json`)
+- **Auth:** header `Authorization: Bearer <CRON_SECRET>` (a Vercel envia automaticamente quando `CRON_SECRET` está configurado)
+
+**Configuração:**
+
+1. Gere o secret: `openssl rand -base64 32`
+2. Adicione `CRON_SECRET` nas variáveis de ambiente da Vercel (Production)
+3. Faça deploy — o `vercel.json` na raiz registra o cron automaticamente
+
+**Verificar:** em **Vercel > Project > Cron Jobs**, confirme que `/api/cron/keep-alive` aparece e que as execuções retornam `200`.
+
+> **Limitações:** isso reduz pausas por inatividade, mas não substitui um plano pago. Se o projeto já estiver pausado, reative manualmente no dashboard do Supabase. Tráfego real do app (reservas, admin) também conta como atividade.
 
 ---
 
