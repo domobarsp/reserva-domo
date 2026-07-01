@@ -10,30 +10,13 @@ import {
   establishmentProfileSchema,
   type EstablishmentProfileData,
 } from "@/lib/validations/admin";
+import { extFromMime, validateImageFile } from "@/lib/image-upload";
 
 const BUCKET = "restaurant-media";
-const MAX_BYTES = 5 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function revalidateEstablishment() {
   revalidatePath("/");
   revalidatePath("/admin/configuracoes/estabelecimento");
-}
-
-function validateImageFile(file: File): string | null {
-  if (!ALLOWED_TYPES.has(file.type)) {
-    return "Formato inválido. Use JPEG, PNG ou WebP.";
-  }
-  if (file.size > MAX_BYTES) {
-    return "Arquivo muito grande. Máximo 5 MB.";
-  }
-  return null;
-}
-
-function extFromMime(mime: string) {
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  return "jpg";
 }
 
 function publicUrl(path: string) {

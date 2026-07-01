@@ -14,18 +14,24 @@ import {
   ChevronUp,
   ChevronDown,
   ImageIcon,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Restaurant, RestaurantPhoto } from "@/types";
 import {
+  formatImageUploadHint,
+  UPLOAD_ERROR_MESSAGE,
+  validateImageFile,
+} from "@/lib/image-upload";
+import {
   updateEstablishmentProfile,
   uploadCoverImage,
   deleteCoverImage,
-  addGalleryPhoto,
-  updateGalleryPhotoCaption,
   deleteGalleryPhoto,
   reorderGalleryPhotos,
 } from "@/app/admin/(authenticated)/configuracoes/estabelecimento/actions";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { GalleryPhotoDialog } from "@/components/features/admin/settings/gallery-photo-dialog";
 
 interface EstablishmentSettingsContentProps {
   restaurant: Restaurant;
@@ -38,7 +44,6 @@ export function EstablishmentSettingsContent({
 }: EstablishmentSettingsContentProps) {
   const router = useRouter();
   const coverInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const [description, setDescription] = useState(restaurant.description ?? "");
   const [address, setAddress] = useState(restaurant.address ?? "");
@@ -56,8 +61,11 @@ export function EstablishmentSettingsContent({
   const [coverUrl, setCoverUrl] = useState(restaurant.cover_image_url);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
-  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
-  const [newCaption, setNewCaption] = useState("");
+  const [showDeleteCoverConfirm, setShowDeleteCoverConfirm] = useState(false);
+  const [deletePhotoId, setDeletePhotoId] = useState<string | null>(null);
+  const [galleryDialogOpen, setGalleryDialogOpen] = useState(false);
+  const [galleryDialogMode, setGalleryDialogMode] = useState<"add" | "edit">("add");
+  const [editingPhoto, setEditingPhoto] = useState<RestaurantPhoto | null>(null);
 
   async function handleSaveProfile() {
     setIsSavingProfile(true);
@@ -84,6 +92,12 @@ export function EstablishmentSettingsContent({
   }
 
   async function handleCoverUpload(file: File) {
+    const clientError = validateImageFile(file);
+    if (clientError) {
+      toast.error(clientError);
+      return;
+    }
+
     setIsUploadingCover(true);
     try {
       const formData = new FormData();
@@ -96,6 +110,8 @@ export function EstablishmentSettingsContent({
       } else {
         toast.error(result.error);
       }
+    } catch {
+      toast.error(UPLOAD_ERROR_MESSAGE);
     } finally {
       setIsUploadingCover(false);
     }
@@ -112,39 +128,28 @@ export function EstablishmentSettingsContent({
       } else {
         toast.error(result.error);
       }
+    } catch {
+      toast.error("Não foi possível remover a foto de capa.");
     } finally {
       setIsUploadingCover(false);
-    }
-  }
-
-  async function handleGalleryUpload(file: File) {
-    setIsUploadingGallery(true);
-    try {
-      const formData = new FormData();
-      formData.set("file", file);
-      formData.set("caption", newCaption);
-      const result = await addGalleryPhoto(formData);
-      if (result.success) {
-        setPhotos((prev) => [...prev, result.data]);
-        setNewCaption("");
-        toast.success("Foto adicionada à galeria");
-        router.refresh();
-      } else {
-        toast.error(result.error);
-      }
-    } finally {
-      setIsUploadingGallery(false);
+      setShowDeleteCoverConfirm(false);
     }
   }
 
   async function handleDeletePhoto(photoId: string) {
-    const result = await deleteGalleryPhoto(photoId);
-    if (result.success) {
-      setPhotos((prev) => prev.filter((p) => p.id !== photoId));
-      toast.success("Foto removida");
-      router.refresh();
-    } else {
-      toast.error(result.error);
+    try {
+      const result = await deleteGalleryPhoto(photoId);
+      if (result.success) {
+        setPhotos((prev) => prev.filter((p) => p.id !== photoId));
+        toast.success("Foto removida");
+        router.refresh();
+      } else {
+        toast.error(result.error);
+      }
+    } catch {
+      toast.error("Não foi possível excluir a foto.");
+    } finally {
+      setDeletePhotoId(null);
     }
   }
 
@@ -164,9 +169,32 @@ export function EstablishmentSettingsContent({
     }
   }
 
-  async function handleCaptionBlur(photoId: string, caption: string) {
-    const result = await updateGalleryPhotoCaption(photoId, caption);
-    if (!result.success) toast.error(result.error);
+  function openAddGalleryDialog() {
+    setGalleryDialogMode("add");
+    setEditingPhoto(null);
+    setGalleryDialogOpen(true);
+  }
+
+  function openEditGalleryDialog(photo: RestaurantPhoto) {
+    setGalleryDialogMode("edit");
+    setEditingPhoto(photo);
+    setGalleryDialogOpen(true);
+  }
+
+  function handleGalleryDialogSuccess(
+    updatedPhoto?: RestaurantPhoto,
+    deletedId?: string
+  ) {
+    if (deletedId) {
+      setPhotos((prev) => prev.filter((p) => p.id !== deletedId));
+    } else if (galleryDialogMode === "add" && updatedPhoto) {
+      setPhotos((prev) => [...prev, updatedPhoto]);
+    } else if (galleryDialogMode === "edit" && updatedPhoto) {
+      setPhotos((prev) =>
+        prev.map((p) => (p.id === updatedPhoto.id ? updatedPhoto : p))
+      );
+    }
+    router.refresh();
   }
 
   return (
@@ -258,7 +286,12 @@ export function EstablishmentSettingsContent({
 
       {/* Capa */}
       <section className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-        <h2 className="text-base font-semibold text-zinc-800">Foto de capa</h2>
+        <div>
+          <h2 className="text-base font-semibold text-zinc-800">Foto de capa</h2>
+          <p className="mt-1 text-xs text-zinc-500">
+            {formatImageUploadHint("cover")}
+          </p>
+        </div>
         <div className="relative aspect-[21/9] w-full overflow-hidden rounded-lg bg-zinc-100">
           {coverUrl ? (
             <Image
@@ -305,7 +338,7 @@ export function EstablishmentSettingsContent({
               variant="outline"
               className="text-rose-600 border-rose-200"
               disabled={isUploadingCover}
-              onClick={() => void handleDeleteCover()}
+              onClick={() => setShowDeleteCoverConfirm(true)}
             >
               <Trash2 className="mr-2 h-4 w-4" />
               Remover capa
@@ -316,41 +349,17 @@ export function EstablishmentSettingsContent({
 
       {/* Galeria */}
       <section className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
-        <h2 className="text-base font-semibold text-zinc-800">
-          Galeria (pratos & coquetéis)
-        </h2>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="caption">Legenda da nova foto (opcional)</Label>
-            <Input
-              id="caption"
-              value={newCaption}
-              onChange={(e) => setNewCaption(e.target.value)}
-              placeholder="Ex: Negroni da casa"
-            />
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-zinc-800">
+              Galeria (pratos & coquetéis)
+            </h2>
+            <p className="mt-1 text-xs text-zinc-500">
+              {formatImageUploadHint("gallery")}
+            </p>
           </div>
-          <input
-            ref={galleryInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void handleGalleryUpload(file);
-              e.target.value = "";
-            }}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            disabled={isUploadingGallery}
-            onClick={() => galleryInputRef.current?.click()}
-          >
-            {isUploadingGallery ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Upload className="mr-2 h-4 w-4" />
-            )}
+          <Button type="button" variant="outline" onClick={openAddGalleryDialog}>
+            <Upload className="mr-2 h-4 w-4" />
             Adicionar foto
           </Button>
         </div>
@@ -374,14 +383,11 @@ export function EstablishmentSettingsContent({
                   />
                 </div>
                 <div className="space-y-2 p-3">
-                  <Input
-                    defaultValue={photo.caption ?? ""}
-                    placeholder="Legenda"
-                    className="text-sm"
-                    onBlur={(e) =>
-                      void handleCaptionBlur(photo.id, e.target.value)
-                    }
-                  />
+                  <p className="truncate text-sm text-zinc-700">
+                    {photo.caption || (
+                      <span className="text-zinc-400 italic">Sem legenda</span>
+                    )}
+                  </p>
                   <div className="flex gap-1">
                     <Button
                       type="button"
@@ -390,6 +396,7 @@ export function EstablishmentSettingsContent({
                       className="h-8 w-8"
                       disabled={index === 0}
                       onClick={() => void movePhoto(index, -1)}
+                      aria-label="Mover para cima"
                     >
                       <ChevronUp className="h-4 w-4" />
                     </Button>
@@ -400,6 +407,7 @@ export function EstablishmentSettingsContent({
                       className="h-8 w-8"
                       disabled={index === photos.length - 1}
                       onClick={() => void movePhoto(index, 1)}
+                      aria-label="Mover para baixo"
                     >
                       <ChevronDown className="h-4 w-4" />
                     </Button>
@@ -407,8 +415,19 @@ export function EstablishmentSettingsContent({
                       type="button"
                       size="icon"
                       variant="outline"
+                      className="h-8 w-8"
+                      onClick={() => openEditGalleryDialog(photo)}
+                      aria-label="Editar foto"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      size="icon"
+                      variant="outline"
                       className="h-8 w-8 text-rose-600"
-                      onClick={() => void handleDeletePhoto(photo.id)}
+                      onClick={() => setDeletePhotoId(photo.id)}
+                      aria-label="Excluir foto"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -419,6 +438,38 @@ export function EstablishmentSettingsContent({
           </div>
         )}
       </section>
+
+      <ConfirmDialog
+        open={showDeleteCoverConfirm}
+        onOpenChange={setShowDeleteCoverConfirm}
+        title="Remover foto de capa"
+        description="Tem certeza que deseja remover a foto de capa? A home voltará a exibir o gradiente padrão."
+        confirmLabel="Remover"
+        onConfirm={() => void handleDeleteCover()}
+        variant="destructive"
+      />
+
+      <ConfirmDialog
+        open={!!deletePhotoId}
+        onOpenChange={(open) => {
+          if (!open) setDeletePhotoId(null);
+        }}
+        title="Excluir foto"
+        description="Tem certeza que deseja remover esta foto da galeria? Esta ação não pode ser desfeita."
+        confirmLabel="Excluir"
+        onConfirm={() => {
+          if (deletePhotoId) void handleDeletePhoto(deletePhotoId);
+        }}
+        variant="destructive"
+      />
+
+      <GalleryPhotoDialog
+        open={galleryDialogOpen}
+        onOpenChange={setGalleryDialogOpen}
+        mode={galleryDialogMode}
+        photo={editingPhoto}
+        onSuccess={handleGalleryDialogSuccess}
+      />
     </div>
   );
 }

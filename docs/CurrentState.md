@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-06-23 | Fase: 16 (Home do Estabelecimento) — CONCLUÍDA
+> Atualizado: 2026-06-30 | Fase: 16 (Home do Estabelecimento) — CONCLUÍDA
 
 ## O que funciona
 
@@ -15,7 +15,7 @@
 - Layout admin (sidebar + topbar responsivo) para todas as rotas `/admin/*`
 - Navegação funcional entre todas as rotas
 - API health check em `/api/health`
-- Cron Vercel `/api/cron/keep-alive` (1×/dia) para evitar pausa do Supabase free por inatividade
+- Cron Vercel `/api/cron/keep-alive` (1×/dia) para evitar pausa do Supabase free por inatividade — agendado via **GitHub Actions** (ou cron-job.org; Vercel Cron só em plano pago)
 - Tipos TypeScript completos em `src/types/index.ts` (espelhando DatabaseSchema.md)
 - Componentes shadcn/ui instalados: button, card, separator, sheet, badge, input, label, select, calendar, popover, radio-group, textarea, form, progress, sonner, table, dialog, dropdown-menu, alert-dialog, switch, checkbox, tooltip, skeleton
 
@@ -329,9 +329,11 @@ Correções de tokens quentes em componentes shared:
 - **Env validation**: `src/lib/env.ts` valida 7 env vars obrigatórias na inicialização; importado em layout raiz
 
 **SEO:**
-- **Metadata**: title template, description, Open Graph (locale pt_BR)
+- **Metadata**: `metadataBase`, title template, description, Open Graph (locale pt_BR, siteName, url), Twitter cards (`summary_large_image`), fallback OG image (`/logo_domo.png`)
+- **Home**: canonical `/`, JSON-LD `Restaurant`/`LocalBusiness`, OG image da capa ou logo
+- **`/reserva`**: metadata dedicada com canonical
 - **robots.ts**: Allow /, Disallow /admin/
-- **sitemap.ts**: / (priority 1) + /reserva (priority 0.9)
+- **sitemap.ts**: / (priority 1) + /reserva (priority 0.9); base URL via `getSiteUrl()` (`NEXT_PUBLIC_APP_URL`)
 
 **Performance:**
 - **Emails non-blocking**: `Promise.all([...]).catch(console.error)` sem await em `/api/reservations` e `/api/reservations/cancel`
@@ -352,8 +354,8 @@ Correções de tokens quentes em componentes shared:
 ### Home pública (`/`)
 
 - Landing estilo Resy/Getin: hero com capa, sobre, galeria, horários, mapa embed, CTA reserva
-- [`PublicHeader`](src/components/layout/public-header.tsx) no layout público (nav + CTA)
-- Metadata dinâmica (`generateMetadata`) com OG image da capa
+- [`PublicHeader`](src/components/layout/public-header.tsx) no layout público: logo `/logo_domo.png` + nav + CTA
+- Metadata dinâmica (`generateMetadata`) com OG image da capa, Twitter cards, canonical e JSON-LD
 - Componentes em `src/components/features/establishment/`
 - Query `getEstablishmentPageData()` em `src/lib/queries/establishment.ts`
 - Mapa: iframe Google Maps embed gratuito (lat/lng ou endereço)
@@ -362,6 +364,9 @@ Correções de tokens quentes em componentes shared:
 
 - `/admin/configuracoes/estabelecimento`: editar descrição, contato, lat/lng, capa, galeria
 - Upload via Supabase Storage bucket `restaurant-media` (5 MB, JPEG/PNG/WebP)
+- Validação client-side compartilhada (`src/lib/image-upload.ts`) com hints de formato/proporção na UI
+- Galeria: modal para adicionar/editar foto + legenda; exclusão com confirmação
+- Capa: hints de proporção 21:9; remoção com confirmação; erros 413/toast amigável
 - Server Actions em `estabelecimento/actions.ts`
 
 ### Banco (migration 010)

@@ -730,3 +730,25 @@ Todos os arquivos de tabela do admin foram migrados para esse padrão (ver lista
 **Contexto**: Plano free do Supabase pausa o projeto após ~7 dias sem chamadas à API.
 **Decisão**: Cron diário na Vercel (`vercel.json` → `GET /api/cron/keep-alive`) com query leve em `restaurants`, protegido por `CRON_SECRET`.
 **Razão**: Custo zero, integrado ao deploy existente; margem confortável abaixo do limite de 7 dias. Tráfego real do app também conta como atividade.
+
+---
+
+### 2026-06-24 — Keep-alive via GitHub Actions (Vercel Hobby sem Cron)
+
+**Contexto**: Plano Hobby da Vercel não oferece Cron Jobs utilizável; Supabase free ainda precisa de ping periódico.
+**Decisão**: Remover dependência de `vercel.json` crons; agendar `.github/workflows/supabase-keep-alive.yml` (1×/dia) chamando `GET /api/cron/keep-alive`. Alternativas documentadas: cron-job.org, UptimeRobot.
+**Razão**: Gratuito, funciona com o endpoint e `CRON_SECRET` já existentes; Vercel Cron permanece opção futura em plano pago.
+
+---
+
+### 2026-06-30 — UX de upload de capa/galeria e SEO da home
+
+**Contexto**: Upload de imagens > 5 MB retornava 413 sem feedback na UI; galeria tinha campo de legenda inline confuso; header público mostrava texto "Domo" em vez do logo; SEO incompleto (sem metadataBase, Twitter, canonical, JSON-LD).
+**Decisão**:
+- Constantes e validação compartilhadas em `src/lib/image-upload.ts` (client + server)
+- Validação client-side antes do upload + `try/catch` com toast amigável para erros de rede/413
+- Hints visuais de limite (5 MB), formatos e proporção (21:9 capa, 4:3 galeria)
+- Galeria: modal `GalleryPhotoDialog` para adicionar/editar; `ConfirmDialog` para exclusões
+- Header público: logo `/logo_domo.png`
+- SEO: helper `src/lib/site-metadata.ts`, `metadataBase`, Twitter cards, canonical, JSON-LD `Restaurant`, metadata em `/reserva`
+**Razão**: Feedback imediato ao usuário, UX consistente com outros dialogs admin, melhor indexação e compartilhamento social.

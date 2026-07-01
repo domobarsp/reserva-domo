@@ -1,7 +1,39 @@
+import type { Metadata } from "next";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { ReservationForm } from "@/components/features/reservation/reservation-form";
 import { getBookingWindowDatesFrom, dateToStr } from "@/lib/availability";
 import type { Settings, ExceptionDate } from "@/types";
+import {
+  SITE_NAME,
+  getSiteUrl,
+  buildOpenGraphMetadata,
+  buildTwitterMetadata,
+} from "@/lib/site-metadata";
+
+const title = "Reservar mesa";
+const description =
+  "Faça sua reserva online no Dōmo. Escolha data, horário e acomodação.";
+
+export const metadata: Metadata = {
+  title,
+  description,
+  alternates: {
+    canonical: "/reserva",
+  },
+  openGraph: buildOpenGraphMetadata({
+    title: `${title} | ${SITE_NAME}`,
+    description,
+    url: `${getSiteUrl()}/reserva`,
+  }),
+  twitter: buildTwitterMetadata({
+    title: `${title} | ${SITE_NAME}`,
+    description,
+  }),
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export default async function ReservaPage() {
   const supabase = createAdminClient();

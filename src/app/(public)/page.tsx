@@ -7,32 +7,45 @@ import { EstablishmentGallery } from "@/components/features/establishment/establ
 import { EstablishmentHours } from "@/components/features/establishment/establishment-hours";
 import { EstablishmentMap } from "@/components/features/establishment/establishment-map";
 import { EstablishmentCta } from "@/components/features/establishment/establishment-cta";
+import { EstablishmentJsonLd } from "@/components/features/establishment/establishment-json-ld";
+import {
+  SITE_NAME,
+  getSiteUrl,
+  buildOpenGraphMetadata,
+  buildTwitterMetadata,
+} from "@/lib/site-metadata";
 
 export const dynamic = "force-dynamic";
 
 export async function generateMetadata(): Promise<Metadata> {
   const data = await getEstablishmentPageData();
   if (!data) {
-    return { title: "Dōmo" };
+    return { title: SITE_NAME };
   }
 
   const { restaurant } = data;
   const description =
     restaurant.description?.slice(0, 160) ??
     `Faça sua reserva online no ${restaurant.name}.`;
+  const ogTitle = `${restaurant.name} — Reservas`;
 
   return {
-    title: restaurant.name,
+    title: { absolute: `${restaurant.name} | ${SITE_NAME}` },
     description,
-    openGraph: {
-      title: `${restaurant.name} — Reservas`,
-      description,
-      type: "website",
-      locale: "pt_BR",
-      ...(restaurant.cover_image_url
-        ? { images: [{ url: restaurant.cover_image_url, alt: restaurant.name }] }
-        : {}),
+    alternates: {
+      canonical: "/",
     },
+    openGraph: buildOpenGraphMetadata({
+      title: ogTitle,
+      description,
+      url: getSiteUrl(),
+      image: restaurant.cover_image_url,
+    }),
+    twitter: buildTwitterMetadata({
+      title: ogTitle,
+      description,
+      image: restaurant.cover_image_url,
+    }),
   };
 }
 
@@ -44,6 +57,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <EstablishmentJsonLd restaurant={restaurant} />
       <EstablishmentHero restaurant={restaurant} />
       <EstablishmentAbout restaurant={restaurant} />
       <EstablishmentGallery photos={photos} />

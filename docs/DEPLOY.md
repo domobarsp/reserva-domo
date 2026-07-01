@@ -196,27 +196,108 @@ Configure estas variáveis em **todas** as opções de deploy abaixo:
 | `STRIPE_SECRET_KEY` | Chave secreta do Stripe | Stripe > Developers > API Keys |
 | `STRIPE_WEBHOOK_SECRET` | Secret do webhook Stripe | Stripe > Developers > Webhooks |
 | `RESEND_API_KEY` | API key do Resend | Resend > API Keys |
+| `RESEND_FROM_EMAIL` | Email remetente (domínio verificado no Resend) | ex: `reservas@seudominio.com` |
 | `ADMIN_NOTIFICATION_EMAIL` | Email para notificações de novas reservas | Definido pelo cliente |
 | `NEXT_PUBLIC_APP_URL` | URL pública do app (sem `/` no final) | URL do deploy Vercel |
 | `CRON_SECRET` | Protege o cron de keep-alive do Supabase | Gere com `openssl rand -base64 32` |
 
-### Keep-alive do Supabase (plano free)
+### 4.1 Keep-alive do Supabase (plano free)
 
-Projetos no plano gratuito do Supabase pausam após **~7 dias sem atividade** na API. O projeto inclui um cron da Vercel que consulta o banco uma vez por dia:
+Projetos no plano gratuito do Supabase **pausam após ~7 dias sem chamadas à API**. O Domo expõe um endpoint que consulta o banco **1× por dia**; qualquer agendador externo (gratuito) pode chamá-lo — **não depende do Cron da Vercel** (indisponível ou limitado no plano Hobby).
 
-- **Rota:** `GET /api/cron/keep-alive`
-- **Agenda:** todo dia às 12:00 UTC (`vercel.json`)
-- **Auth:** header `Authorization: Bearer <CRON_SECRET>` (a Vercel envia automaticamente quando `CRON_SECRET` está configurado)
+| Item | Valor |
+|------|--------|
+| Rota | `GET /api/cron/keep-alive` |
+| Auth | Header `Authorization: Bearer <CRON_SECRET>` |
+| Implementação | `src/app/api/cron/keep-alive/route.ts` |
+| O que faz | `SELECT id FROM restaurants LIMIT 1` via `SUPABASE_SERVICE_ROLE_KEY` |
 
-**Configuração:**
+#### Pré-requisito comum (Vercel + endpoint)
 
-1. Gere o secret: `openssl rand -base64 32`
-2. Adicione `CRON_SECRET` nas variáveis de ambiente da Vercel (Production)
-3. Faça deploy — o `vercel.json` na raiz registra o cron automaticamente
+1. Gere o secret:
 
-**Verificar:** em **Vercel > Project > Cron Jobs**, confirme que `/api/cron/keep-alive` aparece e que as execuções retornam `200`.
+   ```bash
+   openssl rand -base64 32
+   ```
 
-> **Limitações:** isso reduz pausas por inatividade, mas não substitui um plano pago. Se o projeto já estiver pausado, reative manualmente no dashboard do Supabase. Tráfego real do app (reservas, admin) também conta como atividade.
+2. Adicione **`CRON_SECRET`** em **Vercel → Settings → Environment Variables → Production** (mesmo valor usado no agendador abaixo).
+
+3. Garanta **`NEXT_PUBLIC_SUPABASE_URL`** e **`SUPABASE_SERVICE_ROLE_KEY`** em Production.
+
+4. Redeploy após adicionar `CRON_SECRET`.
+
+---
+
+#### Opção A — GitHub Actions (recomendado se o repo está no GitHub)
+
+Gratuito em repositórios públicos e privados (com cota mensal generosa).
+
+1. No GitHub: repositório → **Settings → Secrets and variables → Actions → New repository secret**
+   - `CRON_SECRET` — mesmo valor da Vercel
+   - `APP_URL` — URL de produção **sem** barra no final (ex. `https://domo-xxx.vercel.app`)
+
+2. O workflow já está no repo: `.github/workflows/supabase-keep-alive.yml`  
+   Roda todo dia às **12:00 UTC** e também pode ser disparado manualmente em **Actions → Supabase keep-alive → Run workflow**.
+
+3. Verificar: **Actions** → última execução com ✓ verde.
+
+---
+
+#### Opção B — [cron-job.org](https://cron-job.org) (sem GitHub)
+
+Serviço gratuito que faz HTTP GET agendado.
+
+1. Crie conta em [cron-job.org](https://console.cron-job.org)
+2. **Cronjobs → Create cronjob**:
+   - **URL:** `https://<sua-url-vercel>/api/cron/keep-alive`
+   - **Schedule:** once a day (ex. 09:00, fuso America/Sao_Paulo)
+   - **Request method:** GET
+   - **Headers:** `Authorization: Bearer <seu CRON_SECRET>`
+3. Salve e use **Run now** para testar.
+
+---
+
+#### Opção C — [UptimeRobot](https://uptimerobot.com) (monitor + ping)
+
+Plano free: monitor HTTP (intervalo mínimo 5 min — mais frequente que o necessário, mas funciona).
+
+1. **Add New Monitor → HTTP(s)**
+2. URL: `https://<sua-url-vercel>/api/cron/keep-alive`
+3. **Custom HTTP headers:** `Authorization: Bearer <CRON_SECRET>`
+4. Intervalo: 1 day (se disponível) ou 5 min
+
+---
+
+#### Opção D — Cron da Vercel (apenas planos pagos)
+
+Se no futuro migrar para Vercel Pro, crie `vercel.json` na raiz:
+
+```json
+{
+  "crons": [{ "path": "/api/cron/keep-alive", "schedule": "0 12 * * *" }]
+}
+```
+
+No plano **Hobby**, use as opções A, B ou C acima.
+
+---
+
+#### Testar manualmente
+
+```bash
+curl -s -H "Authorization: Bearer SEU_CRON_SECRET" \
+  https://<sua-url-vercel>/api/cron/keep-alive
+```
+
+Resposta esperada: `{"ok":true,"timestamp":"...","restaurantId":"...","durationMs":...}`
+
+Localmente: `./scripts/test-keep-alive.sh` (com `CRON_SECRET` no `.env.local`).
+
+#### Limitações
+
+- Reduz pausas por inatividade; **não substitui** plano pago do Supabase.
+- Se o projeto já estiver pausado, reative manualmente no dashboard do Supabase.
+- Tráfego real (reservas, admin) também conta como atividade.
 
 ---
 
@@ -254,7 +335,9 @@ vercel env add STRIPE_SECRET_KEY
 vercel env add STRIPE_WEBHOOK_SECRET
 vercel env add RESEND_API_KEY
 vercel env add ADMIN_NOTIFICATION_EMAIL
+vercel env add RESEND_FROM_EMAIL
 vercel env add NEXT_PUBLIC_APP_URL
+vercel env add CRON_SECRET
 
 # Deploy de preview
 vercel
@@ -292,6 +375,7 @@ Execute cada item abaixo após o primeiro deploy bem-sucedido:
 - [ ] Verificar security headers: `curl -I https://<url>`
 - [ ] Testar login com usuário inválido (deve falhar graciosamente)
 - [ ] Verificar robots.txt: `https://<url>/robots.txt`
+- [ ] Keep-alive Supabase: GitHub Actions ✓ verde **ou** cron-job.org/UptimeRobot configurado; testar com `curl` + `CRON_SECRET`
 
 ---
 
@@ -334,6 +418,18 @@ Verifique se todas as variáveis de ambiente estão configuradas na Vercel em **
 - Confirme que a URL do endpoint inclui `/api/stripe/webhook`
 - Verifique se o `STRIPE_WEBHOOK_SECRET` está correto e sem espaços extras
 - No dashboard do Stripe, vá em **Developers > Webhooks** e clique no endpoint para ver os eventos recentes e possíveis erros
+
+### Keep-alive retorna 401
+
+- Confirme que `CRON_SECRET` na Vercel é **igual** ao configurado no GitHub Actions / cron-job.org / UptimeRobot.
+- O header deve ser exatamente: `Authorization: Bearer <secret>`.
+- Teste manual com `curl` (ver § 4.1).
+
+### Keep-alive retorna 503
+
+- Verifique `SUPABASE_SERVICE_ROLE_KEY` e `NEXT_PUBLIC_SUPABASE_URL` em Production.
+- Confirme que existe ao menos um registro em `restaurants` (rode o seed se necessário).
+- Veja logs em **Deployments → Functions** para a mensagem `[keep-alive] Supabase ping failed`.
 
 ### Emails não chegam
 

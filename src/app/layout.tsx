@@ -3,24 +3,37 @@ import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 import "@/lib/env";
+import {
+  SITE_NAME,
+  getSiteUrl,
+  buildOpenGraphMetadata,
+  buildTwitterMetadata,
+} from "@/lib/site-metadata";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
 
+const defaultDescription =
+  "Faça sua reserva online no Dōmo. Bar & restaurante na Rua Major Sertório, 452, São Paulo. Terça a sábado, 19h–24h.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(getSiteUrl()),
   title: {
-    default: "Dōmo — Reservas",
-    template: "%s | Dōmo",
+    default: `${SITE_NAME} — Reservas`,
+    template: `%s | ${SITE_NAME}`,
   },
-  description: "Faça sua reserva online no Dōmo. Bar & restaurante na Rua Major Sertório, 452, São Paulo. Terça a sábado, 19h–24h.",
-  openGraph: {
-    title: "Dōmo — Reservas Online",
-    description: "Faça sua reserva online no Dōmo. Bar & restaurante na Rua Major Sertório, 452, São Paulo. Terça a sábado, 19h–24h.",
-    type: "website",
-    locale: "pt_BR",
-  },
+  description: defaultDescription,
+  openGraph: buildOpenGraphMetadata({
+    title: `${SITE_NAME} — Reservas Online`,
+    description: defaultDescription,
+    url: getSiteUrl(),
+  }),
+  twitter: buildTwitterMetadata({
+    title: `${SITE_NAME} — Reservas Online`,
+    description: defaultDescription,
+  }),
   robots: {
     index: true,
     follow: true,
