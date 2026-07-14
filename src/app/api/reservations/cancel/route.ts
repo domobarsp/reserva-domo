@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { isValidTransition } from "@/lib/status-transitions";
 import { ReservationStatus } from "@/types";
@@ -97,15 +97,17 @@ export async function POST(request: NextRequest) {
     : reservation.accommodation_type;
 
   if (customer?.email) {
-    sendCancellationEmail({
-      to: customer.email,
-      firstName: customer.first_name,
-      date: reservation.date,
-      timeLabel: timeSlot?.name ?? "",
-      accommodationLabel: accommodationType?.name ?? "",
-      partySize: reservation.party_size,
-      locale: (reservation.locale as Locale) ?? "pt",
-    }).catch(console.error);
+    after(async () => {
+      await sendCancellationEmail({
+        to: customer.email,
+        firstName: customer.first_name,
+        date: reservation.date,
+        timeLabel: timeSlot?.name ?? "",
+        accommodationLabel: accommodationType?.name ?? "",
+        partySize: reservation.party_size,
+        locale: (reservation.locale as Locale) ?? "pt",
+      });
+    });
   }
 
   return NextResponse.json({ success: true });

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { apiReservationSchema } from "@/lib/validations/reservation";
 import {
@@ -159,34 +159,37 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
 
-  // Fire-and-forget — don't block response
+  // Schedule emails after the response — never blocks the user. after() keeps the
+  // Vercel isolate alive (unlike bare Promise fire-and-forget). Failures stay in logs.
   const cancellationLink = `${process.env.NEXT_PUBLIC_APP_URL}/cancelar/${result.cancellation_token}`;
 
-  Promise.all([
-    sendConfirmationEmail({
-      to: data.email,
-      firstName: data.first_name,
-      date: data.date,
-      timeLabel: timeSlot.name,
-      accommodationLabel: accommodationType?.name ?? "",
-      partySize: data.party_size,
-      specialRequests: data.special_requests ?? undefined,
-      cancellationLink,
-      locale: data.preferred_locale,
-    }),
-    sendAdminNotificationEmail({
-      customerName: `${data.first_name} ${data.last_name}`,
-      email: data.email,
-      phone: data.phone,
-      date: data.date,
-      timeLabel: timeSlot.name,
-      accommodationLabel: accommodationType?.name ?? "",
-      partySize: data.party_size,
-      specialRequests: data.special_requests ?? undefined,
-      hasCard: !!data.stripe_payment_method_id,
-      reservationId: result.id!,
-    }),
-  ]).catch(console.error);
+  after(async () => {
+    await Promise.all([
+      sendConfirmationEmail({
+        to: data.email,
+        firstName: data.first_name,
+        date: data.date,
+        timeLabel: timeSlot.name,
+        accommodationLabel: accommodationType?.name ?? "",
+        partySize: data.party_size,
+        specialRequests: data.special_requests ?? undefined,
+        cancellationLink,
+        locale: data.preferred_locale,
+      }),
+      sendAdminNotificationEmail({
+        customerName: `${data.first_name} ${data.last_name}`,
+        email: data.email,
+        phone: data.phone,
+        date: data.date,
+        timeLabel: timeSlot.name,
+        accommodationLabel: accommodationType?.name ?? "",
+        partySize: data.party_size,
+        specialRequests: data.special_requests ?? undefined,
+        hasCard: !!data.stripe_payment_method_id,
+        reservationId: result.id!,
+      }),
+    ]);
+  });
 
   return NextResponse.json({
     id: result.id,

@@ -284,6 +284,14 @@
 
 ---
 
+### 2026-07-13 — Emails via `after()` (não bloqueiam o usuário; rodam no Vercel)
+
+**Contexto**: Em produção (Vercel), reservas eram criadas mas nada aparecia no Resend. A rota disparava emails com `Promise` fire-and-forget sem `await`/`after`; o isolate congelava antes do Resend. Um `await` antes do response faria o usuário esperar o email.
+**Decisão**: Usar `after()` do Next.js nas rotas de criar/cancelar reserva. Resposta JSON imediata; email corre em background com isolate mantido vivo. Falhas só em log (`email-service` try/catch + erros da SDK Resend).
+**Razão**: Mesma garantia da DecisionLog 2026-02-22 (email não quebra reserva) + entrega confiável no serverless.
+
+---
+
 ### 2026-02-22 — Resend: templates com inline styles obrigatórios
 
 **Contexto**: Os templates React Email precisam funcionar em clientes de email como Gmail, Outlook, Apple Mail, que suportam apenas subconjuntos de CSS.

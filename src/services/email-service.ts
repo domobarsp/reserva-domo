@@ -11,6 +11,36 @@ const FROM = process.env.RESEND_FROM_EMAIL!;
 const ADMIN_TO =
   process.env.ADMIN_NOTIFICATION_EMAIL ?? process.env.RESEND_FROM_EMAIL!;
 
+async function sendEmail(params: {
+  to: string;
+  subject: string;
+  html: string;
+  label: string;
+}) {
+  if (!process.env.RESEND_API_KEY) {
+    console.error(`[email] ${params.label}: RESEND_API_KEY missing`);
+    return;
+  }
+  if (!FROM) {
+    console.error(`[email] ${params.label}: RESEND_FROM_EMAIL missing`);
+    return;
+  }
+
+  const { data, error } = await resend.emails.send({
+    from: FROM,
+    to: params.to,
+    subject: params.subject,
+    html: params.html,
+  });
+
+  if (error) {
+    console.error(`[email] ${params.label} Resend error:`, error);
+    return;
+  }
+
+  console.log(`[email] ${params.label} sent:`, { id: data?.id, to: params.to });
+}
+
 export async function sendConfirmationEmail(params: {
   to: string;
   firstName: string;
@@ -28,7 +58,7 @@ export async function sendConfirmationEmail(params: {
     const html = await render(
       React.createElement(ConfirmationEmail, { ...rest, locale })
     );
-    await resend.emails.send({ from: FROM, to, subject, html });
+    await sendEmail({ to, subject, html, label: "sendConfirmationEmail" });
   } catch (err) {
     console.error("[email] sendConfirmationEmail failed:", err);
   }
@@ -49,7 +79,7 @@ export async function sendCancellationEmail(params: {
     const html = await render(
       React.createElement(CancellationEmail, { ...rest, locale })
     );
-    await resend.emails.send({ from: FROM, to, subject, html });
+    await sendEmail({ to, subject, html, label: "sendCancellationEmail" });
   } catch (err) {
     console.error("[email] sendCancellationEmail failed:", err);
   }
@@ -69,7 +99,7 @@ export async function sendNoShowChargeEmail(params: {
     const html = await render(
       React.createElement(NoShowChargeEmail, { ...rest, locale })
     );
-    await resend.emails.send({ from: FROM, to, subject, html });
+    await sendEmail({ to, subject, html, label: "sendNoShowChargeEmail" });
   } catch (err) {
     console.error("[email] sendNoShowChargeEmail failed:", err);
   }
@@ -90,7 +120,12 @@ export async function sendAdminNotificationEmail(params: {
   try {
     const subject = emailTranslations.pt.adminNotification.subject;
     const html = await render(React.createElement(AdminNotificationEmail, params));
-    await resend.emails.send({ from: FROM, to: ADMIN_TO, subject, html });
+    await sendEmail({
+      to: ADMIN_TO,
+      subject,
+      html,
+      label: "sendAdminNotificationEmail",
+    });
   } catch (err) {
     console.error("[email] sendAdminNotificationEmail failed:", err);
   }
