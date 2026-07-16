@@ -10,33 +10,21 @@ import {
 } from "@react-email/components";
 import { emailTranslations, type Locale } from "@/lib/email-translations";
 
-interface NoShowChargeEmailProps {
+interface NoShowEmailProps {
   firstName: string;
   date: string;
   timeLabel: string;
-  /** Amount in cents */
-  amount: number;
   locale: Locale;
 }
 
-function formatAmount(amount: number, locale: Locale): string {
-  const value = amount / 100;
-  if (locale === "pt") {
-    return `R$ ${value.toFixed(2).replace(".", ",")}`;
-  }
-  return `$${value.toFixed(2)}`;
-}
-
-export function NoShowChargeEmail({
+export function NoShowEmail({
   firstName,
   date,
   timeLabel,
-  amount,
   locale,
-}: NoShowChargeEmailProps) {
-  const t = emailTranslations[locale].noShowCharge;
-  const dateLabel = emailTranslations[locale].confirmation.dateLabel;
-  const timeLabelStr = emailTranslations[locale].confirmation.timeLabel;
+}: NoShowEmailProps) {
+  const t = emailTranslations[locale].noShow;
+  const labels = emailTranslations[locale].labels;
 
   return (
     <Html lang={locale}>
@@ -53,18 +41,12 @@ export function NoShowChargeEmail({
             <table style={table}>
               <tbody>
                 <tr>
-                  <td style={labelCell}>{dateLabel}</td>
+                  <td style={labelCell}>{labels.dateLabel}</td>
                   <td style={valueCell}>{date}</td>
                 </tr>
                 <tr>
-                  <td style={labelCell}>{timeLabelStr}</td>
+                  <td style={labelCell}>{labels.timeLabel}</td>
                   <td style={valueCell}>{timeLabel}</td>
-                </tr>
-                <tr>
-                  <td style={labelCell}>{t.amountLabel}</td>
-                  <td style={{ ...valueCell, fontWeight: "600" }}>
-                    {formatAmount(amount, locale)}
-                  </td>
                 </tr>
               </tbody>
             </table>

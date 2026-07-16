@@ -760,3 +760,17 @@ Todos os arquivos de tabela do admin foram migrados para esse padrão (ver lista
 - Header público: logo `/logo_domo.png`
 - SEO: helper `src/lib/site-metadata.ts`, `metadataBase`, Twitter cards, canonical, JSON-LD `Restaurant`, metadata em `/reserva`
 **Razão**: Feedback imediato ao usuário, UX consistente com outros dialogs admin, melhor indexação e compartilhamento social.
+
+---
+
+### 2026-07-16 — Emails create/confirmed/cancel/no-show + galeria + ordem de horários
+
+**Contexto**: Cliente recebia um único email “confirmada” no create (status ainda pending); admin confirmar/cancelar/no-show não disparava email; horários no booking vinham sem ordem; lightbox da galeria forçava 4:3.
+**Decisão**:
+- Quatro emails ao cliente: `create` (POST reserva), `confirmed` (admin → confirmed), `cancellation` (cliente ou admin), `noShow` (admin → no_show)
+- CTA de cancelar só em `create` e `confirmed`
+- No-show informa que cobrança **pode** ser realizada conforme a reserva; charge Stripe não envia segundo email
+- Copy PT/EN/ES no código (`email-translations.ts`); textos da Home permanecem no código (sem CMS)
+- Galeria: overlay `bg-black/70` + lightbox com aspect ratio natural (retrato/paisagem)
+- `/api/availability` e `getAvailableTimeSlotsFrom` ordenam por `start_time`
+**Razão**: Alinhar comunicação com o ciclo real da reserva, sem complexidade de editor admin.

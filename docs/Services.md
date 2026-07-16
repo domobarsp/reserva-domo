@@ -181,11 +181,11 @@ ADMIN_NOTIFICATION_EMAIL=         # Email do restaurante para notificações (fa
 src/lib/resend.ts                        # Singleton: new Resend(RESEND_API_KEY)
 src/lib/email-translations.ts            # Strings i18n tipadas (PT/EN/ES) por tipo de email
 src/lib/email-templates/
-  confirmation.tsx                       # Template de confirmação de reserva
-  cancellation.tsx                       # Template de cancelamento
-  no-show-charge.tsx                     # Template de cobrança no-show
+  confirmation.tsx                       # Template create/confirmed (com CTA cancelar)
+  cancellation.tsx                       # Template de cancelamento (sem CTA)
+  no-show-charge.tsx                     # Template de no-show (sem CTA)
   admin-notification.tsx                 # Template de notificação interna (PT fixo)
-src/services/email-service.ts            # 4 funções de envio (não-bloqueantes)
+src/services/email-service.ts            # Funções de envio (não-bloqueantes)
 ```
 
 ### Padrão de Uso
@@ -209,12 +209,16 @@ await resend.emails.send({ from, to, subject, html });
 
 ### Gatilhos
 
-| Evento | Função | Destinatário |
-|--------|--------|--------------|
-| Reserva criada (`POST /api/reservations`) | `sendConfirmationEmail` | Cliente |
-| Reserva criada (`POST /api/reservations`) | `sendAdminNotificationEmail` | Admin (`ADMIN_NOTIFICATION_EMAIL`) |
-| Cancelamento pelo cliente (`POST /api/reservations/cancel`) | `sendCancellationEmail` | Cliente |
-| No-show cobrado (`POST /api/stripe/charge-no-show`) | `sendNoShowChargeEmail` | Cliente |
+| Evento | Função | Destinatário | CTA cancelar |
+|--------|--------|--------------|--------------|
+| Reserva criada (`POST /api/reservations`) | `sendCreateEmail` | Cliente | Sim |
+| Reserva criada (`POST /api/reservations`) | `sendAdminNotificationEmail` | Admin (`ADMIN_NOTIFICATION_EMAIL`) | — |
+| Status → confirmed (admin) | `sendConfirmedEmail` | Cliente | Sim |
+| Cancelamento pelo cliente (`POST /api/reservations/cancel`) | `sendCancellationEmail` | Cliente | Não |
+| Status → cancelled (admin) | `sendCancellationEmail` | Cliente | Não |
+| Status → no_show (admin) | `sendNoShowEmail` | Cliente | Não |
+
+> Cobrança Stripe (`POST /api/stripe/charge-no-show`) **não** envia email — o aviso de no-show (incluindo que a cobrança pode ser realizada) sai ao marcar o status.
 
 ### Localização
 

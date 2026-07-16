@@ -1,10 +1,14 @@
 import { render } from "@react-email/components";
 import React from "react";
 import { resend } from "@/lib/resend";
-import { emailTranslations, type Locale } from "@/lib/email-translations";
+import {
+  emailTranslations,
+  resolveLocale,
+  type Locale,
+} from "@/lib/email-translations";
 import { ConfirmationEmail } from "@/lib/email-templates/confirmation";
 import { CancellationEmail } from "@/lib/email-templates/cancellation";
-import { NoShowChargeEmail } from "@/lib/email-templates/no-show-charge";
+import { NoShowEmail } from "@/lib/email-templates/no-show-charge";
 import { AdminNotificationEmail } from "@/lib/email-templates/admin-notification";
 
 const FROM = process.env.RESEND_FROM_EMAIL!;
@@ -41,7 +45,7 @@ async function sendEmail(params: {
   console.log(`[email] ${params.label} sent:`, { id: data?.id, to: params.to });
 }
 
-export async function sendConfirmationEmail(params: {
+type ReservationEmailParams = {
   to: string;
   firstName: string;
   date: string;
@@ -50,17 +54,51 @@ export async function sendConfirmationEmail(params: {
   partySize: number;
   specialRequests?: string;
   cancellationLink: string;
-  locale: Locale;
-}) {
+  locale: Locale | string | null | undefined;
+};
+
+export async function sendCreateEmail(params: ReservationEmailParams) {
   try {
-    const { to, locale, ...rest } = params;
-    const subject = emailTranslations[locale].confirmation.subject;
+    const locale = resolveLocale(params.locale);
+    const { to, cancellationLink, specialRequests, ...rest } = params;
+    const subject = emailTranslations[locale].create.subject;
     const html = await render(
-      React.createElement(ConfirmationEmail, { ...rest, locale })
+      React.createElement(ConfirmationEmail, {
+        ...rest,
+        specialRequests,
+        cancellationLink,
+        locale,
+        kind: "create",
+      })
     );
-    await sendEmail({ to, subject, html, label: "sendConfirmationEmail" });
+    await sendEmail({ to, subject, html, label: "sendCreateEmail" });
   } catch (err) {
-    console.error("[email] sendConfirmationEmail failed:", err);
+    console.error("[email] sendCreateEmail failed:", err);
+  }
+}
+
+/** @deprecated Use sendCreateEmail */
+export async function sendConfirmationEmail(params: ReservationEmailParams) {
+  return sendCreateEmail(params);
+}
+
+export async function sendConfirmedEmail(params: ReservationEmailParams) {
+  try {
+    const locale = resolveLocale(params.locale);
+    const { to, cancellationLink, specialRequests, ...rest } = params;
+    const subject = emailTranslations[locale].confirmed.subject;
+    const html = await render(
+      React.createElement(ConfirmationEmail, {
+        ...rest,
+        specialRequests,
+        cancellationLink,
+        locale,
+        kind: "confirmed",
+      })
+    );
+    await sendEmail({ to, subject, html, label: "sendConfirmedEmail" });
+  } catch (err) {
+    console.error("[email] sendConfirmedEmail failed:", err);
   }
 }
 
@@ -71,10 +109,11 @@ export async function sendCancellationEmail(params: {
   timeLabel: string;
   accommodationLabel: string;
   partySize: number;
-  locale: Locale;
+  locale: Locale | string | null | undefined;
 }) {
   try {
-    const { to, locale, ...rest } = params;
+    const locale = resolveLocale(params.locale);
+    const { to, ...rest } = params;
     const subject = emailTranslations[locale].cancellation.subject;
     const html = await render(
       React.createElement(CancellationEmail, { ...rest, locale })
@@ -85,24 +124,37 @@ export async function sendCancellationEmail(params: {
   }
 }
 
+export async function sendNoShowEmail(params: {
+  to: string;
+  firstName: string;
+  date: string;
+  timeLabel: string;
+  locale: Locale | string | null | undefined;
+}) {
+  try {
+    const locale = resolveLocale(params.locale);
+    const { to, ...rest } = params;
+    const subject = emailTranslations[locale].noShow.subject;
+    const html = await render(
+      React.createElement(NoShowEmail, { ...rest, locale })
+    );
+    await sendEmail({ to, subject, html, label: "sendNoShowEmail" });
+  } catch (err) {
+    console.error("[email] sendNoShowEmail failed:", err);
+  }
+}
+
+/** @deprecated Use sendNoShowEmail — charge flow no longer sends email */
 export async function sendNoShowChargeEmail(params: {
   to: string;
   firstName: string;
   date: string;
   timeLabel: string;
-  amount: number;
-  locale: Locale;
+  amount?: number;
+  locale: Locale | string | null | undefined;
 }) {
-  try {
-    const { to, locale, ...rest } = params;
-    const subject = emailTranslations[locale].noShowCharge.subject;
-    const html = await render(
-      React.createElement(NoShowChargeEmail, { ...rest, locale })
-    );
-    await sendEmail({ to, subject, html, label: "sendNoShowChargeEmail" });
-  } catch (err) {
-    console.error("[email] sendNoShowChargeEmail failed:", err);
-  }
+  const { amount: _amount, ...rest } = params;
+  return sendNoShowEmail(rest);
 }
 
 export async function sendAdminNotificationEmail(params: {

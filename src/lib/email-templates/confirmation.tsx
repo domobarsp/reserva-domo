@@ -11,6 +11,8 @@ import {
 } from "@react-email/components";
 import { emailTranslations, type Locale } from "@/lib/email-translations";
 
+export type ReservationEmailKind = "create" | "confirmed";
+
 interface ConfirmationEmailProps {
   firstName: string;
   date: string;
@@ -20,6 +22,7 @@ interface ConfirmationEmailProps {
   specialRequests?: string;
   cancellationLink: string;
   locale: Locale;
+  kind?: ReservationEmailKind;
 }
 
 export function ConfirmationEmail({
@@ -31,8 +34,10 @@ export function ConfirmationEmail({
   specialRequests,
   cancellationLink,
   locale,
+  kind = "create",
 }: ConfirmationEmailProps) {
-  const t = emailTranslations[locale].confirmation;
+  const t = emailTranslations[locale][kind];
+  const labels = emailTranslations[locale].labels;
 
   return (
     <Html lang={locale}>
@@ -47,24 +52,24 @@ export function ConfirmationEmail({
             <table style={table}>
               <tbody>
                 <tr>
-                  <td style={labelCell}>{t.dateLabel}</td>
+                  <td style={labelCell}>{labels.dateLabel}</td>
                   <td style={valueCell}>{date}</td>
                 </tr>
                 <tr>
-                  <td style={labelCell}>{t.timeLabel}</td>
+                  <td style={labelCell}>{labels.timeLabel}</td>
                   <td style={valueCell}>{timeLabel}</td>
                 </tr>
                 <tr>
-                  <td style={labelCell}>{t.accommodationLabel}</td>
+                  <td style={labelCell}>{labels.accommodationLabel}</td>
                   <td style={valueCell}>{accommodationLabel}</td>
                 </tr>
                 <tr>
-                  <td style={labelCell}>{t.partySizeLabel}</td>
+                  <td style={labelCell}>{labels.partySizeLabel}</td>
                   <td style={valueCell}>{partySize}</td>
                 </tr>
                 {specialRequests && (
                   <tr>
-                    <td style={labelCell}>{t.specialRequestsLabel}</td>
+                    <td style={labelCell}>{labels.specialRequestsLabel}</td>
                     <td style={valueCell}>{specialRequests}</td>
                   </tr>
                 )}
@@ -75,7 +80,7 @@ export function ConfirmationEmail({
           <Hr style={hr} />
 
           <Button style={cancelButton} href={cancellationLink}>
-            {t.cancelLinkText}
+            {labels.cancelLinkText}
           </Button>
 
           <Text style={footer}>{t.footer}</Text>

@@ -55,25 +55,30 @@ export function EstablishmentGallery({ photos }: EstablishmentGalleryProps) {
       </div>
 
       <Dialog open={!!active} onOpenChange={(open) => !open && setActive(null)}>
-        <DialogContent className="max-w-3xl p-0 overflow-hidden">
+        <DialogContent
+          className="max-w-fit border-0 bg-transparent p-0 shadow-none sm:max-w-fit"
+          overlayClassName="bg-black/70"
+          showCloseButton
+        >
           <DialogTitle className="sr-only">
             {active?.caption ?? "Foto ampliada"}
           </DialogTitle>
           {active && (
-            <div className="relative aspect-[4/3] w-full bg-zinc-100">
-              <Image
-                src={active.url}
-                alt={active.caption ?? "Foto ampliada"}
-                fill
-                className="object-contain"
-                sizes="800px"
-              />
+            <div className="flex max-h-[85vh] max-w-[min(90vw,56rem)] flex-col overflow-hidden rounded-xl bg-zinc-900">
+              <div className="relative flex max-h-[85vh] items-center justify-center">
+                {/* eslint-disable-next-line @next/next/no-img-element -- natural aspect for portrait/landscape lightbox */}
+                <img
+                  src={active.url}
+                  alt={active.caption ?? "Foto ampliada"}
+                  className="max-h-[85vh] w-auto max-w-full object-contain"
+                />
+              </div>
+              {active.caption && (
+                <p className="px-4 py-3 text-sm text-zinc-300">
+                  {active.caption}
+                </p>
+              )}
             </div>
-          )}
-          {active?.caption && (
-            <p className="px-4 py-3 text-sm text-muted-foreground">
-              {active.caption}
-            </p>
           )}
         </DialogContent>
       </Dialog>

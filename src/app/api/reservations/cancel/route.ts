@@ -3,7 +3,7 @@ import { createAdminClient } from "@/utils/supabase/admin";
 import { isValidTransition } from "@/lib/status-transitions";
 import { ReservationStatus } from "@/types";
 import { sendCancellationEmail } from "@/services/email-service";
-import type { Locale } from "@/lib/email-translations";
+import { resolveLocale } from "@/lib/email-translations";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
         timeLabel: timeSlot?.name ?? "",
         accommodationLabel: accommodationType?.name ?? "",
         partySize: reservation.party_size,
-        locale: (reservation.locale as Locale) ?? "pt",
+        locale: resolveLocale(reservation.locale),
       });
     });
   }

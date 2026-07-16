@@ -28,6 +28,7 @@ export function CancellationEmail({
   locale,
 }: CancellationEmailProps) {
   const t = emailTranslations[locale].cancellation;
+  const labels = emailTranslations[locale].labels;
 
   return (
     <Html lang={locale}>
@@ -45,19 +46,19 @@ export function CancellationEmail({
             <table style={table}>
               <tbody>
                 <tr>
-                  <td style={labelCell}>{emailTranslations[locale].confirmation.dateLabel}</td>
+                  <td style={labelCell}>{labels.dateLabel}</td>
                   <td style={valueCell}>{date}</td>
                 </tr>
                 <tr>
-                  <td style={labelCell}>{emailTranslations[locale].confirmation.timeLabel}</td>
+                  <td style={labelCell}>{labels.timeLabel}</td>
                   <td style={valueCell}>{timeLabel}</td>
                 </tr>
                 <tr>
-                  <td style={labelCell}>{emailTranslations[locale].confirmation.accommodationLabel}</td>
+                  <td style={labelCell}>{labels.accommodationLabel}</td>
                   <td style={valueCell}>{accommodationLabel}</td>
                 </tr>
                 <tr>
-                  <td style={labelCell}>{emailTranslations[locale].confirmation.partySizeLabel}</td>
+                  <td style={labelCell}>{labels.partySizeLabel}</td>
                   <td style={valueCell}>{partySize}</td>
                 </tr>
               </tbody>

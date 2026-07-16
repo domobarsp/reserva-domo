@@ -62,7 +62,8 @@ export async function GET(request: NextRequest) {
       .from("time_slots")
       .select("*")
       .eq("restaurant_id", restaurantId)
-      .eq("is_active", true),
+      .eq("is_active", true)
+      .order("start_time", { ascending: true }),
     supabase
       .from("accommodation_types")
       .select("*")

@@ -12,7 +12,7 @@ import type {
   Settings,
 } from "@/types";
 import {
-  sendConfirmationEmail,
+  sendCreateEmail,
   sendAdminNotificationEmail,
 } from "@/services/email-service";
 import { checkRateLimit, getClientIp, rateLimitResponse } from "@/lib/rate-limit";
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
 
   after(async () => {
     await Promise.all([
-      sendConfirmationEmail({
+      sendCreateEmail({
         to: data.email,
         firstName: data.first_name,
         date: data.date,

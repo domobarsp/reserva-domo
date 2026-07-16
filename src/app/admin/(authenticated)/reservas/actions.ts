@@ -1,5 +1,6 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { getRestaurantId } from "@/lib/queries/restaurant";
@@ -15,6 +16,11 @@ import type {
   Customer,
 } from "@/types";
 import { ReservationStatus } from "@/types";
+import {
+  sendConfirmedEmail,
+  sendCancellationEmail,
+  sendNoShowEmail,
+} from "@/services/email-service";
 
 // ===========================
 // Queries
@@ -405,6 +411,81 @@ export async function updateReservationStatus(
     from_status: currentStatus,
     to_status: newStatus,
   });
+
+  const shouldEmail =
+    newStatus === ReservationStatus.CONFIRMED ||
+    newStatus === ReservationStatus.CANCELLED ||
+    newStatus === ReservationStatus.NO_SHOW;
+
+  if (shouldEmail) {
+    after(async () => {
+      const { data: full } = await supabase
+        .from("reservations")
+        .select(
+          `
+          date,
+          party_size,
+          special_requests,
+          locale,
+          cancellation_token,
+          customer:customers(first_name, email),
+          time_slot:time_slots(name),
+          accommodation_type:accommodation_types(name)
+        `
+        )
+        .eq("id", id)
+        .single();
+
+      if (!full) return;
+
+      const customer = Array.isArray(full.customer)
+        ? full.customer[0]
+        : full.customer;
+      const timeSlot = Array.isArray(full.time_slot)
+        ? full.time_slot[0]
+        : full.time_slot;
+      const accommodationType = Array.isArray(full.accommodation_type)
+        ? full.accommodation_type[0]
+        : full.accommodation_type;
+
+      if (!customer?.email) return;
+
+      const base = {
+        to: customer.email as string,
+        firstName: customer.first_name as string,
+        date: full.date as string,
+        timeLabel: (timeSlot?.name as string) ?? "",
+        accommodationLabel: (accommodationType?.name as string) ?? "",
+        partySize: full.party_size as number,
+        locale: full.locale as string | null,
+      };
+
+      if (newStatus === ReservationStatus.CONFIRMED) {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+        await sendConfirmedEmail({
+          ...base,
+          specialRequests: (full.special_requests as string | null) ?? undefined,
+          cancellationLink: `${appUrl}/cancelar/${full.cancellation_token}`,
+        });
+        return;
+      }
+
+      if (newStatus === ReservationStatus.CANCELLED) {
+        await sendCancellationEmail(base);
+        return;
+      }
+
+      if (newStatus === ReservationStatus.NO_SHOW) {
+        await sendNoShowEmail({
+          to: base.to,
+          firstName: base.firstName,
+          date: base.date,
+          timeLabel: base.timeLabel,
+          locale: base.locale,
+        });
+      }
+    });
+  }
 
   revalidatePath("/admin/reservas");
   revalidatePath("/admin/dashboard");

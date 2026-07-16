@@ -80,7 +80,7 @@ export default async function SucessoPage({
             <div className="flex items-center gap-2.5">
               <CheckCircle2 className="h-5 w-5 shrink-0 text-primary" strokeWidth={2} />
               <h1 className="text-xl font-semibold tracking-tight text-foreground">
-                Sua mesa está reservada.
+                Reserva recebida.
               </h1>
             </div>
             {subtitleDate && subtitleTime && (
@@ -148,8 +148,9 @@ export default async function SucessoPage({
               <Mail className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
               <div>
                 <p className="text-sm text-muted-foreground">
-                  Confirmação enviada para{" "}
+                  Enviamos um email para{" "}
                   <span className="font-medium text-foreground">{email}</span>.
+                  Em breve nossa equipe confirmará sua reserva.
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-0.5">
                   Não recebeu? Verifique a caixa de spam.

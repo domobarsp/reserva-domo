@@ -9,7 +9,7 @@ export function EstablishmentCta() {
           Pronto para reservar?
         </h2>
         <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-          Garanta sua mesa em poucos minutos. Confirmação por email.
+          Garanta sua mesa em poucos minutos. Você recebe um email ao reservar e outro quando confirmarmos.
         </p>
         <Button asChild size="lg" className="mt-8 rounded-lg px-8">
           <Link href="/reserva">Fazer reserva</Link>

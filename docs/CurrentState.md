@@ -1,6 +1,6 @@
 # Estado Atual do Sistema
 
-> Atualizado: 2026-06-30 | Fase: 16 (Home do Estabelecimento) — CONCLUÍDA
+> Atualizado: 2026-07-16 | Fase: 16 (Home do Estabelecimento) — CONCLUÍDA + ajustes emails/galeria/horários
 
 ## O que funciona
 
@@ -92,7 +92,7 @@
 
 - **Funções parametrizadas** (`src/lib/availability.ts`):
   - Cálculo de vagas restantes (max_covers - reservas ativas)
-  - Horários disponíveis por dia da semana
+  - Horários disponíveis por dia da semana (ordenados por `start_time` na API de availability e no filtro)
   - Verificação de datas fechadas (exception_dates)
   - Verificação de garantia de cartão (override por data > regra por dia da semana)
   - Janela de booking configurável
@@ -173,13 +173,18 @@
 ### Resend (Fase 6)
 
 - **Singleton Resend** em `src/lib/resend.ts`
-- **Traduções i18n** PT/EN/ES em `src/lib/email-translations.ts`
-- **Templates React Email** (inline styles) em `src/lib/email-templates/`: confirmation, cancellation, no-show-charge, admin-notification
-- **Email service** em `src/services/email-service.ts` — 4 funções não-bloqueantes
-- **Gatilhos**: confirmação + notif admin ao criar reserva, cancelamento ao cancelar via link, cobrança no-show ao cobrar
-- **Locale do cliente**: emails enviados no idioma escolhido (PT/EN/ES); admin sempre em PT
+- **Traduções i18n** PT/EN/ES em `src/lib/email-translations.ts` (`create`, `confirmed`, `cancellation`, `noShow`)
+- **Templates React Email** (inline styles) em `src/lib/email-templates/`: confirmation (create/confirmed), cancellation, no-show, admin-notification
+- **Email service** em `src/services/email-service.ts` — envios não-bloqueantes
+- **Gatilhos**:
+  - `create` + notif admin ao criar reserva online
+  - `confirmed` quando admin muda status para confirmed
+  - `cancellation` no cancel por token **ou** admin → cancelled
+  - `noShow` quando admin marca no_show (menciona que cobrança pode ser aplicada; charge Stripe não reenvia email)
+- **CTA cancelar**: apenas nos emails `create` e `confirmed`
+- **Locale do cliente**: emails no idioma da reserva (PT/EN/ES); admin notification sempre em PT
 - **ADMIN_NOTIFICATION_EMAIL** configurado em `.env.local`
-- Badge "Mock — email real na Fase 6" removido da página `/reserva/sucesso`
+- Página `/reserva/sucesso`: copy alinhada a “reserva recebida / em breve confirmada”
 
 ## O que está mockado
 
@@ -366,6 +371,7 @@ Correções de tokens quentes em componentes shared:
 - Upload via Supabase Storage bucket `restaurant-media` (5 MB, JPEG/PNG/WebP)
 - Validação client-side compartilhada (`src/lib/image-upload.ts`) com hints de formato/proporção na UI
 - Galeria: modal para adicionar/editar foto + legenda; exclusão com confirmação
+- Home pública: lightbox com overlay `bg-black/70` e aspect ratio natural (retrato/paisagem)
 - Capa: hints de proporção 21:9; remoção com confirmação; erros 413/toast amigável
 - Server Actions em `estabelecimento/actions.ts`
 
