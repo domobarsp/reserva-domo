@@ -15,6 +15,14 @@ const FROM = process.env.RESEND_FROM_EMAIL!;
 const ADMIN_TO =
   process.env.ADMIN_NOTIFICATION_EMAIL ?? process.env.RESEND_FROM_EMAIL!;
 
+/** Converte YYYY-MM-DD → DD/MM/YYYY para exibição nos emails. */
+function formatEmailDate(dateStr: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateStr);
+  if (!match) return dateStr;
+  const [, year, month, day] = match;
+  return `${day}/${month}/${year}`;
+}
+
 async function sendEmail(params: {
   to: string;
   subject: string;
@@ -60,11 +68,12 @@ type ReservationEmailParams = {
 export async function sendCreateEmail(params: ReservationEmailParams) {
   try {
     const locale = resolveLocale(params.locale);
-    const { to, cancellationLink, specialRequests, ...rest } = params;
+    const { to, cancellationLink, specialRequests, date, ...rest } = params;
     const subject = emailTranslations[locale].create.subject;
     const html = await render(
       React.createElement(ConfirmationEmail, {
         ...rest,
+        date: formatEmailDate(date),
         specialRequests,
         cancellationLink,
         locale,
@@ -85,11 +94,12 @@ export async function sendConfirmationEmail(params: ReservationEmailParams) {
 export async function sendConfirmedEmail(params: ReservationEmailParams) {
   try {
     const locale = resolveLocale(params.locale);
-    const { to, cancellationLink, specialRequests, ...rest } = params;
+    const { to, cancellationLink, specialRequests, date, ...rest } = params;
     const subject = emailTranslations[locale].confirmed.subject;
     const html = await render(
       React.createElement(ConfirmationEmail, {
         ...rest,
+        date: formatEmailDate(date),
         specialRequests,
         cancellationLink,
         locale,
@@ -113,10 +123,14 @@ export async function sendCancellationEmail(params: {
 }) {
   try {
     const locale = resolveLocale(params.locale);
-    const { to, ...rest } = params;
+    const { to, date, ...rest } = params;
     const subject = emailTranslations[locale].cancellation.subject;
     const html = await render(
-      React.createElement(CancellationEmail, { ...rest, locale })
+      React.createElement(CancellationEmail, {
+        ...rest,
+        date: formatEmailDate(date),
+        locale,
+      })
     );
     await sendEmail({ to, subject, html, label: "sendCancellationEmail" });
   } catch (err) {
@@ -133,10 +147,14 @@ export async function sendNoShowEmail(params: {
 }) {
   try {
     const locale = resolveLocale(params.locale);
-    const { to, ...rest } = params;
+    const { to, date, ...rest } = params;
     const subject = emailTranslations[locale].noShow.subject;
     const html = await render(
-      React.createElement(NoShowEmail, { ...rest, locale })
+      React.createElement(NoShowEmail, {
+        ...rest,
+        date: formatEmailDate(date),
+        locale,
+      })
     );
     await sendEmail({ to, subject, html, label: "sendNoShowEmail" });
   } catch (err) {
@@ -171,7 +189,12 @@ export async function sendAdminNotificationEmail(params: {
 }) {
   try {
     const subject = emailTranslations.pt.adminNotification.subject;
-    const html = await render(React.createElement(AdminNotificationEmail, params));
+    const html = await render(
+      React.createElement(AdminNotificationEmail, {
+        ...params,
+        date: formatEmailDate(params.date),
+      })
+    );
     await sendEmail({
       to: ADMIN_TO,
       subject,
